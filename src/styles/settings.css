@@ -1,0 +1,36 @@
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-art {
+  align-self: center;
+  margin-bottom: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.row-emoji {
+  font-size: 22px;
+}
+
+.row-label {
+  flex: 1;
+  font-size: 15px;
+}
+
+.row-value {
+  color: var(--muted);
+  font-size: 14px;
+}

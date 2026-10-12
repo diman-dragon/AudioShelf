@@ -1,0 +1,25 @@
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 80%;
+  text-align: center;
+}
+
+.empty-art {
+  margin-bottom: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 28px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.empty-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.empty-hint {
+  color: var(--muted);
+  font-size: 14px;
+}

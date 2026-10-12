@@ -1,0 +1,12 @@
+/* AMOLED: чистый чёрный фон, чтобы пиксели были выключены. */
+:root {
+  --bg: #000000;
+  --surface: #0e0e10;
+  --border: #1d1d21;
+  --text: #f2f2f7;
+  --muted: #8e8e93;
+  --accent: #ff6b9d; /* переопределяется для каждого экрана */
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --header-h: 40px;
+  --radius: 16px;
+}
