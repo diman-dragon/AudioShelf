@@ -3,9 +3,7 @@ package com.audioshelf.app;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
-import android.provider.DocumentsContract;
 import android.provider.DocumentsContract.Document;
 import androidx.activity.result.ActivityResult;
 import com.getcapacitor.JSArray;
@@ -19,6 +17,8 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 /** Audio folder via Storage Access Framework: pick a folder and list its audio files. */
 @CapacitorPlugin(name = "Folder")
 public class FolderPlugin extends Plugin {
+
+  private volatile FolderScanner scanner;
 
   private ContentResolver cr() {
     return getContext().getContentResolver();
@@ -52,42 +52,44 @@ public class FolderPlugin extends Plugin {
     call.resolve(o);
   }
 
+  /** Scans the folder and its subfolders in the background; progress arrives as "scan" events. */
   @PluginMethod
-  public void list(PluginCall call) {
+  public void scan(PluginCall call) {
     String t = call.getString("tree");
     if (t == null) {
       call.reject("tree required");
       return;
     }
-    Uri tree = Uri.parse(t);
-    Uri children =
-        DocumentsContract.buildChildDocumentsUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree));
-    String[] cols = {
-      Document.COLUMN_DOCUMENT_ID,
-      Document.COLUMN_DISPLAY_NAME,
-      Document.COLUMN_MIME_TYPE,
-      Document.COLUMN_SIZE,
-      Document.COLUMN_LAST_MODIFIED
-    };
-    JSArray files = new JSArray();
-    try (Cursor c = cr().query(children, cols, null, null, null)) {
-      while (c != null && c.moveToNext()) {
-        String name = c.getString(1);
-        String mime = c.getString(2);
-        if (Document.MIME_TYPE_DIR.equals(mime) || !AudioFiles.isAudio(name, mime)) continue;
-        JSObject o = new JSObject();
-        o.put("uri", DocumentsContract.buildDocumentUriUsingTree(tree, c.getString(0)).toString());
-        o.put("name", name);
-        o.put("size", c.getLong(3));
-        o.put("modified", c.getLong(4));
-        files.put(o);
-      }
-    } catch (Exception e) {
-      call.reject("list failed: " + e.getMessage());
-      return;
-    }
-    JSObject r = new JSObject();
-    r.put("files", files);
-    call.resolve(r);
+    if (scanner != null) scanner.cancel();
+    FolderScanner mine = new FolderScanner();
+    scanner = mine;
+    new Thread(
+            () -> {
+              try {
+                JSArray files =
+                    mine.scan(
+                        cr(),
+                        Uri.parse(t),
+                        (found, folders) -> {
+                          JSObject p = new JSObject();
+                          p.put("files", found);
+                          p.put("folders", folders);
+                          notifyListeners("scan", p);
+                        });
+                JSObject r = new JSObject();
+                r.put("files", files);
+                r.put("cancelled", mine.isCancelled());
+                call.resolve(r);
+              } catch (Exception e) {
+                call.reject("scan failed: " + e.getMessage());
+              }
+            })
+        .start();
+  }
+
+  @PluginMethod
+  public void cancelScan(PluginCall call) {
+    if (scanner != null) scanner.cancel();
+    call.resolve();
   }
 }

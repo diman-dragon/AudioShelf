@@ -7,12 +7,29 @@ let files = [
   { uri: 'mock://3', name: 'Интервью.m4a', size: 5300000, modified: Date.now() - 10 * DAY },
 ];
 
+const listeners = new Set();
+let cancelled = false;
+
 export const mock = {
   async pickFolder() {
-    return { uri: 'mock://folder', name: 'Demo' };
+    return { uri: 'content://com.android.externalstorage.documents/tree/primary%3AAudiobooks%2FBooks', name: 'Books' };
   },
-  async list() {
-    return { files: files.slice() };
+  // Сканирование с «прогрессом»: подпапки обходятся по очереди, как на телефоне.
+  async scan() {
+    cancelled = false;
+    const total = files.length;
+    for (let folders = 1; folders <= 4 && !cancelled; folders++) {
+      await new Promise((r) => setTimeout(r, 350));
+      listeners.forEach((fn) => fn({ files: Math.round((total * folders) / 4), folders }));
+    }
+    return { files: files.slice(), cancelled };
+  },
+  async cancelScan() {
+    cancelled = true;
+  },
+  async addListener(_name, fn) {
+    listeners.add(fn);
+    return { remove: async () => listeners.delete(fn) };
   },
   async read() {
     throw new Error('no cover in browser');
@@ -31,6 +48,6 @@ export const mock = {
     return { uri };
   },
   async open() {
-    alert('open (browser mock)');
+    /* в браузере открывать нечем */
   },
 };
