@@ -1,0 +1,12 @@
+.library {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.lib-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}

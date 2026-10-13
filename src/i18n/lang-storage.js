@@ -1,12 +1,12 @@
 import { readStored, writeStored } from '../core/storage.js';
-import { LANGS } from './languages.js';
+import { AUTO, LANGS } from './languages.js';
 
 const KEY = 'audioshelf.lang';
 
-// null — пользователь язык не выбирал, значит следуем языку устройства.
-export function loadLang() {
+// Выбор пользователя: 'auto' (по умолчанию), 'ru' или 'en'.
+export function loadLangPref() {
   const saved = readStored(KEY);
-  return LANGS.some((l) => l.id === saved) ? saved : null;
+  return LANGS.some((l) => l.id === saved) ? saved : AUTO;
 }
 
-export const saveLang = (id) => writeStored(KEY, id);
+export const saveLangPref = (pref) => writeStored(KEY, pref);

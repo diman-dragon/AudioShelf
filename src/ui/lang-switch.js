@@ -1,8 +1,7 @@
-import { LANGS } from '../i18n/languages.js';
-import { getLang } from '../i18n/i18n.js';
-import { changeLanguage } from '../i18n/language.js';
-import { createChoiceSwitch } from './choice-switch.js';
+import { AUTO, LANGS } from '../i18n/languages.js';
+import { changeLanguage, getLangPref } from '../i18n/language.js';
+import { createSegmented } from './segmented.js';
 
-const items = LANGS.map((l) => ({ id: l.id, icon: l.badge, label: l.label }));
+const items = [{ id: AUTO, labelKey: 'lang.auto' }, ...LANGS.map((l) => ({ id: l.id, label: l.label }))];
 
-export const createLangSwitch = () => createChoiceSwitch(items, getLang, changeLanguage);
+export const createLangSwitch = () => createSegmented(items, getLangPref, changeLanguage);

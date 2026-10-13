@@ -1,21 +1,5 @@
 .settings {
   display: flex;
   flex-direction: column;
-  gap: 8px;
   min-height: 100%;
-}
-
-.settings-art {
-  align-self: center;
-  margin-bottom: 8px;
-  border-radius: 50%;
-  box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 35%, transparent);
-}
-
-.settings-title {
-  margin-top: 10px;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
 }

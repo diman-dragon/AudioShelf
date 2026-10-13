@@ -1,16 +1,13 @@
-import { el } from '../core/dom.js';
+import { el, button, image } from '../core/dom.js';
 import { bindText } from '../i18n/bind.js';
-import { createArt } from './art.js';
 
 function createTab(screen, onSelect) {
-  const btn = el('button', 'tab');
-  btn.type = 'button';
-  btn.append(createArt(screen.icon, 34, 'tab-icon'), bindText(el('span', 'tab-label'), screen.key));
-  btn.addEventListener('click', () => onSelect(screen.id));
+  const btn = button('tab', () => onSelect(screen.id));
+  btn.append(image('tab-icon', screen.emoji), bindText(el('span', 'tab-label'), screen.key));
   return btn;
 }
 
-// Нижние вкладки: картинка + подпись, активная подсвечивается.
+// Нижние вкладки: SVG-эмодзи + подпись, активная подсвечивается.
 export function createTabbar(screens, onSelect) {
   const node = el('nav', 'tabbar');
   const tabs = new Map();

@@ -2,7 +2,6 @@ import { SCREENS } from '../screens/index.js';
 import { createHeader } from '../ui/header.js';
 import { createHost } from '../ui/screen-host.js';
 import { createTabbar } from '../ui/tabbar.js';
-import { setAccentScreen } from '../ui/accent.js';
 import { getScreen, navigate, onNavigate } from './router.js';
 import { initSwipe } from './swipe.js';
 
@@ -18,7 +17,6 @@ export function mountApp(root) {
   let prev = indexOf(getScreen());
   const apply = (id) => {
     const i = indexOf(id);
-    setAccentScreen(id);
     header.setTitle(SCREENS[i].key);
     host.show(id, i - prev);
     tabs.setActive(id);

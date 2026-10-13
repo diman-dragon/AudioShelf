@@ -1,16 +1,24 @@
-/* Тема по умолчанию — AMOLED: чистый чёрный фон, пиксели выключены. */
-:root {
+/* Токены цвета. Тёмная — AMOLED (чистый чёрный), светлая — песочная. */
+:root,
+:root[data-theme='dark'] {
   --bg: #000000;
-  --surface: #0e0e10;
-  --border: #1d1d21;
+  --surface: #121214;
   --text: #f2f2f7;
   --muted: #8e8e93;
-  --accent: #f0a64b; /* переопределяется для каждого экрана */
-  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --line: #222226;
+  --accent: #f0a64b;
+  --on-accent: #1a1204;
+  --accent-soft: color-mix(in srgb, var(--accent) 18%, transparent);
   --header-h: 40px;
-  --radius: 16px;
+  --radius: 14px;
 }
 
-:root[data-screen='library'] { --accent: #f0a64b; }
-:root[data-screen='player'] { --accent: #f5c84c; }
-:root[data-screen='settings'] { --accent: #e08a5c; }
+:root[data-theme='light'] {
+  --bg: #e9dcbf;
+  --surface: #f3e9d1;
+  --text: #2b2418;
+  --muted: #7a6c52;
+  --line: #d3c4a0;
+  --accent: #9a5b1f;
+  --on-accent: #fff8ea;
+}

@@ -1,8 +1,11 @@
-// Поддерживаемые языки. badge — крупная метка на кнопке, label — название на самом языке.
+// Поддерживаемые языки. label — название на самом языке.
 export const LANGS = [
-  { id: 'ru', badge: 'RU', label: 'Русский' },
-  { id: 'en', badge: 'EN', label: 'English' },
+  { id: 'ru', label: 'Русский' },
+  { id: 'en', label: 'English' },
 ];
+
+// «Авто» — язык устройства.
+export const AUTO = 'auto';
 
 // Если язык устройства не поддерживается — английский.
 export const DEFAULT_LANG = 'en';

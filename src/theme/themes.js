@@ -1,9 +1,10 @@
-// Список тем. bg — цвет фона (для системных панелей), light — светлая ли тема.
+// Две темы: светлая (песочная) и тёмная (AMOLED). bg — цвет фона для системных панелей.
 export const THEMES = [
-  { id: 'amoled', labelKey: 'theme.amoled', emoji: '🌑', bg: '#000000', light: false },
-  { id: 'brown', labelKey: 'theme.brown', emoji: '🍂', bg: '#e9d6b8', light: true },
+  { id: 'light', labelKey: 'theme.light', bg: '#E9DCBF', light: true },
+  { id: 'dark', labelKey: 'theme.dark', bg: '#000000', light: false },
 ];
 
-export const DEFAULT_THEME = 'amoled';
+export const findTheme = (id) => THEMES.find((t) => t.id === id) ?? THEMES[1];
 
-export const findTheme = (id) => THEMES.find((t) => t.id === id) ?? THEMES[0];
+// Пока пользователь тему не выбирал — следуем теме системы.
+export const systemTheme = () => (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');

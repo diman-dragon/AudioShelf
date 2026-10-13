@@ -1,11 +1,12 @@
 import { readStored, writeStored } from '../core/storage.js';
-import { DEFAULT_THEME, THEMES } from './themes.js';
+import { THEMES } from './themes.js';
 
 const KEY = 'audioshelf.theme';
 
+// null — пользователь тему не выбирал.
 export function loadTheme() {
   const saved = readStored(KEY);
-  return THEMES.some((t) => t.id === saved) ? saved : DEFAULT_THEME;
+  return THEMES.some((t) => t.id === saved) ? saved : null;
 }
 
 export const saveTheme = (id) => writeStored(KEY, id);

@@ -1,20 +1,28 @@
 import { applyTranslations } from './apply.js';
 import { detectLang } from './detect.js';
 import { getLang, setCurrent } from './i18n.js';
-import { loadLang, saveLang } from './lang-storage.js';
+import { loadLangPref, saveLangPref } from './lang-storage.js';
+import { AUTO } from './languages.js';
 
-function activate(id) {
-  setCurrent(id);
+let pref = AUTO;
+
+export const getLangPref = () => pref;
+
+function activate() {
+  setCurrent(pref === AUTO ? detectLang() : pref);
   document.documentElement.lang = getLang();
   applyTranslations();
+  document.dispatchEvent(new Event('langchange'));
 }
 
-// При старте: выбор пользователя, а если его нет — язык устройства.
+// При старте: выбор пользователя, а при «Авто» — язык устройства.
 export function initLanguage() {
-  activate(loadLang() ?? detectLang());
+  pref = loadLangPref();
+  activate();
 }
 
-export function changeLanguage(id) {
-  saveLang(id);
-  activate(id);
+export function changeLanguage(next) {
+  pref = next;
+  saveLangPref(next);
+  activate();
 }

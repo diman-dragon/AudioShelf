@@ -2,7 +2,7 @@
   flex: none;
   padding-top: env(safe-area-inset-top);
   background: var(--bg);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--line);
 }
 
 .header-title {
