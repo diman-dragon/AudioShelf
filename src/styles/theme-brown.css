@@ -1,0 +1,12 @@
+/* Светло-коричневая тема: переопределяет цвета AMOLED. */
+:root[data-theme='brown'] {
+  --bg: #e9d6b8;
+  --surface: #f5ead7;
+  --border: #cfb48a;
+  --text: #3a281a;
+  --muted: #7d6548;
+}
+
+:root[data-theme='brown'][data-screen='library'] { --accent: #a8531c; }
+:root[data-theme='brown'][data-screen='player'] { --accent: #8a5a00; }
+:root[data-theme='brown'][data-screen='settings'] { --accent: #9c3f2b; }

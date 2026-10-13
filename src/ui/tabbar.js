@@ -1,10 +1,11 @@
 import { el } from '../core/dom.js';
+import { bindText } from '../i18n/bind.js';
 import { createArt } from './art.js';
 
 function createTab(screen, onSelect) {
   const btn = el('button', 'tab');
   btn.type = 'button';
-  btn.append(createArt(screen.icon, 34, 'tab-icon'), el('span', 'tab-label', screen.label));
+  btn.append(createArt(screen.icon, 34, 'tab-icon'), bindText(el('span', 'tab-label'), screen.key));
   btn.addEventListener('click', () => onSelect(screen.id));
   return btn;
 }

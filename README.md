@@ -13,6 +13,15 @@ npm run android          # открыть в Android Studio
 
 Для разработки в браузере: `npm run dev`.
 
+## Сборка в GitHub Actions
+
+Workflow: `.github/workflows/android.yml` (Node 22, Java 21 — этого требует Capacitor 8).
+Что делает: `npm ci` → `npm run sync` → `gradlew assembleDebug bundleRelease` →
+выкладывает `audioshelf-apk` (debug APK) и `audioshelf-aab-unsigned` в Artifacts.
+
+В репозиторий обязательно коммитить `package-lock.json` и папку `android/`.
+Релизный AAB для стора нужно подписать (ключ и секреты добавим отдельным шагом).
+
 ## Принципы кода
 
 - Один файл — одна ответственность.

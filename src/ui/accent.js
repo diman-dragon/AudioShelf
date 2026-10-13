@@ -1,4 +1,4 @@
-// Акцентный цвет приложения меняется вместе с экраном.
-export function setAccent(color) {
-  document.documentElement.style.setProperty('--accent', color);
+// Какой экран открыт — от этого CSS выбирает акцентный цвет (см. styles/theme*.css).
+export function setAccentScreen(id) {
+  document.documentElement.dataset.screen = id;
 }
