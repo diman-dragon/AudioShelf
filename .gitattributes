@@ -1,0 +1,4 @@
+# Скрипты для Linux-раннера должны оставаться с LF, даже если проект правят на Windows.
+*.sh text eol=lf
+gradlew text eol=lf
+*.keystore binary

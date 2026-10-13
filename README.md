@@ -16,36 +16,27 @@ npm run android          # открыть в Android Studio
 ## Сборка в GitHub Actions
 
 Workflow: `.github/workflows/android.yml` (Node 22, Java 21 — этого требует Capacitor 8).
-Что делает: `npm ci` → `npm run sync` → `gradlew assembleDebug` →
-выкладывает `audioshelf-apk` (debug APK) в Artifacts.
+Что делает: `npm ci` → `npm run sync` → `gradlew assembleDebug` → кладёт APK
+`AudioShelf-<версия>.apk` в Artifacts и публикует релиз **«AudioShelf <версия>»**
+(тег `v<версия>`) с этим APK. Релиз не создаётся для pull request.
 
-В репозиторий обязательно коммитить `package-lock.json` и папку `android/`.
+Настраивать ничего не нужно: секреты не требуются.
+В репозиторий обязательно коммитить `package-lock.json`, папку `android/`
+и ключ `android/app/debug.keystore`.
 
-### Подпись (чтобы обновлять приложение, а не ставить заново)
+### Обновление поверх установленного приложения
 
-APK подписывается постоянным ключом из GitHub Secrets. Без этого на каждой сборке ключ
-был бы новый, и Android не ставил бы APK поверх старого.
+APK подписывается постоянным ключом `android/app/debug.keystore` (стандартные
+debug-данные). Поэтому новая версия ставится поверх старой, без удаления.
+Ключ только для личной установки. Для публикации в Google Play понадобится
+отдельный ключ загрузки, его делаем, когда дойдём до стора.
 
-Settings → Secrets and variables → Actions → New repository secret:
+### Версия и релиз
 
-| Секрет | Значение |
-|---|---|
-| `KEYSTORE_BASE64` | файл ключа в base64 |
-| `KEYSTORE_PASSWORD` | пароль ключа |
-| `KEY_ALIAS` | `audioshelf` |
-
-Base64 в PowerShell (результат попадает в буфер обмена):
-```powershell
-[Convert]::ToBase64String([IO.File]::ReadAllBytes(".\audioshelf-release.keystore")) | Set-Clipboard
-```
-Файл ключа в репозиторий не коммитить (он в `.gitignore`) и сохранить в надёжном месте:
-потеряете ключ — обновления поверх установленной версии станут невозможны.
-
-### Версия
-
-Версия задаётся в одном месте — `package.json` → `"version"`. Из неё берутся и текст
-в настройках, и `versionName`, и `versionCode` (`0.1.1` → `101`, `0.2.0` → `200`).
-Чтобы выпустить обновление, поднимите версию и запушьте.
+Версия задаётся в одном месте — `package.json` → `"version"`. Из неё берутся текст
+в настройках, `versionName`, `versionCode` (`0.1.1` → `101`, `0.2.0` → `200`), имя APK
+и название релиза. Чтобы выпустить обновление, поднимите версию и запушьте.
+Если версию не менять, релиз с этим номером обновится новым APK.
 
 ## Принципы кода
 

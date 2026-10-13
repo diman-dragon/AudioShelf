@@ -6,3 +6,5 @@ android/app/build
 android/local.properties
 *.keystore
 *.jks
+# Постоянный debug-ключ нужен в репозитории: с ним APK обновляется поверх старого.
+!android/app/debug.keystore

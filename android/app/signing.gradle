@@ -1,23 +1,19 @@
-// Debug-сборка подписывается постоянным ключом вместо случайного debug-ключа,
-// который на каждой сборке в CI был бы новым и мешал обновлению поверх старой версии.
-// Параметры приходят из переменных окружения (в CI это GitHub Secrets).
-// Без них (например, локально из Android Studio) работает обычный debug-ключ.
-def keystorePath = System.getenv('KEYSTORE_PATH')
-
-if (keystorePath) {
-    android {
-        signingConfigs {
-            audioshelf {
-                storeFile file(keystorePath)
-                storePassword System.getenv('KEYSTORE_PASSWORD')
-                keyAlias System.getenv('KEY_ALIAS')
-                keyPassword System.getenv('KEYSTORE_PASSWORD')
-            }
+// Debug-сборка всегда подписывается одним и тем же ключом из репозитория (debug.keystore).
+// Со случайным debug-ключом, который на каждой сборке в CI новый, Android не ставил бы
+// APK поверх старого. Это ключ для личной установки, а не для магазина:
+// стандартные debug-данные (android / androiddebugkey).
+android {
+    signingConfigs {
+        audioshelf {
+            storeFile file('debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
         }
-        buildTypes {
-            debug {
-                signingConfig signingConfigs.audioshelf
-            }
+    }
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.audioshelf
         }
     }
 }
