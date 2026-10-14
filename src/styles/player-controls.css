@@ -19,7 +19,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 18px;
+  gap: 12px;
+}
+
+/* Кнопки с пиктограммой: значок строго по центру */
+.pskip,
+.pplay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  padding: 0;
 }
 
 .pskip {
@@ -37,32 +47,13 @@
 }
 
 .pskip svg {
+  display: block;
   width: 36px;
   height: 36px;
 }
 
 .pplay svg {
+  display: block;
   width: 34px;
   height: 34px;
-}
-
-.pspeed {
-  min-width: 52px;
-  padding: 6px 10px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.prow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-}
-
-.pcontrols {
-  flex-direction: column;
-  gap: 14px;
 }

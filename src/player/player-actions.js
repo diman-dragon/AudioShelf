@@ -2,10 +2,7 @@ import { Player } from '../folder/plugins.js';
 import { loadSpeed, progressState, resumeAt, saveLast, saveProgress, saveSpeed } from './progress-store.js';
 import { load } from './player-load.js';
 import { applyStatus, getStatus, getTrack, isLoaded, setTrack } from './player-state.js';
-import { nextSpeed } from './speeds.js';
-
-const SKIP_BACK = 15000;
-const SKIP_FORWARD = 30000;
+import { getSkip } from './skip-pref.js';
 
 export function playBook(book) {
   const { i, p } = resumeAt(book.id);
@@ -33,15 +30,16 @@ export async function seekTo(ms) {
   applyStatus(await Player.seek({ position: ms }));
 }
 
+// Перемотка на столько секунд, сколько выбрано в настройках.
 export function skip(forward) {
   const { position, duration } = getStatus();
-  const target = position + (forward ? SKIP_FORWARD : -SKIP_BACK);
-  return seekTo(Math.max(0, duration ? Math.min(duration, target) : target));
+  const { back, forward: ahead } = getSkip();
+  const target = position + (forward ? ahead : -back) * 1000;
+  return seekTo(Math.round(Math.max(0, duration ? Math.min(duration, target) : target)));
 }
 
-export async function cycleSpeed() {
-  const speed = nextSpeed(loadSpeed());
+// Скорость из настроек: запоминаем и сразу применяем к играющему.
+export async function setSpeed(speed) {
   saveSpeed(speed);
   if (isLoaded()) applyStatus(await Player.setSpeed({ speed }));
-  else document.dispatchEvent(new Event('playerchange'));
 }

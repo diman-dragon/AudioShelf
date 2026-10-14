@@ -1,6 +1,6 @@
 .settings-footer {
-  margin-top: auto; /* прижимает футер к низу экрана */
-  padding-top: 24px;
+  flex: none;
+  padding-top: 12px;
   text-align: center;
   color: var(--muted);
   font-size: 12px;

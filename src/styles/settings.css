@@ -1,5 +1,47 @@
 .settings {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  height: 100%;
+}
+
+/* Содержимое прокручивается, футер (версия и копирайт) всегда внизу */
+.settings-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.menu-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.chev {
+  font-size: 22px;
+  color: var(--muted);
+}
+
+.page-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.page-back {
+  width: 36px;
+  height: 36px;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.page-title {
+  font-size: 17px;
+  font-weight: 700;
 }

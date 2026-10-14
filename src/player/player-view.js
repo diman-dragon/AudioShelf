@@ -1,15 +1,15 @@
 import { el } from '../core/dom.js';
 import { bylineOf, titleOf } from '../library/file-info.js';
 import { chapterLabel } from './chapter-label.js';
-import { openChaptersDialog } from './chapters-dialog.js';
 import { createControls } from './controls.js';
 import { createCover } from './cover-box.js';
 import { createPlayerEmpty } from './player-empty.js';
 import { chapterIndex, stepChapter } from './chapter-actions.js';
-import { cycleSpeed, seekTo, skip, togglePlay } from './player-actions.js';
+import { seekTo, skip, togglePlay } from './player-actions.js';
 import { getStatus, getTrack, isLoaded } from './player-state.js';
-import { loadSpeed, resumeAt } from './progress-store.js';
+import { resumeAt } from './progress-store.js';
 import { createSeek } from './seek-bar.js';
+import { getSkip } from './skip-pref.js';
 
 export function renderPlayer() {
   const root = el('section', 'player');
@@ -25,8 +25,6 @@ export function renderPlayer() {
     onToggle: togglePlay,
     onForward: () => skip(true),
     onNext: () => stepChapter(1),
-    onSpeed: cycleSpeed,
-    onChapters: openChaptersDialog,
   });
   body.append(cover.node, title, byline, chapter, seek.node, controls.node);
   const empty = createPlayerEmpty();
@@ -53,12 +51,13 @@ export function renderPlayer() {
     chapter.hidden = !multi;
     cover.refresh(book);
     seek.update(loaded ? s.position : resumeAt(book.id).p, loaded ? s.duration : 0);
-    controls.update({ playing: loaded && s.playing, speed: loaded ? s.speed : loadSpeed(), multi });
+    controls.update({ playing: loaded && s.playing, multi, skip: getSkip() });
   };
 
   document.addEventListener('playerchange', paint);
   document.addEventListener('langchange', paint);
   document.addEventListener('librarychange', paint);
+  document.addEventListener('skipchange', paint);
   paint();
   return root;
 }

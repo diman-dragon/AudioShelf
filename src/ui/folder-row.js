@@ -14,7 +14,6 @@ export function createFolderRow() {
     bindText(el('div'), 'settings.folder'),
     name,
     createFolderStat(),
-    bindText(el('div', 'small muted'), 'settings.folderHint'),
   );
 
   const forget = bindText(button('btn ghost', openForgetDialog), 'settings.forget');
