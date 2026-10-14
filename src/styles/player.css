@@ -18,7 +18,7 @@
 
 .pcover {
   position: relative;
-  width: min(100%, 360px);
+  width: min(100%, 340px, 38vh);
   aspect-ratio: 1;
   overflow: hidden;
   border-radius: var(--radius);

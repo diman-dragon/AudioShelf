@@ -1,5 +1,7 @@
 import { FileOps } from '../folder/plugins.js';
 import { retarget } from '../player/track-sync.js';
+import { moveMarks } from '../player/bookmark-store.js';
+import { moveDurations } from '../player/durations.js';
 import { moveProgress } from '../player/progress-store.js';
 import { fail } from './fail.js';
 import { splitName } from './format.js';
@@ -19,6 +21,8 @@ export async function saveFile(book, meta, base) {
       const { uri } = await FileOps.rename({ uri: file.uri, name: clean + ext });
       moveMeta(id, uri);
       moveProgress(id, uri);
+      moveMarks(id, uri);
+      moveDurations(id, uri);
       moveHidden(id, uri);
       retarget(id, { ...file, uri, name: clean + ext });
       patchFiles((list) => list.map((f) => (f.uri === file.uri ? { ...f, uri, name: clean + ext } : f)));

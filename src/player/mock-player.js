@@ -52,5 +52,6 @@ export const mockPlayer = {
   skipTo: act(({ index }) => Object.assign(s, { index, position: 0 })),
   setSpeed: act(({ speed }) => (s.speed = speed)),
   stop: act(() => Object.assign(s, { items: [], index: 0, playing: false, position: 0 })),
+  setProfile: act(() => {}), // режимы и края файла — только на телефоне
   state: async () => snap(),
 };

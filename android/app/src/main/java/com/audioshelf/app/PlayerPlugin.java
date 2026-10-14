@@ -12,7 +12,7 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import java.util.List;
 import java.util.function.Consumer;
 
-/** Audio playback on Media3 ExoPlayer: load, play, pause, seek, speed, stop, state. */
+/** Audio playback on Media3 ExoPlayer: load, play, pause, seek, speed, mode, stop, state. */
 @CapacitorPlugin(name = "Player")
 public class PlayerPlugin extends Plugin {
   private final Handler main = new Handler(Looper.getMainLooper());
@@ -106,6 +106,17 @@ public class PlayerPlugin extends Plugin {
   public void skipTo(PluginCall call) {
     int index = call.getInt("index", 0);
     onPlayer(call, p -> p.seekTo(index, 0));
+  }
+
+  /** Mode and file-edge fades: repeat off|all|one, shuffle, pauseAfter (chapter), fadeIn/fadeOut in ms. */
+  @PluginMethod
+  public void setProfile(PluginCall call) {
+    String repeat = call.getString("repeat", "off");
+    boolean shuffle = Boolean.TRUE.equals(call.getBoolean("shuffle", false));
+    boolean pauseAfter = Boolean.TRUE.equals(call.getBoolean("pauseAfter", false));
+    int fadeIn = call.getInt("fadeIn", 0);
+    int fadeOut = call.getInt("fadeOut", 0);
+    onPlayer(call, p -> PlayerProfile.apply(p, repeat, shuffle, pauseAfter, fadeIn, fadeOut));
   }
 
   /** The file was deleted or closed: stop and forget it. */

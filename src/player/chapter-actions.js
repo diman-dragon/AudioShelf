@@ -10,7 +10,12 @@ export async function playChapter(index) {
   if (!getStatus().playing) applyStatus(await Player.play());
 }
 
-export const stepChapter = (step) => playChapter(Math.max(0, Math.min(getTrack().files.length - 1, chapterIndex() + step)));
+// Соседняя глава (трек). У загруженного плеера решает он сам: так работают и «вперемешку», и «повтор всех».
+export async function stepChapter(step) {
+  if (!isLoaded()) return playChapter(Math.max(0, Math.min(getTrack().files.length - 1, chapterIndex() + step)));
+  applyStatus(await (step > 0 ? Player.next() : Player.previous()));
+  if (!getStatus().playing) applyStatus(await Player.play());
+}
 
 // Номер текущей главы: у загруженной — из плеера, иначе — где остановились.
 export const chapterIndex = () => (isLoaded() ? getStatus().index : resumeAt(getTrack().id).i);

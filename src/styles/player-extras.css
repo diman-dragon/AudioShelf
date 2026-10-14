@@ -1,0 +1,55 @@
+.pextras {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.pextra {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  max-width: 160px;
+  padding: 8px 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.pextra .pi svg {
+  display: block;
+  width: 22px;
+  height: 22px;
+}
+
+.pextra .pl {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.pline {
+  width: 100%;
+  margin-top: -8px;
+}
+
+.pline-bar {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--line);
+}
+
+.pline-fill {
+  height: 100%;
+  background: var(--accent);
+}
+
+.pline-text {
+  margin-top: 4px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}

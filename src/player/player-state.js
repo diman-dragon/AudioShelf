@@ -1,6 +1,8 @@
 import { App } from '@capacitor/app';
 import { Player } from '../folder/plugins.js';
+import { noteDuration } from './durations.js';
 import { loadLast, saveProgress } from './progress-store.js';
+import { notePause } from './rewind.js';
 
 // Что играет (книга) и в каком состоянии. Состояние спрашиваем у нативного плеера по таймеру.
 const EMPTY = { loaded: false, uri: '', index: 0, count: 0, playing: false, loading: false, ended: false, position: 0, duration: 0, speed: 1 };
@@ -31,7 +33,11 @@ export function applyStatus(next) {
   const prev = status;
   const wasLoaded = isLoaded();
   status = next;
-  if (wasLoaded && ((prev.playing && !next.playing) || ++ticks % 4 === 0)) remember(prev, next);
+  if (prev.playing && !next.playing) notePause();
+  if (wasLoaded && next.loaded && next.duration > 0) noteDuration(track.id, next.index, next.duration);
+  const stopped = prev.playing && !next.playing;
+  const sought = !next.playing && Math.abs(next.position - prev.position) > 500; // подвинули ползунок на паузе
+  if (wasLoaded && (stopped || sought || (next.playing && ++ticks % 4 === 0))) remember(prev, next);
   if (JSON.stringify(prev) !== JSON.stringify(next)) document.dispatchEvent(new Event('playerchange'));
 }
 

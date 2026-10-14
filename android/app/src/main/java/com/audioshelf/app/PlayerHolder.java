@@ -34,11 +34,13 @@ final class PlayerHolder {
               .setSeekForwardIncrementMs(30000)
               .setWakeMode(C.WAKE_MODE_LOCAL)
               .build();
+      PlayerProfile.attach(player);
     }
     return player;
   }
 
   static synchronized void release() {
+    PlayerProfile.detach();
     if (player != null) {
       player.release();
       player = null;

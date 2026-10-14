@@ -2,6 +2,8 @@ import { FileOps } from '../folder/plugins.js';
 import { getFolder } from '../folder/folder-store.js';
 import { navigate } from '../app/router.js';
 import { playBook } from '../player/player-actions.js';
+import { forgetMarks } from '../player/bookmark-store.js';
+import { forgetDurations } from '../player/durations.js';
 import { forgetProgress } from '../player/progress-store.js';
 import { dropTrack } from '../player/track-sync.js';
 import { fail } from './fail.js';
@@ -28,6 +30,8 @@ export function removeBook(book) {
     .then(() => {
       forgetMeta(book.id);
       forgetProgress(book.id);
+      forgetMarks(book.id);
+      forgetDurations(book.id);
       forgetHidden(book.id);
       const gone = new Set(book.files.map((f) => f.uri));
       patchFiles((list) => list.filter((f) => !gone.has(f.uri)));

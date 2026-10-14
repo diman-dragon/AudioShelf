@@ -1,11 +1,18 @@
 import { el } from '../core/dom.js';
-import { bylineOf, titleOf } from '../library/file-info.js';
-import { chapterLabel } from './chapter-label.js';
+import { kindOf } from '../library/file-info.js';
+import { bookProgress } from './book-progress.js';
+import { createBookLine } from './book-line.js';
+import { openMarksDialog } from './bookmark-dialog.js';
+import { getMarks } from './bookmark-store.js';
+import { chapterIndex, stepChapter } from './chapter-actions.js';
 import { createControls } from './controls.js';
 import { createCover } from './cover-box.js';
-import { createPlayerEmpty } from './player-empty.js';
-import { chapterIndex, stepChapter } from './chapter-actions.js';
+import { createExtras } from './extras-row.js';
+import { headingOf } from './heading.js';
+import { cycleMode } from './mode-actions.js';
+import { getMode } from './mode-pref.js';
 import { seekTo, skip, togglePlay } from './player-actions.js';
+import { createPlayerEmpty } from './player-empty.js';
 import { getStatus, getTrack, isLoaded } from './player-state.js';
 import { resumeAt } from './progress-store.js';
 import { createSeek } from './seek-bar.js';
@@ -19,6 +26,7 @@ export function renderPlayer() {
   const byline = el('div', 'psub');
   const chapter = el('div', 'psub');
   const seek = createSeek(seekTo);
+  const line = createBookLine();
   const controls = createControls({
     onPrev: () => stepChapter(-1),
     onBack: () => skip(false),
@@ -26,7 +34,8 @@ export function renderPlayer() {
     onForward: () => skip(true),
     onNext: () => stepChapter(1),
   });
-  body.append(cover.node, title, byline, chapter, seek.node, controls.node);
+  const extras = createExtras({ onMarks: openMarksDialog, onMode: cycleMode });
+  body.append(cover.node, title, byline, chapter, seek.node, line.node, controls.node, extras.node);
   const empty = createPlayerEmpty();
   root.append(body, empty);
 
@@ -41,23 +50,27 @@ export function renderPlayer() {
       cover.show(book);
     }
     const multi = book.files.length > 1;
+    const kind = kindOf(book);
     const loaded = isLoaded();
     const s = getStatus();
-    title.textContent = titleOf(book);
-    byline.textContent = bylineOf(book);
-    byline.hidden = !byline.textContent;
     const index = chapterIndex();
-    chapter.textContent = multi ? chapterLabel(book, index) : '';
-    chapter.hidden = !multi;
+    const head = headingOf(book, index);
+    title.textContent = head.title;
+    byline.textContent = head.sub;
+    byline.hidden = !head.sub;
+    chapter.textContent = head.label;
+    chapter.hidden = !head.label;
     cover.refresh(book);
-    seek.update(loaded ? s.position : resumeAt(book.id).p, loaded ? s.duration : 0);
+    const position = loaded ? s.position : resumeAt(book.id).p;
+    seek.update(position, loaded ? s.duration : 0);
+    line.update(kind === 'book' && multi ? bookProgress(book.id, book.files.length, index, position) : null); // общий прогресс — только у книги
     controls.update({ playing: loaded && s.playing, multi, skip: getSkip() });
+    extras.update({ markCount: getMarks(book.id).length, mode: getMode(kind) });
   };
 
-  document.addEventListener('playerchange', paint);
-  document.addEventListener('langchange', paint);
-  document.addEventListener('librarychange', paint);
-  document.addEventListener('skipchange', paint);
+  ['playerchange', 'langchange', 'librarychange', 'skipchange', 'modechange', 'markschange'].forEach((name) =>
+    document.addEventListener(name, paint),
+  );
   paint();
   return root;
 }

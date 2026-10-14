@@ -1,13 +1,16 @@
 import { readStored, writeStored } from '../core/storage.js';
 import { createMapStore } from '../core/map-store.js';
+import { REWIND_MS } from './rewind.js';
 
-// id книги -> { i: номер файла (главы), p: позиция в нём мс, d: его длительность мс, done: дослушана }
+// id книги -> { i: номер файла (главы), p: позиция в нём мс, d: его длительность мс, done: дослушана, t: когда слушали }
 const store = createMapStore('audioshelf.progress2');
 const LAST = 'audioshelf.last2'; // последняя книга целиком
 const SPEED = 'audioshelf.speed';
 
 export const saveProgress = (id, { i, p, d, done }) =>
-  store.set(id, { i, p: Math.floor(p), d: Math.floor(d), done: Boolean(done) });
+  store.set(id, { i, p: Math.floor(p), d: Math.floor(d), done: Boolean(done), t: Date.now() });
+
+export const lastPlayed = (id) => store.get(id)?.t ?? 0;
 
 // new — не открывали, started — начата, done — прослушана до конца.
 export function progressState(id) {
@@ -17,10 +20,10 @@ export function progressState(id) {
   return r.i > 0 || r.p > 0 ? 'started' : 'new';
 }
 
-// С какого места продолжать: прослушанное начинаем сначала.
+// С какого места продолжать: на 5 с раньше, чем остановились; прослушанное начинаем сначала.
 export function resumeAt(id) {
   const r = store.get(id);
-  return !r || r.done ? { i: 0, p: 0 } : { i: r.i, p: r.p };
+  return !r || r.done ? { i: 0, p: 0 } : { i: r.i, p: Math.max(0, r.p - REWIND_MS) };
 }
 
 export const moveProgress = store.move;
