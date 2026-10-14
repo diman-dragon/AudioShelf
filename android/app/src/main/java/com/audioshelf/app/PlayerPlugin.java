@@ -44,7 +44,7 @@ public class PlayerPlugin extends Plugin {
       return;
     }
     int index = call.getInt("index", 0);
-    long position = call.getLong("position", 0L);
+    long position = call.getData().optLong("position", 0L);
     boolean autoplay = Boolean.TRUE.equals(call.getBoolean("autoplay", false));
     List<MediaItem> list;
     try {
@@ -81,7 +81,7 @@ public class PlayerPlugin extends Plugin {
 
   @PluginMethod
   public void seek(PluginCall call) {
-    long position = call.getLong("position", 0L);
+    long position = call.getData().optLong("position", 0L);
     onPlayer(call, p -> p.seekTo(position));
   }
 
