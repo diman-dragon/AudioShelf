@@ -161,6 +161,10 @@ export default {
   'norm.on': 'On',
   'norm.off': 'Off',
 
+  'player.list': 'List',
+  'list.chapters': 'Chapters',
+  'list.tracks': 'Tracks',
+
   'unit.kb': 'KB',
   'unit.mb': 'MB',
   'unit.gb': 'GB',

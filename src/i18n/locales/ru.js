@@ -161,6 +161,10 @@ export default {
   'norm.on': 'Вкл',
   'norm.off': 'Выкл',
 
+  'player.list': 'Список',
+  'list.chapters': 'Главы',
+  'list.tracks': 'Треки',
+
   'unit.kb': 'КБ',
   'unit.mb': 'МБ',
   'unit.gb': 'ГБ',

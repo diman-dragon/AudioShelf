@@ -13,3 +13,5 @@ export const MODE_ICONS = {
 };
 
 export const MARK_ICON = `${open}><path d="M6 4h12v17l-6-4.5L6 21z"/></svg>`;
+
+export const LIST_ICON = `${open}><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/></svg>`;

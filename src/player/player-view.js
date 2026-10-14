@@ -4,6 +4,7 @@ import { bookProgress } from './book-progress.js';
 import { createBookLine } from './book-line.js';
 import { openMarksDialog } from './bookmark-dialog.js';
 import { getMarks } from './bookmark-store.js';
+import { openChapterList } from './chapter-list-dialog.js';
 import { chapterIndex, stepChapter } from './chapter-actions.js';
 import { createControls } from './controls.js';
 import { createCover } from './cover-box.js';
@@ -34,7 +35,7 @@ export function renderPlayer() {
     onForward: () => skip(true),
     onNext: () => stepChapter(1),
   });
-  const extras = createExtras({ onMarks: openMarksDialog, onMode: cycleMode });
+  const extras = createExtras({ onMarks: openMarksDialog, onList: openChapterList, onMode: cycleMode });
   body.append(cover.node, title, byline, chapter, seek.node, line.node, controls.node, extras.node);
   const empty = createPlayerEmpty();
   root.append(body, empty);
@@ -65,7 +66,7 @@ export function renderPlayer() {
     seek.update(position, loaded ? s.duration : 0);
     line.update(kind === 'book' && multi ? bookProgress(book.id, book.files.length, index, position) : null); // общий прогресс — только у книги
     controls.update({ playing: loaded && s.playing, multi, skip: getSkip() });
-    extras.update({ markCount: getMarks(book.id).length, mode: getMode(kind) });
+    extras.update({ markCount: getMarks(book.id).length, mode: getMode(kind), multi });
   };
 
   ['playerchange', 'langchange', 'librarychange', 'skipchange', 'modechange', 'markschange'].forEach((name) =>

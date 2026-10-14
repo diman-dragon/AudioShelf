@@ -25,9 +25,11 @@ export function hideBook(book) {
   notifyLibrary();
 }
 
-// С диска: у книги-папки удаляется вся папка, у одиночного файла — только он.
+// С диска: если в папке книги нет ничего чужого — удаляется папка (у книги из дисков — каждый диск),
+// иначе только файлы этой записи.
 export function removeBook(book) {
-  FileOps.remove({ uri: book.folder ? book.dirUri : book.files[0].uri })
+  const targets = book.folder && book.ownsDir ? book.dirUris : book.files.map((f) => f.uri);
+  Promise.all(targets.map((uri) => FileOps.remove({ uri })))
     .then(() => {
       forgetMeta(book.id);
       forgetProgress(book.id);
