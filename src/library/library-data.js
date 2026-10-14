@@ -16,6 +16,7 @@ export const getStatus = () => status;
 export const isScanning = () => scanning;
 export const getProgress = () => progress;
 export const getFileCount = () => all.length;
+export const getFiles = () => all;
 export const getBooks = () =>
   groupBooks(all)
     .filter((b) => !isHidden(b.id))

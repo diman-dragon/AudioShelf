@@ -1,12 +1,10 @@
-import { el, image } from '../core/dom.js';
-import { bindText } from '../i18n/bind.js';
-import soundEmoji from '../assets/emoji/1f50a.svg';
+import { el } from '../core/dom.js';
+import { createEqPanel } from '../sound/eq-panel.js';
+import { createNormCard } from '../sound/norm-card.js';
 
-// «Звук»: сюда лягут настройки звука воспроизведения. Пока пусто.
+// «Звук»: эквалайзер с пресетами и нормализация громкости.
 export function renderSound() {
   const root = el('section', 'sound');
-  const note = el('div', 'empty');
-  note.append(image('em', soundEmoji), bindText(el('div', 'empty-title'), 'sound.title'), bindText(el('div', 'muted'), 'sound.hint'));
-  root.append(note);
+  root.append(createEqPanel().node, createNormCard().node);
   return root;
 }

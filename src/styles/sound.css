@@ -1,5 +1,155 @@
 .sound {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  gap: 28px;
+}
+
+.eqpanel,
+.normcard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sound-h {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.sound-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.scope .seg {
+  display: flex;
+}
+
+.scope .seg button {
+  flex: 1;
+}
+
+.seg button:disabled {
+  opacity: 0.4;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 14px;
+}
+
+.chip.on {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+.bands {
+  display: flex;
+  justify-content: space-between;
+  gap: 2px;
+}
+
+.band {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.band-db,
+.band-hz {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.band-track {
+  position: relative;
+  width: 36px;
+  height: 170px;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.band-track::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--line);
+}
+
+.band-fill {
+  position: absolute;
+  left: 50%;
+  width: 4px;
+  margin-left: -2px;
+  background: var(--accent);
+}
+
+.band-thumb {
+  position: absolute;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  margin-bottom: -9px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--bg);
+}
+
+.eq-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.norm-bar {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--line);
+}
+
+.norm-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s;
+}
+
+.norm-bar.busy .norm-fill {
+  animation: norm-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes norm-pulse {
+  50% { opacity: 0.55; }
+}
+
+.norm-status {
+  margin: 0;
+  font-size: 14px;
+}
+
+.normcard .row {
+  border-bottom: 0;
 }

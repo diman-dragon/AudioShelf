@@ -18,6 +18,7 @@ export const isLoaded = () => Boolean(track) && status.loaded && track.files.som
 
 export function setTrack(book) {
   track = book;
+  document.dispatchEvent(new Event('trackchange'));
   document.dispatchEvent(new Event('playerchange'));
 }
 
