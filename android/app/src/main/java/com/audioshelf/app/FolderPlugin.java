@@ -1,14 +1,11 @@
 package com.audioshelf.app;
 
 import android.app.Activity;
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.net.Uri;
 import android.provider.DocumentsContract.Document;
 import androidx.activity.result.ActivityResult;
-import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
-import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.ActivityCallback;
@@ -16,13 +13,9 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 
 /** Audio folder via Storage Access Framework: pick a folder and list its audio files. */
 @CapacitorPlugin(name = "Folder")
-public class FolderPlugin extends Plugin {
+public class FolderPlugin extends SafPlugin {
 
   private volatile FolderScanner scanner;
-
-  private ContentResolver cr() {
-    return getContext().getContentResolver();
-  }
 
   @PluginMethod
   public void pickFolder(PluginCall call) {
@@ -55,36 +48,35 @@ public class FolderPlugin extends Plugin {
   /** Scans the folder and its subfolders in the background; progress arrives as "scan" events. */
   @PluginMethod
   public void scan(PluginCall call) {
-    String t = call.getString("tree");
-    if (t == null) {
-      call.reject("tree required");
-      return;
-    }
+    String tree = need(call, "tree");
+    if (tree == null) return;
     if (scanner != null) scanner.cancel();
-    FolderScanner mine = new FolderScanner();
-    scanner = mine;
-    new Thread(
-            () -> {
-              try {
-                JSArray files =
-                    mine.scan(
-                        cr(),
-                        Uri.parse(t),
-                        (found, folders) -> {
-                          JSObject p = new JSObject();
-                          p.put("files", found);
-                          p.put("folders", folders);
-                          notifyListeners("scan", p);
-                        });
-                JSObject r = new JSObject();
-                r.put("files", files);
-                r.put("cancelled", mine.isCancelled());
-                call.resolve(r);
-              } catch (Exception e) {
-                call.reject("scan failed: " + e.getMessage());
-              }
-            })
-        .start();
+    scanner = new FolderScanner();
+    ScanRunner.start(
+        scanner,
+        cr(),
+        Uri.parse(tree),
+        (found, folders) -> {
+          JSObject p = new JSObject();
+          p.put("files", found);
+          p.put("folders", folders);
+          notifyListeners("scan", p);
+        },
+        call);
+  }
+
+  /** The folder is no longer tracked: give the system permission back. */
+  @PluginMethod
+  public void release(PluginCall call) {
+    String tree = need(call, "uri");
+    if (tree == null) return;
+    try {
+      cr().releasePersistableUriPermission(
+          Uri.parse(tree), Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+    } catch (Exception ignored) {
+      // permission was already gone
+    }
+    call.resolve();
   }
 
   @PluginMethod

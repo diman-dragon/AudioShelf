@@ -1,7 +1,7 @@
 import { el, button } from '../core/dom.js';
 import { bindText } from '../i18n/bind.js';
 import { hiddenCount, restoreHidden } from '../library/hidden-store.js';
-import { refresh } from '../library/library-data.js';
+import { notifyLibrary } from '../library/library-data.js';
 
 // Строка «Скрытые файлы: N — Вернуть»; видна, только если такие есть.
 export function createHiddenRow() {
@@ -9,7 +9,7 @@ export function createHiddenRow() {
   const text = el('span');
   const restore = bindText(button('btn', () => {
     restoreHidden();
-    refresh();
+    notifyLibrary();
   }), 'settings.restore');
   row.append(text, restore);
 

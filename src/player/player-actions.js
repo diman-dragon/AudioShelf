@@ -1,38 +1,35 @@
 import { Player } from '../folder/plugins.js';
-import { authorOf, titleOf } from '../library/file-info.js';
-import { loadPos, loadSpeed, progressState, savePos, saveLast, saveSpeed } from './progress-store.js';
+import { loadSpeed, progressState, resumeAt, saveLast, saveProgress, saveSpeed } from './progress-store.js';
+import { load } from './player-load.js';
 import { applyStatus, getStatus, getTrack, isLoaded, setTrack } from './player-state.js';
 import { nextSpeed } from './speeds.js';
 
 const SKIP_BACK = 15000;
 const SKIP_FORWARD = 30000;
 
-// Загружает текущий файл в нативный плеер с позиции position.
-async function load(position, autoplay) {
-  const track = getTrack();
-  const state = await Player.load({ uri: track.uri, title: titleOf(track), artist: authorOf(track), position, autoplay });
-  applyStatus(await Player.setSpeed({ speed: loadSpeed() }).catch(() => state));
-}
-
-export function playFile(file) {
-  if (progressState(file.uri) === 'new') savePos(file.uri, 1, 0); // «начато» — значок книги сразу меняется
-  setTrack(file);
-  saveLast(file);
-  return load(loadPos(file.uri), true).catch(() => {});
+export function playBook(book) {
+  const { i, p } = resumeAt(book.id);
+  if (progressState(book.id) === 'new') saveProgress(book.id, { i: 0, p: 1, d: 0 }); // «начато»: значок книги сразу меняется
+  setTrack(book);
+  saveLast(book);
+  return load(i, p, true).catch(() => {});
 }
 
 export async function togglePlay() {
   if (!getTrack()) return;
-  if (!isLoaded()) return load(loadPos(getTrack().uri), true);
+  if (!isLoaded()) {
+    const { i, p } = resumeAt(getTrack().id);
+    return load(i, p, true);
+  }
   const s = getStatus();
   if (s.playing) return applyStatus(await Player.pause());
-  if (s.ended) await Player.seek({ position: 0 });
+  if (s.ended) await Player.skipTo({ index: 0 });
   applyStatus(await Player.play());
 }
 
 export async function seekTo(ms) {
   if (!getTrack()) return;
-  if (!isLoaded()) return load(ms, false);
+  if (!isLoaded()) return load(resumeAt(getTrack().id).i, ms, false);
   applyStatus(await Player.seek({ position: ms }));
 }
 

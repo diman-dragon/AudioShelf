@@ -28,6 +28,9 @@ public class PlaybackService extends MediaSessionService {
         new DefaultMediaNotificationProvider.Builder(this).build();
     provider.setSmallIcon(R.drawable.ic_stat_player);
     setMediaNotificationProvider(provider);
+    // Nobody binds to the service (the player is driven by the plugin), so without this
+    // the session is never attached and no notification is ever shown.
+    addSession(session);
   }
 
   /** ✕ in the notification: stop, forget the item and remove the notification. */

@@ -11,11 +11,11 @@ export function createCover() {
   node.append(ph, cover);
   return {
     node,
-    refresh: (file) => applyPlaceholder(ph, file),
-    show(file) {
+    refresh: (book) => applyPlaceholder(ph, book),
+    show(book) {
       cover.classList.remove('ready');
       cover.removeAttribute('src');
-      loadCover(file, cover);
+      loadCover(book.files[0], cover);
     },
   };
 }

@@ -1,53 +1,61 @@
 import { getFolder } from '../folder/folder-store.js';
 import { isHidden } from './hidden-store.js';
-import { cancelScan, scanFolder } from './scan.js';
+import { groupBooks } from './books.js';
+import { loadLibrary, saveLibrary } from './library-cache.js';
 
-let files = [];
-let status = getFolder() ? 'loading' : 'nofolder'; // loading | nofolder | error | ok
+// Состояние библиотеки: все файлы папки (в том числе скрытые) и что с ними сейчас происходит.
+// Обход папки — в rescan.js; здесь только хранение и сообщения экранам.
+let all = [];
+let status = 'nofolder'; // nofolder | unscanned | ok | error
 let scanning = false;
-let again = false; // пока шёл обход, папку сменили или попросили обновить
 let progress = { files: 0, folders: 0 };
 
-export const getFiles = () => files;
+export const notifyLibrary = (name = 'librarychange') => document.dispatchEvent(new Event(name));
+
 export const getStatus = () => status;
 export const isScanning = () => scanning;
 export const getProgress = () => progress;
+export const getFileCount = () => all.length;
+export const getBooks = () =>
+  groupBooks(all)
+    .filter((b) => !isHidden(b.id))
+    .sort((a, b) => b.modified - a.modified);
 
-const announce = (name = 'librarychange') => document.dispatchEvent(new Event(name));
-
-// Обходит папку (с подпапками), показывает прогресс и сообщает экранам событием librarychange.
-export async function refresh() {
+// Поднимает сохранённый список для выбранной папки (при запуске и после выбора папки).
+export function restoreLibrary() {
   const folder = getFolder();
-  if (!folder) {
-    files = [];
-    status = 'nofolder';
-    return announce();
-  }
-  if (scanning) {
-    again = true;
-    return cancelScan();
-  }
-  scanning = true;
-  if (status === 'nofolder' || status === 'error') status = 'loading';
-  progress = { files: 0, folders: 0 };
-  announce();
-  try {
-    const result = await scanFolder(folder.uri, (p) => {
-      progress = p;
-      announce('scanprogress');
-    });
-    files = result.files.filter((f) => !isHidden(f.uri)).sort((a, b) => b.modified - a.modified);
-    status = 'ok';
-  } catch {
-    files = [];
-    status = 'error';
-  }
-  scanning = false;
-  announce();
-  if (again) {
-    again = false;
-    refresh();
-  }
+  const saved = folder && loadLibrary(folder.uri);
+  all = saved ?? [];
+  status = !folder ? 'nofolder' : saved ? 'ok' : 'unscanned';
+  notifyLibrary();
 }
 
-export { cancelScan };
+// Меняет список без обхода (добавили, удалили, переименовали файл) и сохраняет его.
+export function patchFiles(change) {
+  all = change(all);
+  saveLibrary(getFolder().uri, all);
+  notifyLibrary();
+}
+
+export function setScanning(on) {
+  scanning = on;
+  progress = { files: 0, folders: 0 };
+  notifyLibrary();
+}
+
+export function setProgress(next) {
+  progress = next;
+  notifyLibrary('scanprogress');
+}
+
+// Итог обхода: новый список (или null — прежний остаётся) либо ошибка.
+export function finishScan(files, failed) {
+  if (failed) status = 'error';
+  else if (files) {
+    all = files;
+    status = 'ok';
+    saveLibrary(getFolder().uri, all);
+  }
+  scanning = false;
+  notifyLibrary();
+}

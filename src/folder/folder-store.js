@@ -1,4 +1,4 @@
-import { readStored, writeStored } from '../core/storage.js';
+import { readStored, removeStored, writeStored } from '../core/storage.js';
 
 const KEY = 'audioshelf.folder';
 
@@ -12,5 +12,11 @@ export function getFolder() {
 
 export function setFolder(folder) {
   writeStored(KEY, JSON.stringify(folder));
+  document.dispatchEvent(new Event('folderchange'));
+}
+
+// Папку убрали из отслеживания.
+export function clearFolder() {
+  removeStored(KEY);
   document.dispatchEvent(new Event('folderchange'));
 }

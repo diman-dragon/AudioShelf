@@ -13,6 +13,8 @@ final class PlayerState {
     JSObject o = new JSObject();
     o.put("loaded", item != null);
     o.put("uri", item == null ? "" : item.mediaId);
+    o.put("index", p.getCurrentMediaItemIndex());
+    o.put("count", p.getMediaItemCount());
     o.put("playing", p.isPlaying());
     o.put("loading", p.getPlaybackState() == Player.STATE_BUFFERING);
     o.put("ended", p.getPlaybackState() == Player.STATE_ENDED);

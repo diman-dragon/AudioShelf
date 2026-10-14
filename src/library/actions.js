@@ -1,38 +1,44 @@
 import { FileOps } from '../folder/plugins.js';
 import { getFolder } from '../folder/folder-store.js';
-import { fail } from './fail.js';
 import { navigate } from '../app/router.js';
-import { playFile } from '../player/player-actions.js';
-import { dropTrack } from '../player/track-sync.js';
+import { playBook } from '../player/player-actions.js';
 import { forgetProgress } from '../player/progress-store.js';
+import { dropTrack } from '../player/track-sync.js';
+import { fail } from './fail.js';
 import { forgetHidden, hide } from './hidden-store.js';
 import { forgetMeta } from './meta-store.js';
-import { refresh } from './library-data.js';
+import { notifyLibrary, patchFiles } from './library-data.js';
 
-const run = (job) => job.then(refresh).catch(fail);
-
-// Нажатие на файл: играть во встроенном плеере и показать его.
-export function playFromLibrary(f) {
-  playFile(f);
+// Нажатие на книгу: играть во встроенном плеере и показать его.
+export function playFromLibrary(book) {
+  playBook(book);
   navigate('player');
 }
 
-export const openExternal = (f) => FileOps.open({ uri: f.uri }).catch(fail);
+export const openExternal = (book) => FileOps.open({ uri: book.files[0].uri }).catch(fail);
 
-export function hideFile(f) {
-  hide(f.uri);
-  refresh();
+export function hideBook(book) {
+  hide(book.id);
+  notifyLibrary();
 }
 
-export function removeFile(f) {
-  run(
-    FileOps.remove({ uri: f.uri }).then(() => {
-      forgetMeta(f.uri);
-      forgetProgress(f.uri);
-      forgetHidden(f.uri);
-      return dropTrack(f.uri);
-    }),
-  );
+// С диска: у книги-папки удаляется вся папка, у одиночного файла — только он.
+export function removeBook(book) {
+  FileOps.remove({ uri: book.folder ? book.dirUri : book.files[0].uri })
+    .then(() => {
+      forgetMeta(book.id);
+      forgetProgress(book.id);
+      forgetHidden(book.id);
+      const gone = new Set(book.files.map((f) => f.uri));
+      patchFiles((list) => list.filter((f) => !gone.has(f.uri)));
+      return dropTrack(book.id);
+    })
+    .catch(fail);
 }
 
-export const addFiles = () => run(FileOps.add({ tree: getFolder().uri }));
+// Скопированные файлы сразу попадают в список — повторный обход не нужен.
+// Лежат они прямо в выбранной папке, поэтому это отдельные записи.
+export const addFiles = () =>
+  FileOps.add({ tree: getFolder().uri })
+    .then((result) => patchFiles((list) => [...list, ...result.files]))
+    .catch(fail);

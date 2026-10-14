@@ -2,7 +2,7 @@ import { el, button } from '../core/dom.js';
 import { bindText } from '../i18n/bind.js';
 import { closeModal, openModal } from '../ui/modal.js';
 import { t } from '../i18n/i18n.js';
-import { hideFile, removeFile } from './actions.js';
+import { hideBook, removeBook } from './actions.js';
 import { titleOf } from './file-info.js';
 
 // Блок «кнопка + пояснение, что произойдёт».
@@ -16,15 +16,15 @@ function choice(labelKey, hintKey, className, run) {
   return box;
 }
 
-// Удаление: убрать из библиотеки (файл остаётся) или стереть с диска.
-export function openDeleteDialog(file) {
+// Удаление: убрать из библиотеки (файлы остаются) или стереть с диска.
+export function openDeleteDialog(book) {
   const cancel = bindText(button('btn ghost', closeModal), 'lib.cancel');
   const actions = el('div', 'modal-actions');
   actions.append(cancel);
   openModal(t('del.heading'), [
-    el('p', 'ptext', titleOf(file)),
-    choice('del.hide', 'del.hideHint', 'ghost', () => hideFile(file)),
-    choice('del.disk', 'del.diskHint', 'danger', () => removeFile(file)),
+    el('p', 'ptext', titleOf(book)),
+    choice('del.hide', 'del.hideHint', 'ghost', () => hideBook(book)),
+    choice('del.disk', book.folder ? 'del.diskHintFolder' : 'del.diskHint', 'danger', () => removeBook(book)),
     actions,
   ]);
 }

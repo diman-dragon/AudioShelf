@@ -1,14 +1,10 @@
 // Заглушка для работы в браузере (npm run dev): файлы живут только в памяти.
-const DAY = 86400000;
-
-let files = [
-  { uri: 'mock://1', name: 'Мастер и Маргарита, часть 1.m4b', size: 184000000, modified: Date.now() - DAY },
-  { uri: 'mock://2', name: 'Pink Floyd - Time.mp3', size: 9200000, modified: Date.now() - 3600000 },
-  { uri: 'mock://3', name: 'Интервью.m4a', size: 5300000, modified: Date.now() - 10 * DAY },
-];
+import { demoFiles } from './mock-data.js';
 
 const listeners = new Set();
 let cancelled = false;
+
+let files = demoFiles.slice();
 
 export const mock = {
   async pickFolder() {
@@ -24,6 +20,7 @@ export const mock = {
     }
     return { files: files.slice(), cancelled };
   },
+  async release() {},
   async cancelScan() {
     cancelled = true;
   },
@@ -35,11 +32,12 @@ export const mock = {
     throw new Error('no cover in browser');
   },
   async add() {
-    files.push({ uri: `mock://${Date.now()}`, name: 'Новый файл.mp3', size: 3000000, modified: Date.now() });
-    return { added: 1 };
+    const file = { uri: `mock://${Date.now()}`, name: 'Новый файл.mp3', size: 3000000, modified: Date.now(), dir: '', dirUri: 'mock://dir/root' };
+    files.push(file);
+    return { files: [file] };
   },
   async remove({ uri }) {
-    files = files.filter((f) => f.uri !== uri);
+    files = files.filter((f) => f.uri !== uri && f.dirUri !== uri);
   },
   async rename({ uri, name }) {
     files.forEach((f) => {

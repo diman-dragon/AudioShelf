@@ -2,35 +2,24 @@ package com.audioshelf.app;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.net.Uri;
 import android.provider.DocumentsContract;
-import android.provider.DocumentsContract.Document;
 import androidx.activity.result.ActivityResult;
 import com.getcapacitor.JSObject;
-import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
-import java.util.ArrayList;
 import java.util.List;
 
 /** Operations on library files: add (copy in), remove, rename, open in another app. */
 @CapacitorPlugin(name = "FileOps")
-public class FileOpsPlugin extends Plugin {
-
-  private ContentResolver cr() {
-    return getContext().getContentResolver();
-  }
+public class FileOpsPlugin extends SafPlugin {
 
   @PluginMethod
   public void add(PluginCall call) {
-    if (call.getString("tree") == null) {
-      call.reject("tree required");
-      return;
-    }
+    if (need(call, "tree") == null) return;
     Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
     i.addCategory(Intent.CATEGORY_OPENABLE);
     i.setType("audio/*");
@@ -46,20 +35,13 @@ public class FileOpsPlugin extends Plugin {
       call.reject("cancelled");
       return;
     }
-    List<Uri> sources = new ArrayList<>();
-    if (data.getClipData() != null) {
-      for (int k = 0; k < data.getClipData().getItemCount(); k++) {
-        sources.add(data.getClipData().getItemAt(k).getUri());
-      }
-    } else if (data.getData() != null) {
-      sources.add(data.getData());
-    }
+    List<Uri> sources = PickedUris.from(data);
     Uri parent = Saf.treeRoot(Uri.parse(call.getString("tree")));
     // Files can be large: copy off the main thread.
     new Thread(
             () -> {
               JSObject o = new JSObject();
-              o.put("added", Copier.copyAll(cr(), sources, parent));
+              o.put("files", Copier.copyAll(cr(), sources, parent));
               call.resolve(o);
             })
         .start();
@@ -67,11 +49,8 @@ public class FileOpsPlugin extends Plugin {
 
   @PluginMethod
   public void remove(PluginCall call) {
-    String u = call.getString("uri");
-    if (u == null) {
-      call.reject("uri required");
-      return;
-    }
+    String u = need(call, "uri");
+    if (u == null) return;
     try {
       if (DocumentsContract.deleteDocument(cr(), Uri.parse(u))) call.resolve();
       else call.reject("delete failed");
@@ -82,12 +61,9 @@ public class FileOpsPlugin extends Plugin {
 
   @PluginMethod
   public void rename(PluginCall call) {
-    String u = call.getString("uri");
-    String name = call.getString("name");
-    if (u == null || name == null) {
-      call.reject("uri and name required");
-      return;
-    }
+    String u = need(call, "uri");
+    String name = need(call, "name");
+    if (u == null || name == null) return;
     try {
       Uri n = DocumentsContract.renameDocument(cr(), Uri.parse(u), name);
       if (n == null) {
@@ -104,11 +80,8 @@ public class FileOpsPlugin extends Plugin {
 
   @PluginMethod
   public void open(PluginCall call) {
-    String u = call.getString("uri");
-    if (u == null) {
-      call.reject("uri required");
-      return;
-    }
+    String u = need(call, "uri");
+    if (u == null) return;
     Uri uri = Uri.parse(u);
     String mime = cr().getType(uri);
     Intent i = new Intent(Intent.ACTION_VIEW);

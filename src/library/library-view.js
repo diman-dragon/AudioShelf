@@ -3,7 +3,7 @@ import { onNavigate } from '../app/router.js';
 import { createEmpty } from './empty.js';
 import { createItems } from './items-list.js';
 import { createLibBar } from './lib-bar.js';
-import { getFiles, getProgress, getStatus, isScanning } from './library-data.js';
+import { getBooks, getProgress, getStatus, isScanning } from './library-data.js';
 import { createScanPanel } from './scan-panel.js';
 import { getView } from './view-pref.js';
 
@@ -17,16 +17,16 @@ export function renderLibrary() {
 
   const paint = () => {
     const status = getStatus();
-    const files = getFiles();
+    const books = getBooks();
     const scanning = isScanning();
-    const has = status === 'ok' && files.length > 0;
+    const has = status === 'ok' && books.length > 0;
     bar.node.hidden = status === 'nofolder' || status === 'error';
     bar.setBusy(scanning);
     scan.node.hidden = !scanning;
     if (scanning) scan.update(getProgress());
     items.node.hidden = !has;
-    empty.node.hidden = scanning || status === 'loading' || has;
-    if (has) items.show(files, getView());
+    empty.node.hidden = scanning || has;
+    if (has) items.show(books, getView());
     else if (!empty.node.hidden) empty.show(status);
   };
 

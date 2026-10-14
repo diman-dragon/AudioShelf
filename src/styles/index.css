@@ -11,7 +11,12 @@
 @import './empty.css';
 @import './library.css';
 @import './lib-items.css';
+@import './item.css';
+@import './thumb.css';
 @import './sheet.css';
 @import './player.css';
+@import './player-controls.css';
+@import './chapters.css';
 @import './modal.css';
+@import './field.css';
 @import './scan.css';

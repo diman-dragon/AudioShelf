@@ -4,26 +4,29 @@ import { moveProgress } from '../player/progress-store.js';
 import { fail } from './fail.js';
 import { splitName } from './format.js';
 import { moveHidden } from './hidden-store.js';
-import { refresh } from './library-data.js';
+import { notifyLibrary, patchFiles } from './library-data.js';
 import { moveMeta, saveMeta } from './meta-store.js';
 
-// Теги и имя файла из окна «Изменить». Переименование меняет uri — переносим всё, что к нему привязано.
-export async function saveFile(file, meta, base) {
+// Теги и (для одиночного файла) имя из окна «Изменить». Переименование меняет uri —
+// а с ним id записи — поэтому переносим всё, что к нему привязано.
+export async function saveFile(book, meta, base) {
+  const file = book.files[0];
   const [oldBase, ext] = splitName(file.name);
   const clean = base.replace(/[\\/:*?"<>|]/g, '').trim();
-  let uri = file.uri;
+  let id = book.id;
   try {
-    if (clean && clean !== oldBase) {
-      ({ uri } = await FileOps.rename({ uri: file.uri, name: clean + ext }));
-      moveMeta(file.uri, uri);
-      moveProgress(file.uri, uri);
-      moveHidden(file.uri, uri);
-      retarget(file.uri, uri, clean + ext);
+    if (!book.folder && clean && clean !== oldBase) {
+      const { uri } = await FileOps.rename({ uri: file.uri, name: clean + ext });
+      moveMeta(id, uri);
+      moveProgress(id, uri);
+      moveHidden(id, uri);
+      retarget(id, { ...file, uri, name: clean + ext });
+      patchFiles((list) => list.map((f) => (f.uri === file.uri ? { ...f, uri, name: clean + ext } : f)));
+      id = uri;
     }
-    saveMeta(uri, meta);
+    saveMeta(id, meta);
   } catch (e) {
     fail(e);
   }
-  refresh();
+  notifyLibrary();
 }
-

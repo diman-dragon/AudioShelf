@@ -1,47 +1,56 @@
 // Заглушка плеера для браузера (npm run dev): время идёт по часам, звука нет.
-const s = { loaded: false, uri: '', playing: false, position: 0, duration: 3600000, speed: 1, at: 0 };
+const CHAPTER = 600000; // каждая глава 10 минут
+const s = { items: [], index: 0, playing: false, position: 0, speed: 1, at: 0 };
 
-function snap() {
-  if (s.playing) {
-    const now = Date.now();
-    s.position = Math.min(s.duration, s.position + (now - s.at) * s.speed);
-    s.at = now;
-    if (s.position >= s.duration) s.playing = false;
+function advance() {
+  if (!s.playing) return;
+  const now = Date.now();
+  s.position += (now - s.at) * s.speed;
+  s.at = now;
+  while (s.position >= CHAPTER && s.index < s.items.length - 1) {
+    s.position -= CHAPTER;
+    s.index++;
   }
-  return { ...s, loading: false, ended: s.loaded && s.position >= s.duration };
+  if (s.position >= CHAPTER) {
+    s.position = CHAPTER;
+    s.playing = false;
+  }
 }
 
+function snap() {
+  advance();
+  const loaded = s.items.length > 0;
+  return {
+    loaded,
+    uri: loaded ? s.items[s.index].uri : '',
+    index: s.index,
+    count: s.items.length,
+    playing: s.playing,
+    loading: false,
+    ended: loaded && !s.playing && s.index === s.items.length - 1 && s.position >= CHAPTER,
+    position: s.position,
+    duration: loaded ? CHAPTER : 0,
+    speed: s.speed,
+  };
+}
+
+const act = (change) => async (args = {}) => {
+  advance();
+  change(args);
+  s.at = Date.now();
+  return snap();
+};
+
 export const mockPlayer = {
-  async load({ uri, position = 0, autoplay = false }) {
-    Object.assign(s, { loaded: true, uri, position, playing: autoplay, at: Date.now() });
-    return snap();
-  },
-  async play() {
-    snap();
-    s.playing = true;
-    s.at = Date.now();
-    return snap();
-  },
-  async pause() {
-    snap();
-    s.playing = false;
-    return snap();
-  },
-  async seek({ position }) {
-    snap();
-    s.position = position;
-    return snap();
-  },
-  async setSpeed({ speed }) {
-    snap();
-    s.speed = speed;
-    return snap();
-  },
-  async stop() {
-    Object.assign(s, { loaded: false, uri: '', playing: false, position: 0 });
-    return snap();
-  },
-  async state() {
-    return snap();
-  },
+  load: act(({ items, index = 0, position = 0, autoplay = false }) =>
+    Object.assign(s, { items, index, position, playing: autoplay })),
+  play: act(() => (s.playing = true)),
+  pause: act(() => (s.playing = false)),
+  seek: act(({ position }) => (s.position = position)),
+  next: act(() => Object.assign(s, { index: Math.min(s.items.length - 1, s.index + 1), position: 0 })),
+  previous: act(() => Object.assign(s, { index: Math.max(0, s.index - 1), position: 0 })),
+  skipTo: act(({ index }) => Object.assign(s, { index, position: 0 })),
+  setSpeed: act(({ speed }) => (s.speed = speed)),
+  stop: act(() => Object.assign(s, { items: [], index: 0, playing: false, position: 0 })),
+  state: async () => snap(),
 };

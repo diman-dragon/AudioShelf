@@ -6,37 +6,37 @@ import { bylineOf, kindOf, titleOf } from './file-info.js';
 import { getMeta } from './meta-store.js';
 import { applyPlaceholder } from './placeholder.js';
 
-// Сведения: «Книга · 2019 · MP3 · 8,8 МБ · 13.10.2026».
-function infoOf(file) {
-  const { year } = getMeta(file.uri);
-  const ext = splitName(file.name)[1].slice(1).toUpperCase();
-  return [t(`kind.${kindOf(file)}`), year, ext, fmtSize(file.size), fmtDate(file.modified)].filter(Boolean).join(' · ');
+// Сведения: «Книга · 2019 · Файлов: 12 · 1,2 ГБ · 13.10.2026» (у одиночного файла вместо числа — формат).
+function infoOf(book) {
+  const { year } = getMeta(book.id);
+  const what = book.folder ? t('info.files', { n: book.files.length }) : splitName(book.files[0].name)[1].slice(1).toUpperCase();
+  return [t(`kind.${kindOf(book)}`), year, what, fmtSize(book.size), fmtDate(book.modified)].filter(Boolean).join(' · ');
 }
 
-// Один файл: обложка (пока нет — эмодзи), название, автор, сведения и кнопка «⋮».
-export function createItem(file, { onOpen, onMenu }) {
+// Одна книга (папка) или файл: обложка (пока нет — эмодзи), название, автор, сведения и «⋮».
+export function createItem(book, { onOpen, onMenu }) {
   const item = el('div', 'item');
-  item._file = file;
+  item._file = book.files[0]; // обложку берём из первого файла
 
   const thumb = el('div', 'thumb');
   const ph = image('ph');
-  applyPlaceholder(ph, file);
+  applyPlaceholder(ph, book);
   thumb.append(ph, image('pv'));
 
   const meta = el('div', 'meta');
-  meta.append(el('div', 'fname', titleOf(file)));
-  const byline = bylineOf(file);
+  meta.append(el('div', 'fname', titleOf(book)));
+  const byline = bylineOf(book);
   if (byline) meta.append(el('div', 'fauthor', byline));
-  meta.append(el('div', 'fsub', infoOf(file)));
+  meta.append(el('div', 'fsub', infoOf(book)));
 
   const more = button('more', (e) => {
     e.stopPropagation();
-    onMenu(file);
+    onMenu(book);
   });
   more.textContent = '⋮';
   bindAria(more, 'lib.menu');
 
   item.append(thumb, meta, more);
-  item.addEventListener('click', () => onOpen(file));
+  item.addEventListener('click', () => onOpen(book));
   return item;
 }

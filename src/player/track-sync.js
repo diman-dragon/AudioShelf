@@ -2,18 +2,18 @@ import { Player } from '../folder/plugins.js';
 import { getTrack, setTrack } from './player-state.js';
 import { saveLast } from './progress-store.js';
 
-// Файл переименован и получил новый uri.
-export function retarget(from, to, name) {
+// Одиночный файл переименован и получил новый uri (он же id записи).
+export function retarget(oldId, file) {
   const track = getTrack();
-  if (track?.uri !== from) return;
-  const next = { ...track, uri: to, name };
+  if (track?.id !== oldId) return;
+  const next = { ...track, id: file.uri, files: [file] };
   saveLast(next);
   setTrack(next);
 }
 
-// Файл удалён с диска: если он играл — останавливаем и очищаем плеер.
-export async function dropTrack(uri) {
-  if (getTrack()?.uri !== uri) return;
+// Книга удалена с диска: если она играла — останавливаем и очищаем плеер.
+export async function dropTrack(id) {
+  if (getTrack()?.id !== id) return;
   await Player.stop().catch(() => {});
   saveLast(null);
   setTrack(null);

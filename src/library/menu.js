@@ -6,10 +6,10 @@ import { openExternal, playFromLibrary } from './actions.js';
 import { titleOf } from './file-info.js';
 
 // Меню «⋮» у файла.
-export const openFileMenu = (f) =>
-  openSheet(titleOf(f), [
-    { label: t('lib.play'), run: () => playFromLibrary(f) },
-    { label: t('lib.edit'), run: () => openEditDialog(f) },
-    { label: t('lib.open'), run: () => openExternal(f) },
-    { label: t('lib.delete'), danger: true, run: () => openDeleteDialog(f) },
+export const openFileMenu = (book) =>
+  openSheet(titleOf(book), [
+    { label: t('lib.play'), run: () => playFromLibrary(book) },
+    { label: t('lib.edit'), run: () => openEditDialog(book) },
+    ...(book.folder ? [] : [{ label: t('lib.open'), run: () => openExternal(book) }]),
+    { label: t('lib.delete'), danger: true, run: () => openDeleteDialog(book) },
   ]);

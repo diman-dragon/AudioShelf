@@ -1,9 +1,11 @@
-import { App } from '@capacitor/app';
-import { refresh } from './library-data.js';
+import { restoreLibrary } from './library-data.js';
+import { rescan } from './rescan.js';
 
-// Когда перечитывать папку: при смене папки, возврате в приложение и на старте.
+// Обход запускается только при выборе папки (и по кнопке «Обновить»). На старте — сохранённый список.
 export function initLibrarySync() {
-  document.addEventListener('folderchange', refresh);
-  App.addListener('appStateChange', (s) => s.isActive && refresh());
-  refresh();
+  document.addEventListener('folderchange', () => {
+    restoreLibrary(); // сначала то, что уже знаем об этой папке
+    rescan();
+  });
+  restoreLibrary();
 }

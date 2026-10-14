@@ -1,22 +1,27 @@
 import { readStored, writeStored } from '../core/storage.js';
 import { createMapStore } from '../core/map-store.js';
 
-const store = createMapStore('audioshelf.progress'); // uri -> { p: позиция мс, d: длительность мс }
-const LAST = 'audioshelf.last'; // последний файл целиком
+// id книги -> { i: номер файла (главы), p: позиция в нём мс, d: его длительность мс, done: дослушана }
+const store = createMapStore('audioshelf.progress2');
+const LAST = 'audioshelf.last2'; // последняя книга целиком
 const SPEED = 'audioshelf.speed';
-const END_GAP = 3000; // «дослушано», если до конца осталось меньше 3 с
 
-export const savePos = (uri, p, d) => store.set(uri, { p: Math.floor(p), d: Math.floor(d) });
+export const saveProgress = (id, { i, p, d, done }) =>
+  store.set(id, { i, p: Math.floor(p), d: Math.floor(d), done: Boolean(done) });
 
-// new — ещё не открывали, started — начато, done — прослушано до конца.
-export function progressState(uri) {
-  const { p = 0, d = 0 } = store.get(uri) ?? {};
-  if (d > 0 && p >= d - END_GAP) return 'done';
-  return p > 0 ? 'started' : 'new';
+// new — не открывали, started — начата, done — прослушана до конца.
+export function progressState(id) {
+  const r = store.get(id);
+  if (!r) return 'new';
+  if (r.done) return 'done';
+  return r.i > 0 || r.p > 0 ? 'started' : 'new';
 }
 
 // С какого места продолжать: прослушанное начинаем сначала.
-export const loadPos = (uri) => (progressState(uri) === 'done' ? 0 : store.get(uri)?.p ?? 0);
+export function resumeAt(id) {
+  const r = store.get(id);
+  return !r || r.done ? { i: 0, p: 0 } : { i: r.i, p: r.p };
+}
 
 export const moveProgress = store.move;
 export const forgetProgress = store.del;
@@ -30,7 +35,7 @@ const parse = (key, fallback) => {
 };
 
 export const loadLast = () => parse(LAST, null);
-export const saveLast = (file) => writeStored(LAST, JSON.stringify(file));
+export const saveLast = (book) => writeStored(LAST, JSON.stringify(book));
 
 export const loadSpeed = () => parse(SPEED, 1);
 export const saveSpeed = (speed) => writeStored(SPEED, JSON.stringify(speed));

@@ -1,33 +1,30 @@
 package com.audioshelf.app;
 
-import android.Manifest;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.media3.common.MediaItem;
-import androidx.media3.common.MediaMetadata;
 import androidx.media3.exoplayer.ExoPlayer;
+import com.getcapacitor.JSArray;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import java.util.List;
 import java.util.function.Consumer;
 
-/** Audio playback on Media3 ExoPlayer: load, play, pause, seek, speed, state. */
+/** Audio playback on Media3 ExoPlayer: load, play, pause, seek, speed, stop, state. */
 @CapacitorPlugin(name = "Player")
 public class PlayerPlugin extends Plugin {
   private final Handler main = new Handler(Looper.getMainLooper());
 
-  /** ExoPlayer lives on the main thread; plugin calls arrive on another one. */
+  /** ExoPlayer lives on the main thread; plugin calls arrive on another one. Resolves with the new state. */
   private void onPlayer(PluginCall call, Consumer<ExoPlayer> job) {
     main.post(
         () -> {
           try {
-            job.accept(PlayerHolder.get(getContext()));
+            ExoPlayer p = PlayerHolder.get(getContext());
+            job.accept(p);
+            call.resolve(PlayerState.of(p));
           } catch (Exception e) {
             call.reject("player: " + e.getMessage());
           }
@@ -35,42 +32,35 @@ public class PlayerPlugin extends Plugin {
   }
 
   private void startService() {
-    getContext().startService(new Intent(getContext(), PlaybackService.class));
-    // Android 13+: without this permission the media notification is not shown.
-    if (Build.VERSION.SDK_INT >= 33
-        && ContextCompat.checkSelfPermission(getContext(), Manifest.permission.POST_NOTIFICATIONS)
-            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-      ActivityCompat.requestPermissions(
-          getActivity(), new String[] {Manifest.permission.POST_NOTIFICATIONS}, 0);
-    }
+    PlaybackStarter.start(getContext(), getActivity());
   }
 
+  /** items: [{uri, title}] — the files of one book; index/position say where to start. */
   @PluginMethod
   public void load(PluginCall call) {
-    String uri = call.getString("uri");
-    if (uri == null) {
-      call.reject("uri required");
+    JSArray items = call.getArray("items");
+    if (items == null || items.length() == 0) {
+      call.reject("items required");
       return;
     }
-    String title = call.getString("title", "");
-    String artist = call.getString("artist", "");
+    int index = call.getInt("index", 0);
     long position = call.getLong("position", 0L);
     boolean autoplay = Boolean.TRUE.equals(call.getBoolean("autoplay", false));
-    MediaMetadata meta = TrackMeta.of(getContext(), uri, title, artist); // reads tags: not on the main thread
+    List<MediaItem> list;
+    try {
+      // Reads tags (title, cover): not on the main thread.
+      list = Playlist.from(getContext(), items, call.getString("title", ""), call.getString("artist", ""));
+    } catch (Exception e) {
+      call.reject("bad items: " + e.getMessage());
+      return;
+    }
     onPlayer(
         call,
         p -> {
-          p.setMediaItem(
-              new MediaItem.Builder()
-                  .setUri(Uri.parse(uri))
-                  .setMediaId(uri)
-                  .setMediaMetadata(meta)
-                  .build(),
-              position);
+          p.setMediaItems(list, index, position);
           p.prepare();
           p.setPlayWhenReady(autoplay);
           if (autoplay) startService();
-          call.resolve(PlayerState.of(p));
         });
   }
 
@@ -81,40 +71,41 @@ public class PlayerPlugin extends Plugin {
         p -> {
           startService();
           p.play();
-          call.resolve(PlayerState.of(p));
         });
   }
 
   @PluginMethod
   public void pause(PluginCall call) {
-    onPlayer(
-        call,
-        p -> {
-          p.pause();
-          call.resolve(PlayerState.of(p));
-        });
+    onPlayer(call, ExoPlayer::pause);
   }
 
   @PluginMethod
   public void seek(PluginCall call) {
     long position = call.getLong("position", 0L);
-    onPlayer(
-        call,
-        p -> {
-          p.seekTo(position);
-          call.resolve(PlayerState.of(p));
-        });
+    onPlayer(call, p -> p.seekTo(position));
   }
 
   @PluginMethod
   public void setSpeed(PluginCall call) {
-    Float speed = call.getFloat("speed", 1f);
-    onPlayer(
-        call,
-        p -> {
-          p.setPlaybackSpeed(speed);
-          call.resolve(PlayerState.of(p));
-        });
+    float speed = call.getFloat("speed", 1f);
+    onPlayer(call, p -> p.setPlaybackSpeed(speed));
+  }
+
+  @PluginMethod
+  public void next(PluginCall call) {
+    onPlayer(call, ExoPlayer::seekToNextMediaItem);
+  }
+
+  @PluginMethod
+  public void previous(PluginCall call) {
+    onPlayer(call, ExoPlayer::seekToPreviousMediaItem);
+  }
+
+  /** Jump to chapter number index (from its start). */
+  @PluginMethod
+  public void skipTo(PluginCall call) {
+    int index = call.getInt("index", 0);
+    onPlayer(call, p -> p.seekTo(index, 0));
   }
 
   /** The file was deleted or closed: stop and forget it. */
@@ -125,12 +116,11 @@ public class PlayerPlugin extends Plugin {
         p -> {
           p.stop();
           p.clearMediaItems();
-          call.resolve(PlayerState.of(p));
         });
   }
 
   @PluginMethod
   public void state(PluginCall call) {
-    onPlayer(call, p -> call.resolve(PlayerState.of(p)));
+    onPlayer(call, p -> {});
   }
 }
