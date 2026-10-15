@@ -19,7 +19,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 /* Кнопки с пиктограммой: значок строго по центру */
@@ -32,15 +32,32 @@
   padding: 0;
 }
 
+.pskip,
+.pplay {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 .pskip {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   color: var(--text);
 }
 
+.pskip:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.pskip svg,
+.pplay svg {
+  pointer-events: none; /* цель касания всегда сама кнопка, а не вложенный значок */
+}
+
 .pplay {
-  width: 72px;
-  height: 72px;
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
   background: var(--accent);
   color: var(--on-accent);

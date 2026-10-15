@@ -2,6 +2,7 @@ import { registerPlugin } from '@capacitor/core';
 import { mock } from './mock.js';
 import { mockEnergy, mockPlayer, mockResume, mockSleep } from '../player/mock-player.js';
 import { mockBilling } from '../billing/mock-billing.js';
+import { mockLicense } from '../billing/mock-license.js';
 import { mockLoudness, mockSound } from '../sound/mock-sound.js';
 
 // Нативные плагины Android (Java, см. android/.../com/audioshelf/app).
@@ -18,3 +19,4 @@ export const Sleep = registerPlugin('Sleep', { web: () => mockSleep }); // setSl
 export const Billing = registerPlugin('Billing', { web: () => mockBilling }); // getState, buy, событие 'billing': Google Play Billing
 export const Resume = registerPlugin('Resume', { web: () => mockResume }); // saved: место, которое запомнил нативный плеер
 export const Energy = registerPlugin('Energy', { web: () => mockEnergy }); // setOffload: аппаратное воспроизведение
+export const License = registerPlugin('License', { web: () => mockLicense }); // check: отпечаток устройства и проверка кода разработчика

@@ -1,5 +1,6 @@
 import { createPremiumCard } from '../billing/premium-card.js';
 import { createTipsCard } from '../billing/tips-card.js';
+import { createDevCard } from '../billing/dev-card.js';
 import { createEnergySwitch } from '../ui/energy-switch.js';
 import { createFolderRow } from '../ui/folder-row.js';
 import { createHiddenRow } from '../ui/hidden-row.js';
@@ -31,7 +32,7 @@ export const PAGES = [
   {
     id: 'support',
     titleKey: 'settings.sectionSupport',
-    build: () => [createPremiumCard(), createTipsCard()],
+    build: () => [createPremiumCard(), createTipsCard(), createDevCard()],
   },
   {
     id: 'interface',

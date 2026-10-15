@@ -18,13 +18,22 @@ export function createControls({ onPrev, onBack, onToggle, onForward, onNext }) 
   const toggle = iconButton('pplay', PLAY_ICON, 'player.play', onToggle);
   node.append(prev, back, toggle, forward, next);
 
+  // Значок и подпись меняем только когда они правда изменились: если пересоздавать содержимое кнопки
+  // на каждом опросе плеера (дважды в секунду), палец «теряет» нажатую кнопку и тап не срабатывает.
   let shownSkip = '';
+  let shownPlaying = null;
   return {
     node,
     update({ playing, multi, skip }) {
-      toggle.innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
-      bindAria(toggle, playing ? 'player.pause' : 'player.play');
-      [prev, next].forEach((btn) => (btn.hidden = !multi)); // главы бывают только у книги-папки
+      if (playing !== shownPlaying) {
+        shownPlaying = playing;
+        toggle.innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
+        bindAria(toggle, playing ? 'player.pause' : 'player.play');
+      }
+      // «Назад» есть всегда (у одного файла он вернёт к началу); «вперёд» без следующей главы неактивна.
+      prev.hidden = false;
+      next.hidden = false;
+      next.disabled = !multi;
       const key = `${skip.back}/${skip.forward}`;
       if (key === shownSkip) return;
       shownSkip = key;
