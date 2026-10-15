@@ -1,25 +1,36 @@
 .player {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  height: 100%;
 }
 
+/* Всё помещается по высоте без прокрутки: обложка забирает остаток места */
 .pbody {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 20px;
+  gap: 12px;
   width: 100%;
   max-width: 420px;
   margin: 0 auto;
 }
 
+.pbody > * {
+  flex: none;
+}
+
+.pbody > .pcover {
+  flex: 1 1 0;
+  min-height: 64px;
+  max-width: 100%;
+  max-height: 340px;
+  aspect-ratio: 1;
+}
+
 .pcover {
   position: relative;
-  width: min(100%, 340px, 38vh);
-  aspect-ratio: 1;
   overflow: hidden;
   border-radius: var(--radius);
   background: var(--surface);
@@ -33,18 +44,17 @@
   height: 100%;
 }
 
+/* Названия показываем полностью, сколько бы ни было строк */
 .ptitle {
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
   text-align: center;
   font-size: 18px;
   font-weight: 700;
 }
 
 .psub {
-  margin-top: -12px;
+  margin-top: -6px;
+  overflow-wrap: anywhere;
   text-align: center;
   font-size: 14px;
   color: var(--muted);

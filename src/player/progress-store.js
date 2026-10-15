@@ -26,6 +26,14 @@ export function resumeAt(id) {
   return !r || r.done ? { i: 0, p: 0 } : { i: r.i, p: Math.max(0, r.p - REWIND_MS) };
 }
 
+// Нативный плеер записал место, пока JS спал или был убит: берём его, если оно новее нашей записи.
+export function adoptSpot(id, { i, p, t }) {
+  const r = store.get(id);
+  if (r && r.t >= t) return false;
+  store.set(id, { i, p: Math.floor(p), d: r && r.i === i ? r.d : 0, done: false, t });
+  return true;
+}
+
 export const moveProgress = store.move;
 export const forgetProgress = store.del;
 

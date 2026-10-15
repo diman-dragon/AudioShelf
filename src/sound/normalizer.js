@@ -1,11 +1,13 @@
+import { isPremium } from '../billing/entitlement.js';
 import { Loudness } from '../folder/plugins.js';
 import { getFiles } from '../library/library-data.js';
 import { flushGains, hasGain, saveGain } from './gain-store.js';
 
 // Нормализация в фоне: нативная часть измеряет файлы по одному, а мы сохраняем поправки и показываем ход работы.
-// status: idle | running | done | cancelled
+// status: idle | running | done | cancelled | battery (остановлено, чтобы не посадить слабую батарею)
 let state = { status: 'idle', done: 0, total: 0, failed: 0, current: '' };
 let listener = null;
+const FINISH = { cancelled: 'cancelled', battery: 'battery' };
 
 export const getNorm = () => state;
 export const pendingFiles = () => getFiles().filter((f) => !hasGain(f.uri));
@@ -25,11 +27,11 @@ function onEvent(e) {
   flushGains();
   listener?.remove();
   listener = null;
-  set({ status: e.status === 'cancelled' ? 'cancelled' : 'done', failed: e.failed, current: '' });
+  set({ status: FINISH[e.status] ?? 'done', failed: e.failed, current: '' });
 }
 
 export async function startNormalize() {
-  if (state.status === 'running') return;
+  if (state.status === 'running' || !isPremium()) return;
   const todo = pendingFiles();
   if (!todo.length) return set({ status: 'done', done: 0, total: 0, failed: 0, current: '' });
   set({ status: 'running', done: 0, total: todo.length, failed: 0, current: '' });

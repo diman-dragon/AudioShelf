@@ -21,6 +21,8 @@ final class PlayerState {
     o.put("position", p.getCurrentPosition());
     o.put("duration", p.getDuration() < 0 ? 0 : p.getDuration());
     o.put("speed", p.getPlaybackParameters().speed);
+    o.put("sleepLeft", PlayerProfile.sleepLeft());
+    o.put("sleepEnd", PlayerProfile.sleepAtChapterEnd());
     return o;
   }
 }

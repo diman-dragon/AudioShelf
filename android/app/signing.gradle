@@ -1,7 +1,17 @@
-// Debug-сборка всегда подписывается одним и тем же ключом из репозитория (debug.keystore).
-// Со случайным debug-ключом, который на каждой сборке в CI новый, Android не ставил бы
-// APK поверх старого. Это ключ для личной установки, а не для магазина:
-// стандартные debug-данные (android / androiddebugkey).
+// Подпись сборок.
+//
+// debug: всегда один и тот же ключ из репозитория (debug.keystore). Со случайным debug-ключом, который
+// на каждой сборке в CI новый, Android не ставил бы APK поверх старого. Это ключ для личной установки.
+//
+// release (для Google Play): ключ ЗАГРУЗКИ. Его нет в репозитории. Данные берутся из переменных окружения
+// (так их передаёт GitHub Actions из секретов) или из файла android/keystore.properties (для сборки на своём компьютере):
+//   AUDIOSHELF_KEYSTORE_FILE, AUDIOSHELF_KEYSTORE_PASSWORD, AUDIOSHELF_KEY_ALIAS, AUDIOSHELF_KEY_PASSWORD
+// Если данных нет, release-сборка остаётся неподписанной.
+def uploadProps = new Properties()
+def uploadFile = rootProject.file('keystore.properties')
+if (uploadFile.exists()) uploadFile.withInputStream { uploadProps.load(it) }
+def upload = { String name -> System.getenv(name) ?: uploadProps.getProperty(name) }
+
 android {
     signingConfigs {
         audioshelf {
@@ -10,10 +20,21 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        if (upload('AUDIOSHELF_KEYSTORE_FILE')) {
+            release {
+                storeFile file(upload('AUDIOSHELF_KEYSTORE_FILE'))
+                storePassword upload('AUDIOSHELF_KEYSTORE_PASSWORD')
+                keyAlias upload('AUDIOSHELF_KEY_ALIAS')
+                keyPassword upload('AUDIOSHELF_KEY_PASSWORD')
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.audioshelf
+        }
+        release {
+            if (upload('AUDIOSHELF_KEYSTORE_FILE')) signingConfig signingConfigs.release
         }
     }
 }

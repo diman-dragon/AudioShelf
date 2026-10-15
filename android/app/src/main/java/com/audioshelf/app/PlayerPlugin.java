@@ -11,11 +11,13 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import java.util.List;
 import java.util.function.Consumer;
+import org.json.JSONObject;
 
 /** Audio playback on Media3 ExoPlayer: load, play, pause, seek, speed, mode, stop, state. */
 @CapacitorPlugin(name = "Player")
 public class PlayerPlugin extends Plugin {
   private final Handler main = new Handler(Looper.getMainLooper());
+  private ExoPlayer listened;
 
   /** ExoPlayer lives on the main thread; plugin calls arrive on another one. Resolves with the new state. */
   private void onPlayer(PluginCall call, Consumer<ExoPlayer> job) {
@@ -23,6 +25,10 @@ public class PlayerPlugin extends Plugin {
         () -> {
           try {
             ExoPlayer p = PlayerHolder.get(getContext());
+            if (p != listened) { // changes from outside (notification, headset, call) reach JavaScript at once
+              listened = p;
+              new StateEvents(p, (player) -> notifyListeners("state", PlayerState.of(player)));
+            }
             job.accept(p);
             call.resolve(PlayerState.of(p));
           } catch (Exception e) {
@@ -48,6 +54,7 @@ public class PlayerPlugin extends Plugin {
     boolean autoplay = Boolean.TRUE.equals(call.getBoolean("autoplay", false));
     List<MediaItem> list;
     try {
+      ResumeStore.saveSession(getContext(), call.getString("id", ""), call.getString("title", ""), call.getString("artist", ""), items, index, position);
       // Reads tags (title, cover): not on the main thread.
       list = Playlist.from(getContext(), items, call.getString("title", ""), call.getString("artist", ""));
     } catch (Exception e) {
@@ -88,6 +95,7 @@ public class PlayerPlugin extends Plugin {
   @PluginMethod
   public void setSpeed(PluginCall call) {
     float speed = call.getFloat("speed", 1f);
+    ResumeStore.put(getContext(), ResumeStore.SPEED, String.valueOf(speed));
     onPlayer(call, p -> p.setPlaybackSpeed(speed));
   }
 
@@ -108,15 +116,12 @@ public class PlayerPlugin extends Plugin {
     onPlayer(call, p -> p.seekTo(index, 0));
   }
 
-  /** Mode and file-edge fades: repeat off|all|one, shuffle, pauseAfter (chapter), fadeIn/fadeOut in ms. */
+  /** Mode and file edges: repeat off|all|one, shuffle, pauseAfter, fadeIn/fadeOut in ms, speech (a book). */
   @PluginMethod
   public void setProfile(PluginCall call) {
-    String repeat = call.getString("repeat", "off");
-    boolean shuffle = Boolean.TRUE.equals(call.getBoolean("shuffle", false));
-    boolean pauseAfter = Boolean.TRUE.equals(call.getBoolean("pauseAfter", false));
-    int fadeIn = call.getInt("fadeIn", 0);
-    int fadeOut = call.getInt("fadeOut", 0);
-    onPlayer(call, p -> PlayerProfile.apply(p, repeat, shuffle, pauseAfter, fadeIn, fadeOut));
+    JSONObject data = call.getData();
+    ResumeStore.put(getContext(), ResumeStore.PROFILE, data.toString());
+    onPlayer(call, p -> PlayerProfile.apply(p, data));
   }
 
   /** The file was deleted or closed: stop and forget it. */
@@ -125,6 +130,7 @@ public class PlayerPlugin extends Plugin {
     onPlayer(
         call,
         p -> {
+          ResumeStore.forgetSession(getContext());
           p.stop();
           p.clearMediaItems();
         });

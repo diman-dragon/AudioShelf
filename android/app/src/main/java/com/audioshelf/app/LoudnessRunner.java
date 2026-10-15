@@ -14,7 +14,7 @@ final class LoudnessRunner {
     /** gain is NaN when the file could not be measured. */
     void onFile(String uri, String name, double gain);
 
-    /** status: "done" or "cancelled". */
+    /** status: "done", "cancelled" or "battery" (stopped to save a weak battery). */
     void onFinish(String status, int failed);
   }
 
@@ -44,8 +44,13 @@ final class LoudnessRunner {
   private void run(Context app, List<String[]> files, Listener listener) {
     Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
     int failed = 0;
+    boolean lowBattery = false;
     for (String[] file : files) {
       if (cancel.get()) break;
+      if (BatteryGuard.shouldPause(app)) {
+        lowBattery = true;
+        break;
+      }
       listener.onStart(file[1]);
       double gain;
       try {
@@ -58,6 +63,6 @@ final class LoudnessRunner {
       listener.onFile(file[0], file[1], gain);
     }
     running = false;
-    listener.onFinish(cancel.get() ? "cancelled" : "done", failed);
+    listener.onFinish(cancel.get() ? "cancelled" : lowBattery ? "battery" : "done", failed);
   }
 }

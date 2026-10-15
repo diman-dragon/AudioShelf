@@ -1,8 +1,12 @@
+import { createPremiumCard } from '../billing/premium-card.js';
+import { createTipsCard } from '../billing/tips-card.js';
+import { createEnergySwitch } from '../ui/energy-switch.js';
 import { createFolderRow } from '../ui/folder-row.js';
 import { createHiddenRow } from '../ui/hidden-row.js';
 import { createLangSwitch } from '../ui/lang-switch.js';
 import { createRow } from '../ui/setting-row.js';
 import { createSkipSwitch } from '../ui/skip-switch.js';
+import { createSleepSwitch } from '../ui/sleep-switch.js';
 import { createSpeedSwitch } from '../ui/speed-switch.js';
 import { createThemeSwitch } from '../ui/theme-switch.js';
 
@@ -20,7 +24,14 @@ export const PAGES = [
       createRow('settings.skipBack', createSkipSwitch('back'), true),
       createRow('settings.skipForward', createSkipSwitch('forward'), true),
       createRow('settings.speed', createSpeedSwitch(), true),
+      createRow('settings.sleep', createSleepSwitch(), true),
+      createRow('settings.energy', createEnergySwitch(), true),
     ],
+  },
+  {
+    id: 'support',
+    titleKey: 'settings.sectionSupport',
+    build: () => [createPremiumCard(), createTipsCard()],
   },
   {
     id: 'interface',

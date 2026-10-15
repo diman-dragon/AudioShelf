@@ -10,6 +10,7 @@ import { applyStatus, getTrack } from './player-state.js';
 export async function load(index, position, autoplay) {
   const book = getTrack();
   const state = await Player.load({
+    id: book.id,
     items: book.files.map((f) => ({ uri: f.uri, title: splitName(f.name)[0] })),
     index,
     position,

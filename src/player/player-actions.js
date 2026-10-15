@@ -2,7 +2,6 @@ import { Player } from '../folder/plugins.js';
 import { progressState, resumeAt, saveLast, saveProgress, saveSpeed } from './progress-store.js';
 import { load } from './player-load.js';
 import { applyStatus, getStatus, getTrack, isLoaded, setTrack } from './player-state.js';
-import { rewindTarget } from './rewind.js';
 import { getSkip } from './skip-pref.js';
 
 export function playBook(book) {
@@ -22,11 +21,7 @@ export async function togglePlay() {
   const s = getStatus();
   if (s.playing) return applyStatus(await Player.pause());
   if (s.ended) await Player.skipTo({ index: 0 });
-  else {
-    const back = rewindTarget(s.position); // после паузы — на 5 с раньше
-    if (back !== s.position) await Player.seek({ position: back });
-  }
-  applyStatus(await Player.play());
+  applyStatus(await Player.play()); // откат на 5 с после паузы делает нативный плеер
 }
 
 export async function seekTo(ms) {

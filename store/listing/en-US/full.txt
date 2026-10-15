@@ -1,0 +1,38 @@
+AudioShelf is a simple player for the audiobooks and music already stored on your phone. No accounts, no ads, no subscriptions: the app works offline and your files and data never leave your phone.
+
+A LIBRARY BUILT FROM YOUR FOLDER
+• Pick a folder with audio and the app scans it and all its subfolders.
+• A folder of chapters becomes a book; single files become tracks and albums. Single-file books (.m4b) are recognized on their own, and "CD1", "CD2" folders are merged into one book.
+• Covers come from the files; when there is none, a neat icon is shown: a closed book, an open book once you start listening, or a disc.
+• Filter "All / Books / Albums", search by title, author, narrator and year, and sorting.
+• Your own tags: title, author, narrator, year and type. Your files are never changed.
+• The library refreshes only when you want it to, with a button. Scanning runs in the background and shows its progress.
+
+A PLAYER THAT REMEMBERS
+• Remembers your place in every book and resumes 5 seconds earlier, so you can pick up the thread.
+• Bookmarks anywhere in a book and a chapter list one tap away.
+• Whole-book progress and time left.
+• Skip 5, 10, 15, 30 or 60 seconds, your choice. Speed from 0.75× to 2×.
+• Sleep timer: after 15, 30, 45 or 60 minutes, or at the end of the chapter. It counts only while playing.
+• Books and albums have their own modes: "continuous" and "pause after chapter" for books; repeat, repeat track and shuffle for albums.
+• Smooth fades between album tracks, instant switching between book chapters.
+
+SOUND TO YOUR TASTE (PREMIUM)
+• 10-band equalizer from 31 Hz to 16 kHz.
+• Presets: Voice, Rock, Pop, Jazz, Classical, Electronic, Bass, Treble.
+• Set it for everything at once, or separately for a chosen book or album.
+• Loudness normalization: the app measures your files in the background and evens out the volume during playback. The files themselves are not changed.
+
+BACKGROUND PLAYBACK
+• Control from the notification shade and the lock screen, with cover art.
+• Pauses when headphones are unplugged and during calls.
+
+PREMIUM — ONE PAYMENT, FOREVER
+The equalizer and loudness normalization are part of Premium: a one-time purchase, no subscription. Everything else is free and ad-free. If you like the app, you can buy the author a tea — it is optional and unlocks nothing.
+
+SIMPLE AND PRIVATE
+• Light (sand) and dark (AMOLED) themes, English and Russian.
+• Everything you set up stays on your device.
+• Access only to the folder you choose.
+
+Supports MP3, M4A, M4B, AAC, OGG, Opus, FLAC, WAV and other formats your Android can play.

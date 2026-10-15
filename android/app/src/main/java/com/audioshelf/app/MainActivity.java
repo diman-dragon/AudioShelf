@@ -11,7 +11,11 @@ public class MainActivity extends BridgeActivity {
     registerPlugin(CoverPlugin.class);
     registerPlugin(PlayerPlugin.class);
     registerPlugin(SoundPlugin.class);
+    registerPlugin(SleepPlugin.class);
     registerPlugin(LoudnessPlugin.class);
+    registerPlugin(BillingPlugin.class);
+    registerPlugin(ResumePlugin.class);
+    registerPlugin(EnergyPlugin.class);
     super.onCreate(savedInstanceState);
   }
 }

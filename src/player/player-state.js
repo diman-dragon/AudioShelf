@@ -1,8 +1,8 @@
 import { App } from '@capacitor/app';
-import { Player } from '../folder/plugins.js';
+import { Player, Resume } from '../folder/plugins.js';
 import { noteDuration } from './durations.js';
-import { loadLast, saveProgress } from './progress-store.js';
-import { notePause } from './rewind.js';
+import { adoptSpot, loadLast, saveProgress } from './progress-store.js';
+import { syncSleep } from './sleep-actions.js';
 
 // Что играет (книга) и в каком состоянии. Состояние спрашиваем у нативного плеера по таймеру.
 const EMPTY = { loaded: false, uri: '', index: 0, count: 0, playing: false, loading: false, ended: false, position: 0, duration: 0, speed: 1 };
@@ -34,7 +34,7 @@ export function applyStatus(next) {
   const prev = status;
   const wasLoaded = isLoaded();
   status = next;
-  if (prev.playing && !next.playing) notePause();
+  syncSleep(next);
   if (wasLoaded && next.loaded && next.duration > 0) noteDuration(track.id, next.index, next.duration);
   const stopped = prev.playing && !next.playing;
   const sought = !next.playing && Math.abs(next.position - prev.position) > 500; // подвинули ползунок на паузе
@@ -44,9 +44,33 @@ export function applyStatus(next) {
 
 export const syncNow = () => Player.state().then(applyStatus).catch(() => {});
 
-// Состояние меняется и снаружи (шторка, наушники), поэтому спрашиваем плеер постоянно.
+// Нативный плеер сам записывает место (каждые 10 с, при паузе, смене главы и закрытии): берём запись, если она новее нашей.
+async function reconcile() {
+  const saved = await Resume.saved().catch(() => null);
+  if (saved?.id && adoptSpot(saved.id, { i: saved.index, p: saved.position, t: saved.t })) {
+    document.dispatchEvent(new Event('playerchange'));
+  }
+}
+
+// Изменения (шторка, наушники, звонок) приходят событиями. Опрос нужен только для бегунка: пока приложение
+// видно, раз в 0,5 с при игре и раз в 2 с на паузе. В фоне и при выключенном экране не опрашиваем совсем.
 export function initPlayer() {
+  let active = true;
+  let idle = 0;
+  const wake = (on) => {
+    active = on;
+    if (on) {
+      reconcile();
+      syncNow();
+    }
+  };
+  reconcile();
   syncNow();
-  setInterval(syncNow, 500);
-  App.addListener('appStateChange', (s) => s.isActive && syncNow());
+  Player.addListener('state', applyStatus).catch(() => {});
+  App.addListener('appStateChange', (s) => wake(s.isActive));
+  document.addEventListener('visibilitychange', () => wake(!document.hidden));
+  setInterval(() => {
+    if (!active || (!status.playing && ++idle % 4)) return;
+    syncNow();
+  }, 500);
 }

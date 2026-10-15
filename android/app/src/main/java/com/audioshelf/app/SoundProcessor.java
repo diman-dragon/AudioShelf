@@ -57,12 +57,22 @@ final class SoundProcessor extends BaseAudioProcessor {
     builtTrim = trim;
   }
 
+  private boolean allFlat() {
+    for (Biquad f : filters) if (f != null) return false;
+    return true;
+  }
+
   @Override
   public void queueInput(ByteBuffer input) {
     int size = input.remaining();
     if (size == 0) return;
     refresh();
     ByteBuffer out = replaceOutputBuffer(size);
+    if (gain == 1f && allFlat()) { // nothing to do: copy as is
+      out.put(input);
+      out.flip();
+      return;
+    }
     int channel = 0;
     while (input.remaining() >= 2) {
       float x = input.getShort();

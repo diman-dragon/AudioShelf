@@ -41,6 +41,13 @@ final class SessionCallback implements MediaSession.Callback {
         .build();
   }
 
+  /** Play was pressed when nothing is loaded (the process was killed): bring back the last book. */
+  @Override
+  public ListenableFuture<MediaSession.MediaItemsWithStartPosition> onPlaybackResumption(
+      MediaSession session, MediaSession.ControllerInfo controller) {
+    return ResumeLoader.load(ctx);
+  }
+
   @Override
   public ListenableFuture<SessionResult> onCustomCommand(
       MediaSession session,

@@ -35,6 +35,7 @@ public class PlaybackService extends MediaSessionService {
 
   /** ✕ in the notification: stop, forget the item and remove the notification. */
   private void close() {
+    PositionSaver.flush();
     Player p = session.getPlayer();
     p.pause();
     p.clearMediaItems();
@@ -50,7 +51,8 @@ public class PlaybackService extends MediaSessionService {
 
   @Override
   public void onTaskRemoved(@Nullable Intent rootIntent) {
-    // App swiped away from recents: stop playback and remove the notification.
+    // App swiped away from recents: save the place, stop playback and remove the notification.
+    PositionSaver.flush();
     pauseAllPlayersAndStopSelf();
   }
 

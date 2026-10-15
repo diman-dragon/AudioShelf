@@ -1,0 +1,57 @@
+name: Release AAB (Google Play)
+
+# Запускается только вручную: Actions → Release AAB → Run workflow.
+# Собирает подписанный ключом загрузки AAB для Google Play и кладёт его в Artifacts (не в публичный релиз).
+on:
+  workflow_dispatch:
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    env:
+      AUDIOSHELF_KEYSTORE_FILE: ${{ github.workspace }}/upload.jks
+      AUDIOSHELF_KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
+      AUDIOSHELF_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+      AUDIOSHELF_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore the upload key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$AUDIOSHELF_KEYSTORE_PASSWORD" ] || [ -z "$AUDIOSHELF_KEY_ALIAS" ] || [ -z "$AUDIOSHELF_KEY_PASSWORD" ]; then
+            echo "::error::Не заданы секреты ключа загрузки. См. store/PUBLISHING.md, шаг «Ключ загрузки»."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$AUDIOSHELF_KEYSTORE_FILE"
+
+      # Capacitor 8 требует Node 22+ и Java 21.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - run: npm ci
+      - run: npm run sync
+
+      - name: Build signed AAB
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew bundleRelease --no-daemon
+
+      - name: Name the AAB
+        id: aab
+        run: bash .github/scripts/name-aab.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AudioShelf-${{ steps.aab.outputs.version }}-aab
+          path: ${{ steps.aab.outputs.file }}

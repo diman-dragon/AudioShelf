@@ -5,8 +5,12 @@ import android.os.Looper;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
 import androidx.media3.exoplayer.ExoPlayer;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /** Sound settings of the one player: equalizer bands and a loudness trim for each file. */
 final class PlayerSound {
@@ -38,8 +42,29 @@ final class PlayerSound {
     player = null;
   }
 
-  /** bands: 10 values in dB; trims: file uri -> dB. May be called from any thread. */
-  static void apply(float[] bands, Map<String, Float> trims) {
+  /** {bands: [10 dB values], trims: {file uri: dB}} as sent by JavaScript. Any thread. */
+  static void applyJson(JSONObject d) {
+    JSONArray list = d.optJSONArray("bands");
+    float[] bands = new float[SoundProcessor.BANDS];
+    for (int i = 0; list != null && i < bands.length && i < list.length(); i++) {
+      bands[i] = (float) list.optDouble(i, 0);
+    }
+    Map<String, Float> trims = new HashMap<>();
+    JSONObject raw = d.optJSONObject("trims");
+    if (raw != null) {
+      Iterator<String> keys = raw.keys();
+      while (keys.hasNext()) {
+        String uri = keys.next();
+        trims.put(uri, (float) raw.optDouble(uri, 0));
+      }
+    }
+    apply(bands, trims);
+  }
+
+  private static void apply(float[] bands, Map<String, Float> trims) {
+    boolean flat = trims.isEmpty();
+    for (float b : bands) flat &= b == 0;
+    PlayerOffload.setNeutral(flat); // offload would bypass the equalizer and the trims
     PROCESSOR.setBands(bands);
     TRIMS.clear();
     TRIMS.putAll(trims);
