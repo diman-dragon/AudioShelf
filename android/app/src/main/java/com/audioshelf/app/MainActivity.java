@@ -17,6 +17,7 @@ public class MainActivity extends BridgeActivity {
     registerPlugin(ResumePlugin.class);
     registerPlugin(EnergyPlugin.class);
     registerPlugin(LicensePlugin.class);
+    registerPlugin(ChaptersPlugin.class);
     super.onCreate(savedInstanceState);
   }
 }

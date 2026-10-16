@@ -1,12 +1,7 @@
-// Какая страница настроек открыта (null — список разделов).
-let page = null;
+// Какая страница настроек была открыта последней (номер): при возврате на экран остаёмся на ней.
+let index = 0;
 
-export const getPage = () => page;
-
-function change(next) {
-  page = next;
-  document.dispatchEvent(new Event('settingspage'));
-}
-
-export const openPage = (id) => change(id);
-export const closePage = () => change(null);
+export const getPageIndex = () => index;
+export const setPageIndex = (i) => {
+  index = i;
+};

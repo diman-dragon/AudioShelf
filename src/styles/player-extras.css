@@ -1,7 +1,7 @@
 .pextras {
   display: flex;
   justify-content: center;
-  gap: 12px;
+  gap: 6px;
   width: 100%;
 }
 
@@ -11,8 +11,10 @@
   align-items: center;
   gap: 2px;
   flex: 1;
+  min-width: 0;
   max-width: 160px;
-  padding: 6px 4px;
+  padding: 6px 2px;
+  touch-action: manipulation;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
@@ -26,8 +28,28 @@
 }
 
 .pextra .pl {
-  font-size: 12px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
   color: var(--muted);
+}
+
+.pextra .pi-text {
+  display: block;
+  height: 22px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 22px;
+}
+
+.pextra.on {
+  border-color: var(--accent);
+}
+
+.pextra.on .pl {
+  color: var(--accent);
 }
 
 .pline {

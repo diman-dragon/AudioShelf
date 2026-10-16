@@ -1,6 +1,6 @@
 import { registerPlugin } from '@capacitor/core';
 import { mock } from './mock.js';
-import { mockEnergy, mockPlayer, mockResume, mockSleep } from '../player/mock-player.js';
+import { mockChapters, mockEnergy, mockPlayer, mockResume, mockSleep } from '../player/mock-player.js';
 import { mockBilling } from '../billing/mock-billing.js';
 import { mockLicense } from '../billing/mock-license.js';
 import { mockLoudness, mockSound } from '../sound/mock-sound.js';
@@ -20,3 +20,4 @@ export const Billing = registerPlugin('Billing', { web: () => mockBilling }); //
 export const Resume = registerPlugin('Resume', { web: () => mockResume }); // saved: место, которое запомнил нативный плеер
 export const Energy = registerPlugin('Energy', { web: () => mockEnergy }); // setOffload: аппаратное воспроизведение
 export const License = registerPlugin('License', { web: () => mockLicense }); // check: отпечаток устройства и проверка кода разработчика
+export const Chapters = registerPlugin('Chapters', { web: () => mockChapters }); // read: главы внутри файлов (MKA, M4B, MP3)

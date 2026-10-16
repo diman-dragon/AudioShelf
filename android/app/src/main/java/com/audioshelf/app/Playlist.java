@@ -8,23 +8,30 @@ import java.util.ArrayList;
 import java.util.List;
 import org.json.JSONObject;
 
-/** A book is a playlist of files (chapters). The cover is read once, from the first file. */
+/** A book is a playlist of chapters: files, or parts of one file (start/end in ms). The cover is read once, from the first file. */
 final class Playlist {
   private Playlist() {}
 
-  /** items: [{uri, title}, ...]; book and artist go to every item's metadata. */
+  /** items: [{uri, title, start?, end?}, ...]; book and artist go to every item's metadata. */
   static List<MediaItem> from(Context ctx, JSArray items, String book, String artist) throws Exception {
     byte[] art = items.length() > 0 ? TrackMeta.cover(ctx, items.getJSONObject(0).getString("uri")) : null;
     List<MediaItem> list = new ArrayList<>();
     for (int i = 0; i < items.length(); i++) {
       JSONObject item = items.getJSONObject(i);
       String uri = item.getString("uri");
-      list.add(
+      MediaItem.Builder builder =
           new MediaItem.Builder()
               .setUri(Uri.parse(uri))
               .setMediaId(uri)
-              .setMediaMetadata(TrackMeta.of(item.optString("title", book), book, artist, art))
-              .build());
+              .setMediaMetadata(TrackMeta.of(item.optString("title", book), book, artist, art));
+      long start = item.optLong("start", 0L);
+      long end = item.optLong("end", -1L);
+      if (start > 0 || end > 0) { // a chapter inside one file: the same file, clipped to its part
+        MediaItem.ClippingConfiguration.Builder clip = new MediaItem.ClippingConfiguration.Builder().setStartPositionMs(start);
+        if (end > start) clip.setEndPositionMs(end);
+        builder.setClippingConfiguration(clip.build());
+      }
+      list.add(builder.build());
     }
     return list;
   }

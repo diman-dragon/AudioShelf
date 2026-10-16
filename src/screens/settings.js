@@ -1,25 +1,56 @@
-import { el } from '../core/dom.js';
-import { createSettingsMenu } from '../settings/settings-menu.js';
-import { createSettingsPage } from '../settings/settings-page.js';
+import { el, button } from '../core/dom.js';
+import { bindText } from '../i18n/bind.js';
 import { PAGES } from '../settings/settings-pages.js';
-import { getPage } from '../settings/settings-nav.js';
-import { createSettingsFooter } from '../ui/settings-footer.js';
+import { getPageIndex, setPageIndex } from '../settings/settings-nav.js';
 
-// Настройки: сверху список разделов или открытый раздел, внизу всегда версия и копирайт.
+// Настройки страничками: сверху названия разделов (можно нажать), ниже страницы, которые листаются свайпом.
+// Каждая страница прокручивается по вертикали сама.
 export function renderSettings() {
   const root = el('section', 'settings');
-  const body = el('div', 'settings-body');
-  root.append(body, createSettingsFooter());
+  const tabs = el('div', 'stabs');
+  const pager = el('div', 'spager');
+  pager.dataset.noswipe = '1';
+  const dots = el('div', 'sdots');
 
-  const menu = createSettingsMenu();
-  const pages = new Map(PAGES.map((page) => [page.id, createSettingsPage(page)])); // страницы живут, состояние не теряется
+  const chips = PAGES.map((page, i) => {
+    const chip = button('stab', () => pager.scrollTo({ left: i * pager.clientWidth, behavior: 'smooth' }));
+    bindText(chip, page.titleKey);
+    tabs.append(chip);
+    const view = el('div', 'spage');
+    view.append(...page.build());
+    pager.append(view);
+    const dot = el('span', 'sdot');
+    dots.append(dot);
+    return { chip, dot };
+  });
 
-  const paint = () => {
-    const id = getPage();
-    body.replaceChildren(id ? pages.get(id) : menu);
-    body.scrollTop = 0;
+  let shown = -1;
+  const mark = () => {
+    const i = Math.max(0, Math.min(PAGES.length - 1, Math.round(pager.scrollLeft / (pager.clientWidth || 1))));
+    if (i === shown) return;
+    shown = i;
+    setPageIndex(i);
+    chips.forEach(({ chip, dot }, n) => {
+      chip.classList.toggle('on', n === i);
+      chip.setAttribute('aria-current', String(n === i));
+      dot.classList.toggle('on', n === i);
+    });
+    const chip = chips[i].chip;
+    tabs.scrollTo({ left: chip.offsetLeft - (tabs.clientWidth - chip.offsetWidth) / 2, behavior: 'smooth' });
   };
-  document.addEventListener('settingspage', paint);
-  paint();
+  let frame = 0;
+  pager.addEventListener('scroll', () => {
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(mark);
+  });
+
+  root.append(tabs, pager, dots);
+  // Экран вставляется в документ позже: возвращаемся на прежнюю страницу, когда у ленты появилась ширина.
+  const restore = () => {
+    if (!pager.clientWidth) return requestAnimationFrame(restore);
+    pager.scrollLeft = getPageIndex() * pager.clientWidth;
+    mark();
+  };
+  requestAnimationFrame(restore);
   return root;
 }

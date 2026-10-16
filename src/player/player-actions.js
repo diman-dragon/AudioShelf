@@ -1,14 +1,15 @@
 import { Player } from '../folder/plugins.js';
 import { progressState, resumeAt, saveLast, saveProgress, saveSpeed } from './progress-store.js';
 import { load } from './player-load.js';
-import { applyStatus, getStatus, getTrack, isLoaded, setTrack } from './player-state.js';
+import { applyStatus, getStatus, getTrack, isLoaded, refreshChapters, setTrack } from './player-state.js';
 import { getSkip } from './skip-pref.js';
 
-export function playBook(book) {
-  const { i, p } = resumeAt(book.id);
+export async function playBook(book) {
   if (progressState(book.id) === 'new') saveProgress(book.id, { i: 0, p: 1, d: 0 }); // «начато»: значок книги сразу меняется
   setTrack(book);
   saveLast(book);
+  await refreshChapters(book); // главы внутри файла (MKA, M4B, MP3): узнаём до запуска, чтобы начать с нужного места
+  const { i, p } = resumeAt(book.id);
   return load(i, p, true).catch(() => {});
 }
 
@@ -41,5 +42,6 @@ export function skip(forward) {
 // Скорость из настроек: запоминаем и сразу применяем к играющему.
 export async function setSpeed(speed) {
   saveSpeed(speed);
+  document.dispatchEvent(new Event('speedchange'));
   if (isLoaded()) applyStatus(await Player.setSpeed({ speed }));
 }

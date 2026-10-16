@@ -11,7 +11,7 @@ export async function load(index, position, autoplay) {
   const book = getTrack();
   const state = await Player.load({
     id: book.id,
-    items: book.files.map((f) => ({ uri: f.uri, title: splitName(f.name)[0] })),
+    items: book.files.map((f) => ({ uri: f.uri, title: splitName(f.name)[0], start: f.start ?? 0, end: f.end ?? -1 })),
     index,
     position,
     autoplay,

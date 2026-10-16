@@ -25,3 +25,6 @@ export function syncSleep(status) {
     notify();
   }
 }
+
+// Кнопка в плеере: следующий вариант таймера по кругу.
+export const cycleSleep = () => setSleepChoice(SLEEP_OPTIONS[(SLEEP_OPTIONS.indexOf(choice) + 1) % SLEEP_OPTIONS.length]);

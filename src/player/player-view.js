@@ -12,12 +12,14 @@ import { createExtras } from './extras-row.js';
 import { headingOf } from './heading.js';
 import { cycleMode } from './mode-actions.js';
 import { getMode } from './mode-pref.js';
-import { seekTo, skip, togglePlay } from './player-actions.js';
+import { seekTo, setSpeed, skip, togglePlay } from './player-actions.js';
 import { createPlayerEmpty } from './player-empty.js';
 import { getStatus, getTrack, isLoaded } from './player-state.js';
-import { resumeAt } from './progress-store.js';
+import { loadSpeed, resumeAt } from './progress-store.js';
 import { createSeek } from './seek-bar.js';
+import { cycleSleep, getSleepChoice } from './sleep-actions.js';
 import { getSkip } from './skip-pref.js';
+import { nextSpeed } from './speeds.js';
 
 export function renderPlayer() {
   const root = el('section', 'player');
@@ -35,7 +37,13 @@ export function renderPlayer() {
     onForward: () => skip(true),
     onNext: () => stepChapter(1),
   });
-  const extras = createExtras({ onMarks: openMarksDialog, onList: openChapterList, onMode: cycleMode });
+  const extras = createExtras({
+    onMarks: openMarksDialog,
+    onList: openChapterList,
+    onMode: cycleMode,
+    onSpeed: () => setSpeed(nextSpeed(loadSpeed())),
+    onSleep: cycleSleep,
+  });
   body.append(cover.node, title, byline, chapter, seek.node, line.node, controls.node, extras.node);
   const empty = createPlayerEmpty();
   root.append(body, empty);
@@ -64,12 +72,18 @@ export function renderPlayer() {
     cover.refresh(book);
     const position = loaded ? s.position : resumeAt(book.id).p;
     seek.update(position, loaded ? s.duration : 0);
-    line.update(kind === 'book' && multi ? bookProgress(book.id, book.files.length, index, position) : null); // общий прогресс — только у книги
+    line.update(kind === 'book' ? bookProgress(book.id, book.files.length, index, position) : null); // общий прогресс — только у книги
     controls.update({ playing: loaded && s.playing, multi, skip: getSkip() });
-    extras.update({ markCount: getMarks(book.id).length, mode: getMode(kind), multi });
+    extras.update({
+      markCount: getMarks(book.id).length,
+      mode: getMode(kind),
+      multi,
+      speed: loadSpeed(),
+      sleep: { choice: getSleepChoice(), left: s.sleepLeft, end: s.sleepEnd },
+    });
   };
 
-  ['playerchange', 'langchange', 'librarychange', 'skipchange', 'modechange', 'markschange'].forEach((name) =>
+  ['playerchange', 'langchange', 'librarychange', 'skipchange', 'modechange', 'markschange', 'speedchange', 'sleepchange'].forEach((name) =>
     document.addEventListener(name, paint),
   );
   paint();

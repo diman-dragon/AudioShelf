@@ -15,3 +15,6 @@ export function noteDuration(id, index, ms) {
 export const getDurations = (id) => store.get(id) ?? {};
 export const moveDurations = store.move;
 export const forgetDurations = store.del;
+
+// Длины глав, которые известны заранее (из оглавления файла).
+export const seedDurations = (id, known) => store.set(id, { ...getDurations(id), ...known });

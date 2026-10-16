@@ -2,13 +2,21 @@ import { readStored, writeStored } from '../core/storage.js';
 import { createMapStore } from '../core/map-store.js';
 import { REWIND_MS } from './rewind.js';
 
-// id книги -> { i: номер файла (главы), p: позиция в нём мс, d: его длительность мс, done: дослушана, t: когда слушали }
+// id книги -> { i: номер файла (главы), p: позиция в нём мс, d: его длительность мс, done: дослушана, t: когда слушали,
+//   x: 1 — номера глав посчитаны с учётом глав внутри файла }
 const store = createMapStore('audioshelf.progress2');
 const LAST = 'audioshelf.last2'; // последняя книга целиком
 const SPEED = 'audioshelf.speed';
 
-export const saveProgress = (id, { i, p, d, done }) =>
-  store.set(id, { i, p: Math.floor(p), d: Math.floor(d), done: Boolean(done), t: Date.now() });
+export const saveProgress = (id, { i, p, d, done, x }) =>
+  store.set(id, { i, p: Math.floor(p), d: Math.floor(d), done: Boolean(done), x: x ? 1 : 0, t: Date.now() });
+
+// Книга стала раскладываться на главы внутри файла: запись без пометки x переносим на новые номера.
+export function remapProgress(id, map) {
+  const r = store.get(id);
+  if (!r || r.x) return;
+  store.set(id, { ...r, ...map(r.i, r.p), d: 0, x: 1 });
+}
 
 export const lastPlayed = (id) => store.get(id)?.t ?? 0;
 
@@ -27,10 +35,10 @@ export function resumeAt(id) {
 }
 
 // Нативный плеер записал место, пока JS спал или был убит: берём его, если оно новее нашей записи.
-export function adoptSpot(id, { i, p, t }) {
+export function adoptSpot(id, { i, p, t, x }) {
   const r = store.get(id);
   if (r && r.t >= t) return false;
-  store.set(id, { i, p: Math.floor(p), d: r && r.i === i ? r.d : 0, done: false, t });
+  store.set(id, { i, p: Math.floor(p), d: r && r.i === i ? r.d : 0, done: false, x: x ? 1 : (r?.x ?? 0), t });
   return true;
 }
 

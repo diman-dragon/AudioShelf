@@ -1,5 +1,5 @@
 // Версия приложения берётся из package.json — единственного источника.
-// Пример: версия 0.9.2 -> versionName "0.9.2", versionCode = major*10000 + minor*100 + patch = 901.
+// Пример: версия 0.9.3 -> versionName "0.9.3", versionCode = major*10000 + minor*100 + patch = 903.
 // versionCode растёт вместе с версией, поэтому новый APK ставится поверх старого.
 import groovy.json.JsonSlurper
 

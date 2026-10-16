@@ -8,7 +8,7 @@ export function markHere() {
   const book = getTrack();
   if (!book || !isLoaded()) return false;
   const { index, position } = getStatus();
-  addMark(book.id, index, position);
+  addMark(book.id, index, position, book.expanded);
   document.dispatchEvent(new Event('markschange'));
   return true;
 }

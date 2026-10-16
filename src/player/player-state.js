@@ -1,6 +1,8 @@
 import { App } from '@capacitor/app';
 import { Player, Resume } from '../folder/plugins.js';
 import { noteDuration } from './durations.js';
+import { scanBook } from './chapter-store.js';
+import { expandBook } from './expand.js';
 import { adoptSpot, loadLast, saveProgress } from './progress-store.js';
 import { syncSleep } from './sleep-actions.js';
 
@@ -8,16 +10,17 @@ import { syncSleep } from './sleep-actions.js';
 const EMPTY = { loaded: false, uri: '', index: 0, count: 0, playing: false, loading: false, ended: false, position: 0, duration: 0, speed: 1 };
 const END_GAP = 3000; // до конца последней главы меньше 3 с — считаем дослушанной
 
-let track = loadLast()?.files ? loadLast() : null;
+let track = expandBook(loadLast()?.files ? loadLast() : null);
 let status = EMPTY;
 let ticks = 0;
 
 export const getTrack = () => track;
 export const getStatus = () => status;
-export const isLoaded = () => Boolean(track) && status.loaded && track.files.some((f) => f.uri === status.uri);
+// Плеер держит именно эту книгу: тот же файл и то же число глав (главы внутри файла считаются отдельно).
+export const isLoaded = () => Boolean(track) && status.loaded && status.count === track.files.length && track.files.some((f) => f.uri === status.uri);
 
 export function setTrack(book) {
-  track = book;
+  track = expandBook(book);
   document.dispatchEvent(new Event('trackchange'));
   document.dispatchEvent(new Event('playerchange'));
 }
@@ -27,7 +30,7 @@ function remember(prev, next) {
   const at = next.loaded ? next : prev; // плеер закрыли — берём последнее известное
   const last = at.index === track.files.length - 1;
   const done = next.ended || (last && at.duration > 0 && at.position >= at.duration - END_GAP);
-  saveProgress(track.id, { i: at.index, p: next.ended ? 0 : at.position, d: at.duration, done });
+  saveProgress(track.id, { i: at.index, p: next.ended ? 0 : at.position, d: at.duration, done, x: track.expanded });
 }
 
 export function applyStatus(next) {
@@ -42,12 +45,20 @@ export function applyStatus(next) {
   if (JSON.stringify(prev) !== JSON.stringify(next)) document.dispatchEvent(new Event('playerchange'));
 }
 
+// Узнаёт, есть ли в файлах книги главы внутри (один раз на файл), и раскладывает книгу на главы.
+export async function refreshChapters(book = track?.base ?? track) {
+  if (!book || !(await scanBook(book))) return;
+  if (track && (track.base ?? track).id === book.id) setTrack(book);
+}
+
 export const syncNow = () => Player.state().then(applyStatus).catch(() => {});
 
 // Нативный плеер сам записывает место (каждые 10 с, при паузе, смене главы и закрытии): берём запись, если она новее нашей.
 async function reconcile() {
   const saved = await Resume.saved().catch(() => null);
-  if (saved?.id && adoptSpot(saved.id, { i: saved.index, p: saved.position, t: saved.t })) {
+  // Номера глав у JS и у нативного плеера должны значить одно и то же: только та же книга с тем же числом глав.
+  const same = track && saved?.id === track.id && saved.count === track.files.length;
+  if (same && adoptSpot(saved.id, { i: saved.index, p: saved.position, t: saved.t, x: track.expanded })) {
     document.dispatchEvent(new Event('playerchange'));
   }
 }
@@ -66,6 +77,7 @@ export function initPlayer() {
   };
   reconcile();
   syncNow();
+  refreshChapters();
   Player.addListener('state', applyStatus).catch(() => {});
   App.addListener('appStateChange', (s) => wake(s.isActive));
   document.addEventListener('visibilitychange', () => wake(!document.hidden));

@@ -22,6 +22,7 @@ final class CoverArt {
     try {
       mmr.setDataSource(ctx, uri);
       byte[] raw = mmr.getEmbeddedPicture();
+      if (raw == null) raw = attached(ctx, uri); // Matroska keeps pictures as attachments
       if (raw == null) throw new Exception("no cover");
       Bitmap bmp = decode(raw, width);
       if (bmp == null) throw new Exception("bad cover");
@@ -34,6 +35,14 @@ final class CoverArt {
         mmr.release();
       } catch (Exception ignored) {
       }
+    }
+  }
+
+  private static byte[] attached(Context ctx, Uri uri) {
+    try (ChannelSource src = ChannelSource.open(ctx, uri)) {
+      return FileChapters.read(src, true).cover;
+    } catch (Throwable e) {
+      return null;
     }
   }
 

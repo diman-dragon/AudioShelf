@@ -3,6 +3,7 @@ import { getFolder } from '../folder/folder-store.js';
 import { navigate } from '../app/router.js';
 import { playBook } from '../player/player-actions.js';
 import { forgetMarks } from '../player/bookmark-store.js';
+import { forgetChapters } from '../player/chapter-store.js';
 import { forgetDurations } from '../player/durations.js';
 import { clearTrackEq } from '../sound/eq-store.js';
 import { forgetProgress } from '../player/progress-store.js';
@@ -36,6 +37,7 @@ export function removeBook(book) {
       forgetMarks(book.id);
       clearTrackEq(book.id);
       forgetDurations(book.id);
+      book.files.forEach((f) => forgetChapters(f.uri));
       forgetHidden(book.id);
       const gone = new Set(book.files.map((f) => f.uri));
       patchFiles((list) => list.filter((f) => !gone.has(f.uri)));

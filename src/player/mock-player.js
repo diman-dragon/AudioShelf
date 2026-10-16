@@ -1,5 +1,9 @@
 // Заглушка плеера для браузера (npm run dev): время идёт по часам, звука нет.
-const CHAPTER = 600000; // каждая глава 10 минут
+const CHAPTER = 600000; // каждая глава 10 минут; у главы внутри файла — своя длина (start..end)
+const lengthOf = (i) => {
+  const it = s.items[i];
+  return it && it.end > 0 ? it.end - (it.start || 0) : CHAPTER;
+};
 const s = { items: [], index: 0, playing: false, position: 0, speed: 1, at: 0, sleepLeft: 0, sleepEnd: false };
 
 function advance() {
@@ -11,12 +15,12 @@ function advance() {
   }
   s.position += (now - s.at) * s.speed;
   s.at = now;
-  while (s.position >= CHAPTER && s.index < s.items.length - 1) {
-    s.position -= CHAPTER;
+  while (s.items.length && s.position >= lengthOf(s.index) && s.index < s.items.length - 1) {
+    s.position -= lengthOf(s.index);
     s.index++;
   }
-  if (s.position >= CHAPTER) {
-    s.position = CHAPTER;
+  if (s.items.length && s.position >= lengthOf(s.index)) {
+    s.position = lengthOf(s.index);
     s.playing = false;
   }
 }
@@ -31,9 +35,9 @@ function snap() {
     count: s.items.length,
     playing: s.playing,
     loading: false,
-    ended: loaded && !s.playing && s.index === s.items.length - 1 && s.position >= CHAPTER,
+    ended: loaded && !s.playing && s.index === s.items.length - 1 && s.position >= lengthOf(s.index),
     position: s.position,
-    duration: loaded ? CHAPTER : 0,
+    duration: loaded ? lengthOf(s.index) : 0,
     speed: s.speed,
     sleepLeft: s.sleepLeft,
     sleepEnd: s.sleepEnd,
@@ -70,4 +74,17 @@ export const mockSleep = {
 
 // Нативная память места и настройка энергосбережения: в браузере их нет.
 export const mockResume = { saved: async () => ({}) };
+
+// Главы внутри файла: в браузере есть только у файлов mock://chaptered/…, чтобы можно было проверить раскладку.
+export const mockChapters = {
+  async read({ uris }) {
+    const titles = ['Пролог', 'Глава 1. Начало', 'Глава 2', 'Эпилог'];
+    return {
+      items: uris.map((uri) => ({
+        uri,
+        chapters: uri.startsWith('mock://chaptered') ? titles.map((title, i) => ({ title, start: i * 900000, end: i < 3 ? (i + 1) * 900000 : -1 })) : [],
+      })),
+    };
+  },
+};
 export const mockEnergy = { setOffload: async () => {} };
