@@ -6,6 +6,8 @@ import { initBack } from './app/back.js';
 import { initLibrarySync } from './library/library-sync.js';
 import { initPlayer } from './player/player-state.js';
 import { initBilling, initDevCode } from './billing/entitlement.js';
+import { initAutoNormalize } from './sound/auto-normalize.js';
+import { initProgressWatch } from './library/progress-watch.js';
 import { applyOffload } from './player/energy-pref.js';
 import { initSoundSync } from './sound/sound-sync.js';
 
@@ -17,5 +19,7 @@ initLibrarySync();
 initPlayer();
 initSoundSync();
 initBilling();
+initProgressWatch();
+initAutoNormalize();
 initDevCode();
 applyOffload();

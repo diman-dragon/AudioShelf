@@ -1,7 +1,7 @@
 import { Player } from '../folder/plugins.js';
 import { progressState, resumeAt, saveLast, saveProgress, saveSpeed } from './progress-store.js';
 import { load } from './player-load.js';
-import { applyStatus, getStatus, getTrack, isLoaded, refreshChapters, setTrack } from './player-state.js';
+import { applyStatus, getStatus, getTrack, holdStatus, isLoaded, refreshChapters, setTrack } from './player-state.js';
 import { getSkip } from './skip-pref.js';
 
 export async function playBook(book) {
@@ -13,16 +13,26 @@ export async function playBook(book) {
   return load(i, p, true).catch(() => {});
 }
 
+let toggling = false; // пока предыдущее нажатие не обработано, следующие не запускают вторую загрузку или второй «пуск»
+
+// Пуск/пауза. Что делать, решает нативный плеер по своему настоящему состоянию (а не по нашей копии, которая могла отстать),
+// а кнопка сразу показывает результат: ответ приходит позже.
 export async function togglePlay() {
-  if (!getTrack()) return;
-  if (!isLoaded()) {
-    const { i, p } = resumeAt(getTrack().id);
-    return load(i, p, true);
+  if (!getTrack() || toggling) return;
+  toggling = true;
+  holdStatus(true);
+  try {
+    if (!isLoaded()) {
+      const { i, p } = resumeAt(getTrack().id);
+      await load(i, p, true);
+      return;
+    }
+    applyStatus({ ...getStatus(), playing: !getStatus().playing });
+    applyStatus(await Player.toggle());
+  } finally {
+    holdStatus(false);
+    toggling = false;
   }
-  const s = getStatus();
-  if (s.playing) return applyStatus(await Player.pause());
-  if (s.ended) await Player.skipTo({ index: 0 });
-  applyStatus(await Player.play()); // откат на 5 с после паузы делает нативный плеер
 }
 
 export async function seekTo(ms) {

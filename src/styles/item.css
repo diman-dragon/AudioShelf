@@ -63,3 +63,34 @@
   background: color-mix(in srgb, var(--bg) 70%, transparent);
   color: var(--text);
 }
+
+/* Прогресс книги: тонкая полоса и процент справа */
+.fprog {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.fprog-track {
+  flex: 1;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--line);
+}
+
+.fprog-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.fprog-pc {
+  flex: none;
+  min-width: 30px;
+  text-align: right;
+  color: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}

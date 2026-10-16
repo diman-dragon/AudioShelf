@@ -20,7 +20,11 @@ const set = (patch) => {
 function onEvent(e) {
   if (e.type === 'start') return set({ current: e.name });
   if (e.type === 'file') {
-    if (e.gain == null) return set({ done: state.done + 1, failed: state.failed + 1 });
+    // Файл, который не удалось измерить, тоже запоминаем (поправка 0): иначе его пробовали бы заново при каждом запуске.
+    if (e.gain == null) {
+      saveGain(e.uri, 0);
+      return set({ done: state.done + 1, failed: state.failed + 1 });
+    }
     saveGain(e.uri, e.gain);
     return set({ done: state.done + 1 });
   }
@@ -34,7 +38,7 @@ export async function startNormalize() {
   if (state.status === 'running' || !isPremium()) return;
   const todo = pendingFiles();
   if (!todo.length) return set({ status: 'done', done: 0, total: 0, failed: 0, current: '' });
-  set({ status: 'running', done: 0, total: todo.length, failed: 0, current: '' });
+  set({ status: 'running', done: 0, total: todo.length, failed: 0, current: '', paused: false });
   listener = await Loudness.addListener('loudness', onEvent);
   try {
     await Loudness.start({ files: todo.map((f) => ({ uri: f.uri, name: f.name })) });
@@ -44,3 +48,9 @@ export async function startNormalize() {
 }
 
 export const stopNormalize = () => Loudness.cancel().catch(() => {});
+
+// Остановка не по просьбе человека (началось воспроизведение): автозапуск потом продолжит с оставшихся файлов.
+export const pauseNormalize = () => {
+  state = { ...state, paused: true };
+  return stopNormalize();
+};

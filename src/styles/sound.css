@@ -153,3 +153,23 @@
 .normcard .row {
   border-bottom: 0;
 }
+
+.boostcard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.boostcard .note {
+  margin: 0;
+}
+
+.boostcard .seg {
+  display: flex;
+}
+
+.boostcard .seg button {
+  flex: 1;
+  padding: 0 4px;
+}

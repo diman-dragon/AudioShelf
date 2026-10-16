@@ -56,6 +56,13 @@ export const mockPlayer = {
     Object.assign(s, { items, index, position, playing: autoplay })),
   play: act(() => (s.playing = true)),
   pause: act(() => (s.playing = false)),
+  toggle: act(() => {
+    if (s.playing) s.playing = false;
+    else {
+      if (s.items.length && s.index === s.items.length - 1 && s.position >= lengthOf(s.index)) Object.assign(s, { index: 0, position: 0 });
+      s.playing = true;
+    }
+  }),
   seek: act(({ position }) => (s.position = position)),
   next: act(() => Object.assign(s, { index: Math.min(s.items.length - 1, s.index + 1), position: 0 })),
   previous: act(() => Object.assign(s, { index: Math.max(0, s.index - 1), position: 0 })),

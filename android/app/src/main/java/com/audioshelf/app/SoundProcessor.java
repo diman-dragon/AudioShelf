@@ -12,6 +12,7 @@ final class SoundProcessor extends BaseAudioProcessor {
 
   private volatile float[] bandsDb = new float[BANDS];
   private volatile float trimDb;
+  private volatile float boost = 1f; // linear, 1 = as recorded
 
   private int rate;
   private int channels;
@@ -20,6 +21,8 @@ final class SoundProcessor extends BaseAudioProcessor {
   private Biquad[] filters = new Biquad[BANDS]; // null = band is flat
   private float[] builtFor;
   private float builtTrim = Float.NaN;
+  private float builtBoost = Float.NaN;
+  private boolean limit;
   private float gain = 1f;
 
   void setBands(float[] db) {
@@ -28,6 +31,11 @@ final class SoundProcessor extends BaseAudioProcessor {
 
   void setTrimDb(float db) {
     trimDb = db;
+  }
+
+  /** Volume above 100%: linear factor (1..3); loud peaks are then softly limited instead of clipped. */
+  void setBoost(float factor) {
+    boost = Math.max(1f, Math.min(4f, factor));
   }
 
   @Override
@@ -45,14 +53,17 @@ final class SoundProcessor extends BaseAudioProcessor {
   private void refresh() {
     float[] db = bandsDb;
     float trim = trimDb;
-    if (db == builtFor && trim == builtTrim) return;
+    float factor = boost;
+    if (db == builtFor && trim == builtTrim && factor == builtBoost) return;
     float peak = 0;
     for (int i = 0; i < BANDS; i++) {
       boolean on = db[i] != 0 && FREQS[i] < rate * 0.45;
       filters[i] = on ? Biquad.peaking(FREQS[i], db[i], Q, rate) : null;
       peak = Math.max(peak, db[i]);
     }
-    gain = (float) Math.pow(10, (trim - peak) / 20); // boosting bands lowers the level: no clipping
+    gain = (float) Math.pow(10, (trim - peak) / 20) * factor; // boosting bands lowers the level: no clipping
+    limit = factor > 1f;
+    builtBoost = factor;
     builtFor = db;
     builtTrim = trim;
   }
@@ -60,6 +71,16 @@ final class SoundProcessor extends BaseAudioProcessor {
   private boolean allFlat() {
     for (Biquad f : filters) if (f != null) return false;
     return true;
+  }
+
+  /** Below 80% of full scale the signal is untouched; above it peaks bend smoothly towards full scale. */
+  private static float soften(float x) {
+    float knee = 0.8f * 32768f;
+    float a = Math.abs(x);
+    if (a <= knee) return x;
+    float room = 32767f - knee;
+    float y = knee + room * (float) Math.tanh((a - knee) / room);
+    return x < 0 ? -y : y;
   }
 
   @Override
@@ -85,6 +106,7 @@ final class SoundProcessor extends BaseAudioProcessor {
         x = y;
       }
       x *= gain;
+      if (limit) x = soften(x);
       out.putShort((short) Math.max(-32768, Math.min(32767, Math.round(x))));
       if (++channel == channels) channel = 0;
     }

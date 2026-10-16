@@ -21,7 +21,7 @@ function sleepLabel({ choice, left, end }) {
   return choice === 'off' ? t('player.sleep') : t('sleep.min', { n: choice });
 }
 
-// Ряд под кнопками плеера: [Закладки] [Список] [Режим] [Скорость] [Сон].
+// Ряд под кнопками плеера: [Скорость] [Сон] [Список] [Режим] [Закладки].
 // Режим зависит от типа (книга / альбом); скорость и сон переключаются по кругу одним нажатием.
 export function createExtras({ onMarks, onList, onMode, onSpeed, onSleep }) {
   const node = el('div', 'pextras');
@@ -38,7 +38,7 @@ export function createExtras({ onMarks, onList, onMode, onSpeed, onSleep }) {
   bindText(speed.label, 'player.speed');
   bindAria(speed.btn, 'player.speed');
   bindAria(sleep.btn, 'player.sleep');
-  node.append(marks.btn, list.btn, mode.btn, speed.btn, sleep.btn);
+  node.append(speed.btn, sleep.btn, list.btn, mode.btn, marks.btn);
   return {
     node,
     update({ markCount, mode: current, multi, speed: rate, sleep: sleepState }) {

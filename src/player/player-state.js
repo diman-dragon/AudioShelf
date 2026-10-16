@@ -1,6 +1,7 @@
 import { App } from '@capacitor/app';
 import { Player, Resume } from '../folder/plugins.js';
 import { noteDuration } from './durations.js';
+import { bookProgress } from './book-progress.js';
 import { scanBook } from './chapter-store.js';
 import { expandBook } from './expand.js';
 import { adoptSpot, loadLast, saveProgress } from './progress-store.js';
@@ -30,7 +31,9 @@ function remember(prev, next) {
   const at = next.loaded ? next : prev; // плеер закрыли — берём последнее известное
   const last = at.index === track.files.length - 1;
   const done = next.ended || (last && at.duration > 0 && at.position >= at.duration - END_GAP);
-  saveProgress(track.id, { i: at.index, p: next.ended ? 0 : at.position, d: at.duration, done, x: track.expanded });
+  const info = bookProgress(track.id, track.files.length, at.index, at.position);
+  const pc = done ? 100 : info ? info.percent : 0;
+  saveProgress(track.id, { i: at.index, p: next.ended ? 0 : at.position, d: at.duration, done, x: track.expanded, pc });
 }
 
 export function applyStatus(next) {
@@ -51,7 +54,16 @@ export async function refreshChapters(book = track?.base ?? track) {
   if (track && (track.base ?? track).id === book.id) setTrack(book);
 }
 
-export const syncNow = () => Player.state().then(applyStatus).catch(() => {});
+// Пока идёт нажатие «пуск/пауза», ответы опроса и события (они могли начаться раньше) состояние не перебивают.
+let hold = false;
+export const holdStatus = (on) => {
+  hold = on;
+};
+const fromNative = (next) => {
+  if (!hold) applyStatus(next);
+};
+
+export const syncNow = () => Player.state().then(fromNative).catch(() => {});
 
 // Нативный плеер сам записывает место (каждые 10 с, при паузе, смене главы и закрытии): берём запись, если она новее нашей.
 async function reconcile() {
@@ -78,7 +90,7 @@ export function initPlayer() {
   reconcile();
   syncNow();
   refreshChapters();
-  Player.addListener('state', applyStatus).catch(() => {});
+  Player.addListener('state', fromNative).catch(() => {});
   App.addListener('appStateChange', (s) => wake(s.isActive));
   document.addEventListener('visibilitychange', () => wake(!document.hidden));
   setInterval(() => {

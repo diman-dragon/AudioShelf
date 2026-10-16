@@ -116,3 +116,64 @@
   color: var(--text);
   font: inherit;
 }
+
+/* Печать Премиума */
+.seal {
+  --seal-check: #1a1204;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 18px;
+}
+
+.seal-ring {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 104px;
+  height: 104px;
+  border: 2px dashed var(--line);
+  border-radius: 50%;
+  color: var(--muted);
+}
+
+.seal-icon svg {
+  display: block;
+  width: 56px;
+  height: 56px;
+}
+
+.seal-label {
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.seal.owned .seal-ring {
+  border: 2px solid var(--accent);
+  background: radial-gradient(circle at 35% 30%, var(--accent-soft), transparent 70%), var(--surface);
+  box-shadow: 0 0 0 6px var(--accent-soft), 0 0 28px var(--accent-soft);
+  color: var(--accent);
+  animation: seal-glow 3.2s ease-in-out infinite;
+}
+
+.seal.owned .seal-label {
+  color: var(--accent);
+}
+
+@keyframes seal-glow {
+  50% { box-shadow: 0 0 0 9px var(--accent-soft), 0 0 38px var(--accent-soft); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seal.owned .seal-ring { animation: none; }
+}
+
+.set-h {
+  margin: 22px 0 0;
+}
+
+.set-h:first-child {
+  margin-top: 4px;
+}

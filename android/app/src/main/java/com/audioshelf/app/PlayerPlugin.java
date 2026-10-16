@@ -3,6 +3,7 @@ package com.audioshelf.app;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.media3.common.MediaItem;
+import androidx.media3.common.Player;
 import androidx.media3.exoplayer.ExoPlayer;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.Plugin;
@@ -76,6 +77,23 @@ public class PlayerPlugin extends Plugin {
     onPlayer(
         call,
         p -> {
+          startService();
+          p.play();
+        });
+  }
+
+  /** Pause when it is playing (or about to), play otherwise: decided here, on the real player state, so a tap is never lost. */
+  @PluginMethod
+  public void toggle(PluginCall call) {
+    onPlayer(
+        call,
+        p -> {
+          boolean ended = p.getPlaybackState() == Player.STATE_ENDED;
+          if (p.getPlayWhenReady() && !ended) {
+            p.pause();
+            return;
+          }
+          if (ended) p.seekTo(0, 0);
           startService();
           p.play();
         });

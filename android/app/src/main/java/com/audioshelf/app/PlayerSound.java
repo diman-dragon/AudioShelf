@@ -42,7 +42,7 @@ final class PlayerSound {
     player = null;
   }
 
-  /** {bands: [10 dB values], trims: {file uri: dB}} as sent by JavaScript. Any thread. */
+  /** {bands: [10 dB values], trims: {file uri: dB}, boost: linear factor} as sent by JavaScript. Any thread. */
   static void applyJson(JSONObject d) {
     JSONArray list = d.optJSONArray("bands");
     float[] bands = new float[SoundProcessor.BANDS];
@@ -58,14 +58,15 @@ final class PlayerSound {
         trims.put(uri, (float) raw.optDouble(uri, 0));
       }
     }
-    apply(bands, trims);
+    apply(bands, trims, (float) d.optDouble("boost", 1.0));
   }
 
-  private static void apply(float[] bands, Map<String, Float> trims) {
-    boolean flat = trims.isEmpty();
+  private static void apply(float[] bands, Map<String, Float> trims, float boost) {
+    boolean flat = trims.isEmpty() && boost <= 1f;
     for (float b : bands) flat &= b == 0;
     PlayerOffload.setNeutral(flat); // offload would bypass the equalizer and the trims
     PROCESSOR.setBands(bands);
+    PROCESSOR.setBoost(boost);
     TRIMS.clear();
     TRIMS.putAll(trims);
     MAIN.post(
