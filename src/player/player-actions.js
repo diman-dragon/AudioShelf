@@ -1,7 +1,10 @@
 import { Player } from '../folder/plugins.js';
-import { progressState, resumeAt, saveLast, saveProgress, saveSpeed } from './progress-store.js';
+import { progressState, resumeAt, saveProgress } from './progress-store.js';
+import { saveLast, saveSpeed } from './last-book.js';
 import { load } from './player-load.js';
-import { applyStatus, getStatus, getTrack, holdStatus, isLoaded, refreshChapters, setTrack } from './player-state.js';
+import { applyStatus, getStatus, getTrack, isLoaded, setTrack } from './player-state.js';
+import { holdStatus } from './status-poll.js';
+import { refreshChapters } from './refresh-chapters.js';
 import { getSkip } from './skip-pref.js';
 
 export async function playBook(book) {

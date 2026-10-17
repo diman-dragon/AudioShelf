@@ -1,72 +1,67 @@
-import { readStored, writeStored } from '../core/storage.js';
-import { createMapStore } from '../core/map-store.js';
 import { REWIND_MS } from './rewind.js';
+import { forgetInfo, getInfo, moveInfo, setInfo } from './progress-info.js';
+import { forgetSpot, getSpot, moveSpot, setSpot } from './spot-store.js';
 
-// id книги -> { i: номер файла (главы), p: позиция в нём мс, d: его длительность мс, done: дослушана, t: когда слушали,
-//   x: 1 — номера глав посчитаны с учётом глав внутри файла }
-const store = createMapStore('audioshelf.progress2');
-const LAST = 'audioshelf.last2'; // последняя книга целиком
-const SPEED = 'audioshelf.speed';
+// Прогресс книги = позиция (spot-store, пишется часто) + сведения (progress-info, пишутся редко).
+// Каждая часть пишется только когда изменилась именно она.
+const changed = (id) => document.dispatchEvent(new CustomEvent('progresschange', { detail: id }));
 
-// pc — процент прослушанного по всей книге (для полоски в библиотеке). Длины глав узнаются, когда книгу открывают;
-// до этого процент 0 (или оценка по уже известным длинам).
-export const saveProgress = (id, { i, p, d, done, x, pc }) => {
-  store.set(id, { i: i, p: Math.floor(p), d: Math.floor(d), done: Boolean(done), x: x ? 1 : 0, pc: pc ?? 0, t: Date.now() });
-  document.dispatchEvent(new CustomEvent('progresschange', { detail: id }));
+export const saveProgress = (id, { i, p, done, x, pc }) => {
+  const before = progressState(id);
+  setSpot(id, i, p);
+  const infoChanged = setInfo(id, { done, x, pc });
+  if (infoChanged || before !== progressState(id)) changed(id); // полоска и значок книги меняются, только когда изменился процент или состояние
 };
 
 // Процент по записи: null — не начата.
-export function percentFrom(r) {
-  if (!r) return null;
-  if (r.done) return 100;
-  return r.pc > 0 || r.i > 0 || r.p > 1 ? Math.max(0, Math.min(99, r.pc ?? 0)) : null;
+export function percentOf(id) {
+  const info = getInfo(id);
+  const spot = getSpot(id);
+  if (info?.done) return 100;
+  const pc = info?.pc ?? 0;
+  return progressState(id) === 'started' ? Math.max(0, Math.min(99, pc)) : null; // та же граница «начата», что и у значка книги
 }
-export const percentOf = (id) => percentFrom(store.get(id));
 
-// Книга стала раскладываться на главы внутри файла: запись без пометки x переносим на новые номера.
+// Книга стала раскладываться на главы внутри файла: позицию без пометки x переносим на новые номера.
 export function remapProgress(id, map) {
-  const r = store.get(id);
-  if (!r || r.x) return;
-  store.set(id, { ...r, ...map(r.i, r.p), d: 0, x: 1 });
+  const spot = getSpot(id);
+  const info = getInfo(id);
+  if (!spot || info?.x) return;
+  const next = map(spot.i, spot.p);
+  setSpot(id, next.i, next.p, spot.t);
+  setInfo(id, { done: info?.done, x: 1, pc: info?.pc });
 }
 
-export const lastPlayed = (id) => store.get(id)?.t ?? 0;
+export const lastPlayed = (id) => getSpot(id)?.t ?? 0;
 
 // new — не открывали, started — начата, done — прослушана до конца.
 export function progressState(id) {
-  const r = store.get(id);
-  if (!r) return 'new';
-  if (r.done) return 'done';
-  return r.i > 0 || r.p > 0 ? 'started' : 'new';
+  if (getInfo(id)?.done) return 'done';
+  const spot = getSpot(id);
+  return spot && (spot.i > 0 || spot.p > 0) ? 'started' : 'new';
 }
 
 // С какого места продолжать: на 5 с раньше, чем остановились; прослушанное начинаем сначала.
 export function resumeAt(id) {
-  const r = store.get(id);
-  return !r || r.done ? { i: 0, p: 0 } : { i: r.i, p: Math.max(0, r.p - REWIND_MS) };
+  const spot = getSpot(id);
+  return !spot || getInfo(id)?.done ? { i: 0, p: 0 } : { i: spot.i, p: Math.max(0, spot.p - REWIND_MS) };
 }
 
 // Нативный плеер записал место, пока JS спал или был убит: берём его, если оно новее нашей записи.
 export function adoptSpot(id, { i, p, t, x }) {
-  const r = store.get(id);
-  if (r && r.t >= t) return false;
-  store.set(id, { i, p: Math.floor(p), d: r && r.i === i ? r.d : 0, done: false, x: x ? 1 : (r?.x ?? 0), pc: r?.pc ?? 0, t });
+  const spot = getSpot(id);
+  if (spot && spot.t >= t) return false;
+  setSpot(id, i, p, t);
+  const info = getInfo(id);
+  setInfo(id, { done: false, x: x ? 1 : info?.x, pc: info?.pc });
   return true;
 }
 
-export const moveProgress = store.move;
-export const forgetProgress = store.del;
-
-const parse = (key, fallback) => {
-  try {
-    return JSON.parse(readStored(key)) ?? fallback;
-  } catch {
-    return fallback;
-  }
+export const moveProgress = (from, to) => {
+  moveSpot(from, to);
+  moveInfo(from, to);
 };
-
-export const loadLast = () => parse(LAST, null);
-export const saveLast = (book) => writeStored(LAST, JSON.stringify(book));
-
-export const loadSpeed = () => parse(SPEED, 1);
-export const saveSpeed = (speed) => writeStored(SPEED, JSON.stringify(speed));
+export const forgetProgress = (id) => {
+  forgetSpot(id);
+  forgetInfo(id);
+};

@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core';
 import { Cover } from '../folder/plugins.js';
 
 // Обложки из тегов файла: по одной за раз + кэш в памяти.
@@ -11,8 +12,19 @@ export function loadCover(file, img) {
     if (cache.get(key)) img.src = cache.get(key);
     return;
   }
-  queue.push({ key, uri: file.uri, img });
+  queue.push({ key, uri: file.uri, sig: `${file.modified}|${file.size}`, img });
   run();
+}
+
+async function inline(job) {
+  job.img.onerror = null;
+  try {
+    const result = await Cover.read({ uri: job.uri, sig: job.sig, width: 360, inline: true });
+    cache.set(job.key, result.data);
+    job.img.src = result.data;
+  } catch {
+    cache.set(job.key, '');
+  }
 }
 
 async function run() {
@@ -22,9 +34,12 @@ async function run() {
     const job = queue.shift();
     if (!job.img.isConnected) continue;
     try {
-      const result = await Cover.read({ uri: job.uri, width: 360 });
-      cache.set(job.key, result.data);
-      job.img.src = result.data;
+      const result = await Cover.read({ uri: job.uri, sig: job.sig, width: 360 });
+      // Нативная часть кладёт обложку файлом в кэш, WebView грузит его сама; если не получилось — просим данные в ответе.
+      const src = result.path ? Capacitor.convertFileSrc(result.path) : result.data;
+      cache.set(job.key, src);
+      if (result.path) job.img.onerror = () => inline(job);
+      job.img.src = src;
     } catch {
       cache.set(job.key, '');
     }

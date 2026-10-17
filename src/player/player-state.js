@@ -1,100 +1,48 @@
-import { App } from '@capacitor/app';
-import { Player, Resume } from '../folder/plugins.js';
 import { noteDuration } from './durations.js';
-import { bookProgress } from './book-progress.js';
-import { scanBook } from './chapter-store.js';
 import { expandBook } from './expand.js';
-import { adoptSpot, loadLast, saveProgress } from './progress-store.js';
+import { loadLast } from './last-book.js';
+import { remember } from './remember.js';
+import { setAnchor } from './status-anchor.js';
+import { diffKind } from './status-diff.js';
 import { syncSleep } from './sleep-actions.js';
 
-// Что играет (книга) и в каком состоянии. Состояние спрашиваем у нативного плеера по таймеру.
+// Что играет (книга) и в каком состоянии. Состояние приходит от нативного плеера (опрос и события — status-poll.js).
 const EMPTY = { loaded: false, uri: '', index: 0, count: 0, playing: false, loading: false, ended: false, position: 0, duration: 0, speed: 1 };
-const END_GAP = 3000; // до конца последней главы меньше 3 с — считаем дослушанной
 
-let track = expandBook(loadLast()?.files ? loadLast() : null);
+const saved = loadLast();
+let track = expandBook(saved?.files ? saved : null);
 let status = EMPTY;
-let ticks = 0;
+const JUMP_PLAYING = 5000; // мс: при игре позиция меняется на ~1 с за шаг, больше — перемотка
+const JUMP_PAUSED = 500;
+
+const announce = (name) => document.dispatchEvent(new Event(name));
 
 export const getTrack = () => track;
 export const getStatus = () => status;
+
 // Плеер держит именно эту книгу: тот же файл и то же число глав (главы внутри файла считаются отдельно).
 export const isLoaded = () => Boolean(track) && status.loaded && status.count === track.files.length && track.files.some((f) => f.uri === status.uri);
 
 export function setTrack(book) {
   track = expandBook(book);
-  document.dispatchEvent(new Event('trackchange'));
-  document.dispatchEvent(new Event('playerchange'));
+  announce('trackchange');
+  announce('playerchange');
 }
 
-// Прогресс книги запоминаем каждые ~2 с, при паузе и когда плеер закрыли из шторки.
-function remember(prev, next) {
-  const at = next.loaded ? next : prev; // плеер закрыли — берём последнее известное
-  const last = at.index === track.files.length - 1;
-  const done = next.ended || (last && at.duration > 0 && at.position >= at.duration - END_GAP);
-  const info = bookProgress(track.id, track.files.length, at.index, at.position);
-  const pc = done ? 100 : info ? info.percent : 0;
-  saveProgress(track.id, { i: at.index, p: next.ended ? 0 : at.position, d: at.duration, done, x: track.expanded, pc });
-}
-
-export function applyStatus(next) {
+// Новое состояние. 'playerchange' — изменилось что-то заметное, 'playertick' — только время.
+// synthetic — состояние посчитано здесь по времени (status-ticker.js), а не пришло от плеера.
+// Прогресс запоминаем только по событиям: остановка, перемотка, другая глава (во время игры место пишет сам нативный плеер).
+export function applyStatus(next, synthetic = false) {
   const prev = status;
   const wasLoaded = isLoaded();
   status = next;
+  if (!synthetic) setAnchor(next);
   syncSleep(next);
   if (wasLoaded && next.loaded && next.duration > 0) noteDuration(track.id, next.index, next.duration);
   const stopped = prev.playing && !next.playing;
-  const sought = !next.playing && Math.abs(next.position - prev.position) > 500; // подвинули ползунок на паузе
-  if (wasLoaded && (stopped || sought || (next.playing && ++ticks % 4 === 0))) remember(prev, next);
-  if (JSON.stringify(prev) !== JSON.stringify(next)) document.dispatchEvent(new Event('playerchange'));
-}
-
-// Узнаёт, есть ли в файлах книги главы внутри (один раз на файл), и раскладывает книгу на главы.
-export async function refreshChapters(book = track?.base ?? track) {
-  if (!book || !(await scanBook(book))) return;
-  if (track && (track.base ?? track).id === book.id) setTrack(book);
-}
-
-// Пока идёт нажатие «пуск/пауза», ответы опроса и события (они могли начаться раньше) состояние не перебивают.
-let hold = false;
-export const holdStatus = (on) => {
-  hold = on;
-};
-const fromNative = (next) => {
-  if (!hold) applyStatus(next);
-};
-
-export const syncNow = () => Player.state().then(fromNative).catch(() => {});
-
-// Нативный плеер сам записывает место (каждые 10 с, при паузе, смене главы и закрытии): берём запись, если она новее нашей.
-async function reconcile() {
-  const saved = await Resume.saved().catch(() => null);
-  // Номера глав у JS и у нативного плеера должны значить одно и то же: только та же книга с тем же числом глав.
-  const same = track && saved?.id === track.id && saved.count === track.files.length;
-  if (same && adoptSpot(saved.id, { i: saved.index, p: saved.position, t: saved.t, x: track.expanded })) {
-    document.dispatchEvent(new Event('playerchange'));
-  }
-}
-
-// Изменения (шторка, наушники, звонок) приходят событиями. Опрос нужен только для бегунка: пока приложение
-// видно, раз в 0,5 с при игре и раз в 2 с на паузе. В фоне и при выключенном экране не опрашиваем совсем.
-export function initPlayer() {
-  let active = true;
-  let idle = 0;
-  const wake = (on) => {
-    active = on;
-    if (on) {
-      reconcile();
-      syncNow();
-    }
-  };
-  reconcile();
-  syncNow();
-  refreshChapters();
-  Player.addListener('state', fromNative).catch(() => {});
-  App.addListener('appStateChange', (s) => wake(s.isActive));
-  document.addEventListener('visibilitychange', () => wake(!document.hidden));
-  setInterval(() => {
-    if (!active || (!status.playing && ++idle % 4)) return;
-    syncNow();
-  }, 500);
+  const jumped = Math.abs(next.position - prev.position) > (next.playing ? JUMP_PLAYING : JUMP_PAUSED); // подвинули ползунок
+  const moved = prev.loaded && next.loaded && prev.index !== next.index;
+  if (wasLoaded && (stopped || jumped || moved)) remember(track, prev, next);
+  const kind = diffKind(prev, next);
+  if (kind !== 'none') announce(kind === 'tick' ? 'playertick' : 'playerchange');
 }

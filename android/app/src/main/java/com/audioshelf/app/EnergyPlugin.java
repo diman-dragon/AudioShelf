@@ -1,5 +1,6 @@
 package com.audioshelf.app;
 
+import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
@@ -15,5 +16,15 @@ public class EnergyPlugin extends Plugin {
     ResumeStore.put(getContext(), ResumeStore.OFFLOAD, enabled ? "1" : "0");
     PlayerOffload.setAllowed(enabled);
     call.resolve();
+  }
+
+  /** { supported: the phone can do it, allowed: the setting is on, neutral: no equalizer/trims/boost are in the way right now } */
+  @PluginMethod
+  public void status(PluginCall call) {
+    JSObject o = new JSObject();
+    o.put("supported", OffloadSupport.supported(getContext()));
+    o.put("allowed", PlayerOffload.isAllowed());
+    o.put("neutral", PlayerOffload.isNeutral());
+    call.resolve(o);
   }
 }

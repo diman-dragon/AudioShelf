@@ -19,6 +19,7 @@ final class AppDb extends SQLiteOpenHelper {
 
   private AppDb(Context ctx) {
     super(ctx, "audioshelf.db", null, 1);
+    setWriteAheadLoggingEnabled(true); // a commit appends to a log instead of syncing the whole file: far fewer flash writes
   }
 
   @Override

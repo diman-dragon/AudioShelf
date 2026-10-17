@@ -26,7 +26,7 @@ public class LoudnessPlugin extends Plugin {
     notifyListeners("loudness", o);
   }
 
-  /** files: [{uri, name}]. Events: start {name}, file {uri, name, gain|null}, finish {status, failed}. */
+  /** files: [{uri, name}], onlyCharging: run only while charging. Events: start {name}, file {uri, name, gain|null}, finish {status, failed}. */
   @PluginMethod
   public void start(PluginCall call) {
     JSArray raw = call.getArray("files");
@@ -40,10 +40,16 @@ public class LoudnessPlugin extends Plugin {
       call.reject("bad files: " + e.getMessage());
       return;
     }
+    boolean onlyCharging = Boolean.TRUE.equals(call.getBoolean("onlyCharging", false));
+    if (onlyCharging && BatteryGuard.shouldPause(getContext(), true)) {
+      call.resolve(new JSObject().put("started", false).put("reason", "unplugged"));
+      return;
+    }
     boolean started =
         runner.start(
             getContext(),
             files,
+            onlyCharging,
             new LoudnessRunner.Listener() {
               @Override
               public void onStart(String name) {

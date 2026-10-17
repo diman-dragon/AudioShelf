@@ -48,6 +48,10 @@ export function createExtras({ onMarks, onList, onMode, onSpeed, onSleep }) {
       bindAria(mode.btn, `mode.${current}`);
       mode.icon.innerHTML = MODE_ICONS[current];
       speed.icon.textContent = fmtSpeed(rate);
+      this.updateSleep(sleepState);
+    },
+    // Остаток таймера сна меняется каждую секунду, остальной ряд — нет.
+    updateSleep(sleepState) {
       sleep.label.textContent = sleepLabel(sleepState);
       sleep.btn.classList.toggle('on', sleepState.choice !== 'off');
     },

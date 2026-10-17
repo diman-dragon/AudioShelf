@@ -94,4 +94,10 @@ export const mockChapters = {
     };
   },
 };
-export const mockEnergy = { setOffload: async () => {} };
+let offload = false;
+export const mockEnergy = {
+  setOffload: async ({ enabled }) => {
+    offload = enabled;
+  },
+  status: async () => ({ supported: true, allowed: offload, neutral: true }),
+};

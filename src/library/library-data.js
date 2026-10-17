@@ -10,17 +10,24 @@ let status = 'nofolder'; // nofolder | unscanned | ok | error
 let scanning = false;
 let progress = { files: 0, folders: 0 };
 
-export const notifyLibrary = (name = 'librarychange') => document.dispatchEvent(new Event(name));
+let books = null; // сгруппированные книги: считаются заново только после изменения библиотеки
+
+export const notifyLibrary = (name = 'librarychange') => {
+  if (name === 'librarychange') books = null;
+  document.dispatchEvent(new Event(name));
+};
 
 export const getStatus = () => status;
 export const isScanning = () => scanning;
 export const getProgress = () => progress;
 export const getFileCount = () => all.length;
 export const getFiles = () => all;
-export const getBooks = () =>
-  groupBooks(all)
+export const getBooks = () => {
+  books ??= groupBooks(all)
     .filter((b) => !isHidden(b.id))
     .sort((a, b) => b.modified - a.modified);
+  return books;
+};
 
 // Поднимает сохранённый список для выбранной папки (при запуске и после выбора папки).
 export function restoreLibrary() {

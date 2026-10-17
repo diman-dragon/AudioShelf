@@ -1,7 +1,7 @@
-import { clearRows, delRow, putRow, readRows, readStored, removeStored } from './storage.js';
+import { clearRows, delRow, putRow, readRows } from './storage.js';
 
-// Словарь «ключ -> значение» в базе данных, по строке на запись (например, id книги -> прогресс, uri файла -> данные о нём).
-// Разобранные значения держим в памяти; запись меняет одну строку, а не весь словарь.
+// Словарь «ключ -> значение» в базе данных, по строке на запись (id книги -> закладки, uri файла -> данные о нём).
+// Разобранные значения держим в памяти; запись меняет одну строку, и только если значение изменилось.
 export function createMapStore(store) {
   let map = null;
 
@@ -15,20 +15,6 @@ export function createMapStore(store) {
         /* битая строка пропускается */
       }
     });
-    // Прежние версии хранили весь словарь одной записью: разбираем её на строки (один раз).
-    const legacy = readStored(store);
-    if (legacy) {
-      try {
-        Object.entries(JSON.parse(legacy) ?? {}).forEach(([k, v]) => {
-          if (k in map) return;
-          map[k] = v;
-          putRow(store, k, JSON.stringify(v));
-        });
-      } catch {
-        /* ignore */
-      }
-      removeStored(store);
-    }
     return map;
   };
 
@@ -37,20 +23,22 @@ export function createMapStore(store) {
     putRow(store, id, JSON.stringify(value));
   };
 
+  const del = (id) => {
+    delete load()[id];
+    delRow(store, id);
+  };
+
   return {
     all: load,
     get: (id) => load()[id],
     set,
-    del(id) {
-      delete load()[id];
-      delRow(store, id);
-    },
+    del,
     // Файл переименован и получил новый uri — переносим запись.
     move(from, to) {
       const m = load();
       if (from === to || !(from in m)) return;
       const value = m[from];
-      this.del(from);
+      del(from);
       set(to, value);
     },
     clear() {

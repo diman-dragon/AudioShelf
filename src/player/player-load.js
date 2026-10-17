@@ -3,7 +3,7 @@ import { authorOf, titleOf } from '../library/file-info.js';
 import { splitName } from '../library/format.js';
 import { applyProfile } from './apply-profile.js';
 import { applySound } from '../sound/apply-sound.js';
-import { loadSpeed } from './progress-store.js';
+import { loadSpeed } from './last-book.js';
 import { applyStatus, getTrack } from './player-state.js';
 
 // Загружает книгу в нативный плеер: главу index с позиции position.

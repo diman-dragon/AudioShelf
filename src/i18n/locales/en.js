@@ -152,7 +152,7 @@ export default {
   'boost.hint': '100% is the level recorded in the file. Higher values amplify the signal in software so quiet recordings are easier to hear.',
   'boost.warn': 'At high values loud peaks are limited and may distort slightly. Protect your hearing: start with 125%.',
   'norm.title': 'Loudness normalization',
-  'norm.hint': 'The loudness of new library files is measured automatically in the background, only when it interferes with nothing (nothing playing, battery fine). The result is saved and applied during playback. The files themselves are not changed.',
+  'norm.hint': 'The loudness of new library files is measured automatically in the background, only when it interferes with nothing: nothing is playing and the phone is charging (the button also works without the charger). The result is saved and applied during playback. The files themselves are not changed.',
   'norm.start': 'Normalize library',
   'norm.stop': 'Stop · {n} of {m}',
   'norm.running': 'Analyzing: {n} of {m}',
@@ -222,5 +222,8 @@ export default {
   'energy.on': 'On',
   'energy.off': 'Off',
   'energy.hint': 'The phone’s audio chip plays the sound and the processor sleeps, so the battery lasts longer. Works while the equalizer and loudness trims are not needed. Some phones may not support it.',
+  'energy.unsupported': 'This phone does not support hardware playback of MP3 and AAC: turning it on changes nothing.',
+  'energy.waiting': 'On, but not in effect right now: the equalizer, volume boost or loudness trims are in use.',
+  'energy.active': 'On. At speeds other than 1x the normal playback is used.',
   'norm.battery': 'Stopped to save power (Battery Saver or below 20%): {n} of {m} done. Plug in the charger and start again.',
 };

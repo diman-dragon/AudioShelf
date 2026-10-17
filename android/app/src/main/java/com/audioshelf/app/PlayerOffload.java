@@ -13,8 +13,8 @@ import androidx.media3.exoplayer.ExoPlayer;
 final class PlayerOffload {
   private static final Handler MAIN = new Handler(Looper.getMainLooper());
   private static ExoPlayer player;
-  private static boolean allowed;
-  private static boolean neutral = true;
+  private static volatile boolean allowed;
+  private static volatile boolean neutral = true;
   private static boolean applied;
 
   private PlayerOffload() {}
@@ -25,6 +25,15 @@ final class PlayerOffload {
     allowed = allow;
     applied = false;
     update();
+  }
+
+  /** For the settings screen: is it allowed, and is the sound untouched right now (so that it can be used)? */
+  static boolean isAllowed() {
+    return allowed;
+  }
+
+  static boolean isNeutral() {
+    return neutral;
   }
 
   static void detach() {

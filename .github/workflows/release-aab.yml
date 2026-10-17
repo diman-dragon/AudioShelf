@@ -5,6 +5,9 @@ name: Release AAB (Google Play)
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read # артефакт кладётся в Artifacts, репозиторий не меняется
+
 jobs:
   bundle:
     runs-on: ubuntu-latest

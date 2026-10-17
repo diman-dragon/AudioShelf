@@ -8,35 +8,29 @@ import android.media.MediaFormat;
 import android.net.Uri;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 
 /** Decodes the start of an audio file and measures how loud it is. */
 final class LoudnessMeter {
-  private static final long LIMIT_US = 20L * 60 * 1000000; // first 20 minutes are enough, and it spares the battery
+  private static final long WINDOW_US = 5L * 60 * 1000000; // five minutes are enough, and it spares the battery
   private static final long WAIT_US = 10000;
 
   private LoudnessMeter() {}
 
   /** Gain in dB for this file; throws if it cannot be decoded. */
-  static double gainFor(Context ctx, Uri uri, AtomicBoolean cancel) throws IOException {
+  static double gainFor(Context ctx, Uri uri, BooleanSupplier stop) throws IOException {
     MediaExtractor extractor = new MediaExtractor();
     MediaCodec codec = null;
     try {
       extractor.setDataSource(ctx, uri, null);
-      MediaFormat format = null;
-      for (int i = 0; i < extractor.getTrackCount() && format == null; i++) {
-        MediaFormat f = extractor.getTrackFormat(i);
-        String mime = f.getString(MediaFormat.KEY_MIME);
-        if (mime != null && mime.startsWith("audio/")) {
-          extractor.selectTrack(i);
-          format = f;
-        }
-      }
+      MediaFormat format = ExtractorAudio.select(extractor);
       if (format == null) throw new IOException("no audio track");
       codec = MediaCodec.createDecoderByType(format.getString(MediaFormat.KEY_MIME));
       codec.configure(format, null, null, 0);
       codec.start();
-      return decode(extractor, codec, format, cancel);
+      long start = ExtractorAudio.windowStartUs(format, WINDOW_US);
+      if (start > 0) extractor.seekTo(start, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+      return decode(extractor, codec, format, start + WINDOW_US, stop);
     } catch (IllegalStateException | IllegalArgumentException e) {
       throw new IOException(e);
     } finally {
@@ -52,20 +46,20 @@ final class LoudnessMeter {
     }
   }
 
-  private static double decode(MediaExtractor ex, MediaCodec codec, MediaFormat in, AtomicBoolean cancel) {
+  private static double decode(MediaExtractor ex, MediaCodec codec, MediaFormat in, long endUs, BooleanSupplier stop) {
     MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
-    LoudnessStats stats = new LoudnessStats(rate(in), channels(in));
+    LoudnessStats stats = new LoudnessStats(ExtractorAudio.rate(in), ExtractorAudio.channels(in));
     boolean isFloat = false;
     boolean inDone = false;
     boolean outDone = false;
-    while (!outDone && !cancel.get()) {
+    while (!outDone && !stop.getAsBoolean()) {
       if (!inDone) {
         int i = codec.dequeueInputBuffer(WAIT_US);
         if (i >= 0) {
           ByteBuffer buf = codec.getInputBuffer(i);
           int size = buf == null ? -1 : ex.readSampleData(buf, 0);
           long time = ex.getSampleTime();
-          if (size < 0 || time > LIMIT_US) {
+          if (size < 0 || time > endUs) {
             codec.queueInputBuffer(i, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
             inDone = true;
           } else {
@@ -91,13 +85,5 @@ final class LoudnessMeter {
       }
     }
     return stats.gainDb();
-  }
-
-  private static int rate(MediaFormat f) {
-    return f.containsKey(MediaFormat.KEY_SAMPLE_RATE) ? f.getInteger(MediaFormat.KEY_SAMPLE_RATE) : 44100;
-  }
-
-  private static int channels(MediaFormat f) {
-    return f.containsKey(MediaFormat.KEY_CHANNEL_COUNT) ? f.getInteger(MediaFormat.KEY_CHANNEL_COUNT) : 2;
   }
 }

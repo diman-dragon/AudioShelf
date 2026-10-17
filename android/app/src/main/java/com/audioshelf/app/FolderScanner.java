@@ -6,7 +6,6 @@ import android.net.Uri;
 import android.provider.DocumentsContract;
 import android.provider.DocumentsContract.Document;
 import com.getcapacitor.JSArray;
-import com.getcapacitor.JSObject;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,13 +21,6 @@ final class FolderScanner {
     void on(int files, int folders);
   }
 
-  private static final String[] COLS = {
-    Document.COLUMN_DOCUMENT_ID,
-    Document.COLUMN_DISPLAY_NAME,
-    Document.COLUMN_MIME_TYPE,
-    Document.COLUMN_SIZE,
-    Document.COLUMN_LAST_MODIFIED
-  };
   private static final int THREADS = 4;
 
   private volatile boolean cancelled;
@@ -60,14 +52,7 @@ final class FolderScanner {
   }
 
   /** dir is the document id, path is the folder path relative to the chosen root ("" for the root). */
-  private void submit(
-      ExecutorService pool,
-      ContentResolver cr,
-      Uri tree,
-      String dir,
-      String path,
-      boolean root,
-      Progress progress) {
+  private void submit(ExecutorService pool, ContentResolver cr, Uri tree, String dir, String path, boolean root, Progress progress) {
     pending.incrementAndGet(); // counted before the parent task ends, so it can't reach 0 early
     pool.execute(
         () -> {
@@ -81,18 +66,10 @@ final class FolderScanner {
         });
   }
 
-  private void readFolder(
-      ExecutorService pool,
-      ContentResolver cr,
-      Uri tree,
-      String dir,
-      String path,
-      boolean root,
-      Progress progress)
-      throws Exception {
+  private void readFolder(ExecutorService pool, ContentResolver cr, Uri tree, String dir, String path, boolean root, Progress progress) throws Exception {
     tally.addFolder();
     Uri children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, dir);
-    try (Cursor c = cr.query(children, COLS, null, null, null)) {
+    try (Cursor c = cr.query(children, ScanFile.COLS, null, null, null)) {
       if (c == null) throw new Exception("cannot read folder");
       while (!cancelled && c.moveToNext()) {
         String name = c.getString(1);
@@ -101,21 +78,10 @@ final class FolderScanner {
           String sub = path.isEmpty() ? name : path + "/" + name;
           submit(pool, cr, tree, c.getString(0), sub, false, progress);
         } else if (AudioFiles.isAudio(name, mime)) {
-          tally.addFile(describe(tree, c, dir, path));
+          tally.addFile(ScanFile.describe(tree, c, dir, path));
         }
         tally.report(progress);
       }
     }
-  }
-
-  private static JSObject describe(Uri tree, Cursor c, String dir, String path) {
-    JSObject o = new JSObject();
-    o.put("dir", path); // the folder the file lies in; files of one folder make one book
-    o.put("dirUri", DocumentsContract.buildDocumentUriUsingTree(tree, dir).toString());
-    o.put("uri", DocumentsContract.buildDocumentUriUsingTree(tree, c.getString(0)).toString());
-    o.put("name", c.getString(1));
-    o.put("size", c.getLong(3));
-    o.put("modified", c.getLong(4));
-    return o;
   }
 }

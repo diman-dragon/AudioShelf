@@ -18,6 +18,6 @@ export const Loudness = registerPlugin('Loudness', { web: () => mockLoudness });
 export const Sleep = registerPlugin('Sleep', { web: () => mockSleep }); // setSleep: таймер сна
 export const Billing = registerPlugin('Billing', { web: () => mockBilling }); // getState, buy, событие 'billing': Google Play Billing
 export const Resume = registerPlugin('Resume', { web: () => mockResume }); // saved: место, которое запомнил нативный плеер
-export const Energy = registerPlugin('Energy', { web: () => mockEnergy }); // setOffload: аппаратное воспроизведение
+export const Energy = registerPlugin('Energy', { web: () => mockEnergy }); // setOffload, status: аппаратное воспроизведение
 export const License = registerPlugin('License', { web: () => mockLicense }); // check: отпечаток устройства и проверка кода разработчика
 export const Chapters = registerPlugin('Chapters', { web: () => mockChapters }); // read: главы внутри файлов (MKA, M4B, MP3)

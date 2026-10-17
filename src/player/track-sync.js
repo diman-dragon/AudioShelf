@@ -1,6 +1,7 @@
 import { Player } from '../folder/plugins.js';
-import { getTrack, refreshChapters, setTrack } from './player-state.js';
-import { saveLast } from './progress-store.js';
+import { getTrack, setTrack } from './player-state.js';
+import { refreshChapters } from './refresh-chapters.js';
+import { saveLast } from './last-book.js';
 
 // Одиночный файл переименован и получил новый uri (он же id записи).
 export function retarget(oldId, file) {

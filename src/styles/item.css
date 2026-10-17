@@ -94,3 +94,9 @@
   font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
+
+/* Строки за пределами экрана не раскладываются, пока до них не доскроллят */
+.lib-items.list .item {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 84px;
+}

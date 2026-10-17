@@ -28,6 +28,7 @@ function infoOf(book) {
 export function createItem(book, { onOpen, onMenu }) {
   const item = el('div', 'item');
   item._file = book.files[0]; // обложку берём из первого файла
+  item._book = book;
 
   const thumb = el('div', 'thumb');
   const ph = image('ph');

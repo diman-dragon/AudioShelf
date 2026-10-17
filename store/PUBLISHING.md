@@ -18,7 +18,7 @@
 ## Шаг 0. Решите до первой загрузки (потом не изменить)
 
 1. **applicationId** сейчас `com.audioshelf.app`. После публикации менять нельзя. Если хотите свой домен — замените в `android/app/build.gradle`, `capacitor.config.*`, `AndroidManifest.xml` и пакете Java (`com.audioshelf.app`) до загрузки.
-2. **Версия.** Сейчас 0.9.6 (versionCode 906). Для первого релиза логично 1.0.0 (versionCode 10000): поднимите версию по правилам проекта.
+2. **Версия.** Сейчас 0.9.9 (versionCode 909). Для первого релиза логично 1.0.0 (versionCode 10000): поднимите версию по правилам проекта.
 3. **E-mail в политике:** в `docs/index.html` замените `[ВАШ E-MAIL]` и `[YOUR E-MAIL]`.
 
 ## Шаг 1. Аккаунт разработчика
@@ -105,3 +105,29 @@ Repo → Settings → Pages → Source: *Deploy from a branch*, ветка `main
 - Премиум проверяется на устройстве по ответу Google Play (без собственного сервера): достаточно для такого приложения, но технически подкованный пользователь может обойти блокировку.
 - Разрешение `INTERNET` осталось в манифесте (стандарт Capacitor).
 - Скриншоты сделаны в браузере на демо-данных, не на устройстве; Google допускает это, но на реальном телефоне лучше переснять.
+
+
+## Ключ подписи APK (для обновлений поверх)
+
+Ключ, которым подписывается APK из основной сборки, в репозиторий не входит. Он хранится в секретах GitHub:
+Settings → Secrets and variables → Actions → New repository secret.
+
+| Секрет | Что это |
+| --- | --- |
+| `AUDIOSHELF_DEBUG_KEYSTORE_BASE64` | файл ключа `audioshelf-debug.jks`, закодированный в base64 |
+| `AUDIOSHELF_DEBUG_KEYSTORE_PASSWORD` | пароль хранилища |
+| `AUDIOSHELF_DEBUG_KEY_ALIAS` | имя ключа (`audioshelf`) |
+| `AUDIOSHELF_DEBUG_KEY_PASSWORD` | пароль ключа |
+
+Новый ключ создаётся так (значения паролей придумайте сами и сохраните):
+
+```
+keytool -genkeypair -keystore audioshelf-debug.jks -storetype PKCS12 -alias audioshelf \
+  -keyalg RSA -keysize 2048 -validity 10950
+base64 -w0 audioshelf-debug.jks      # результат — значение секрета ..._BASE64
+```
+
+Сохраните `audioshelf-debug.jks` и пароли в надёжном месте. Потеряете ключ — придётся удалить приложение и поставить заново
+(данные приложения пропадут). Менять ключ без необходимости не нужно: с другим ключом APK поверх старого не встанет.
+Локально ту же подпись даёт файл `android/keystore.properties` (в `.gitignore`) с теми же именами `AUDIOSHELF_DEBUG_*`,
+где `AUDIOSHELF_DEBUG_KEYSTORE_FILE` — путь к `audioshelf-debug.jks`.

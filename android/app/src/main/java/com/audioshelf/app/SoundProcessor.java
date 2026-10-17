@@ -4,21 +4,17 @@ import androidx.media3.common.C;
 import androidx.media3.common.audio.BaseAudioProcessor;
 import java.nio.ByteBuffer;
 
-/** 10-band equalizer plus a per-file loudness trim, applied to 16-bit PCM before the output. */
+/** 10-band equalizer plus a per-file loudness trim and volume boost, applied to 16-bit PCM before the output. */
 final class SoundProcessor extends BaseAudioProcessor {
-  static final int BANDS = 10;
-  private static final double[] FREQS = {31.25, 62.5, 125, 250, 500, 1000, 2000, 4000, 8000, 16000};
-  private static final double Q = 1.41;
+  static final int BANDS = EqChain.BANDS;
 
   private volatile float[] bandsDb = new float[BANDS];
   private volatile float trimDb;
   private volatile float boost = 1f; // linear, 1 = as recorded
 
+  private final EqChain eq = new EqChain();
   private int rate;
   private int channels;
-  private float[][] z1;
-  private float[][] z2;
-  private Biquad[] filters = new Biquad[BANDS]; // null = band is flat
   private float[] builtFor;
   private float builtTrim = Float.NaN;
   private float builtBoost = Float.NaN;
@@ -33,7 +29,7 @@ final class SoundProcessor extends BaseAudioProcessor {
     trimDb = db;
   }
 
-  /** Volume above 100%: linear factor (1..3); loud peaks are then softly limited instead of clipped. */
+  /** Volume above 100%: linear factor (1..4); loud peaks are then softly limited instead of clipped. */
   void setBoost(float factor) {
     boost = Math.max(1f, Math.min(4f, factor));
   }
@@ -43,8 +39,7 @@ final class SoundProcessor extends BaseAudioProcessor {
     if (input.encoding != C.ENCODING_PCM_16BIT) return AudioFormat.NOT_SET; // leave other formats alone
     rate = input.sampleRate;
     channels = input.channelCount;
-    z1 = new float[BANDS][channels];
-    z2 = new float[BANDS][channels];
+    eq.reset(channels);
     builtFor = null;
     return input;
   }
@@ -55,32 +50,12 @@ final class SoundProcessor extends BaseAudioProcessor {
     float trim = trimDb;
     float factor = boost;
     if (db == builtFor && trim == builtTrim && factor == builtBoost) return;
-    float peak = 0;
-    for (int i = 0; i < BANDS; i++) {
-      boolean on = db[i] != 0 && FREQS[i] < rate * 0.45;
-      filters[i] = on ? Biquad.peaking(FREQS[i], db[i], Q, rate) : null;
-      peak = Math.max(peak, db[i]);
-    }
+    float peak = eq.build(db, rate);
     gain = (float) Math.pow(10, (trim - peak) / 20) * factor; // boosting bands lowers the level: no clipping
     limit = factor > 1f;
     builtBoost = factor;
     builtFor = db;
     builtTrim = trim;
-  }
-
-  private boolean allFlat() {
-    for (Biquad f : filters) if (f != null) return false;
-    return true;
-  }
-
-  /** Below 80% of full scale the signal is untouched; above it peaks bend smoothly towards full scale. */
-  private static float soften(float x) {
-    float knee = 0.8f * 32768f;
-    float a = Math.abs(x);
-    if (a <= knee) return x;
-    float room = 32767f - knee;
-    float y = knee + room * (float) Math.tanh((a - knee) / room);
-    return x < 0 ? -y : y;
   }
 
   @Override
@@ -89,24 +64,15 @@ final class SoundProcessor extends BaseAudioProcessor {
     if (size == 0) return;
     refresh();
     ByteBuffer out = replaceOutputBuffer(size);
-    if (gain == 1f && allFlat()) { // nothing to do: copy as is
+    if (gain == 1f && eq.flat()) { // nothing to do: copy as is
       out.put(input);
       out.flip();
       return;
     }
     int channel = 0;
     while (input.remaining() >= 2) {
-      float x = input.getShort();
-      for (int b = 0; b < BANDS; b++) {
-        Biquad f = filters[b];
-        if (f == null) continue;
-        float y = f.b0 * x + z1[b][channel];
-        z1[b][channel] = f.b1 * x - f.a1 * y + z2[b][channel];
-        z2[b][channel] = f.b2 * x - f.a2 * y;
-        x = y;
-      }
-      x *= gain;
-      if (limit) x = soften(x);
+      float x = eq.process(input.getShort(), channel) * gain;
+      if (limit) x = SoftLimiter.soften(x);
       out.putShort((short) Math.max(-32768, Math.min(32767, Math.round(x))));
       if (++channel == channels) channel = 0;
     }
