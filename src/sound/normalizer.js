@@ -1,7 +1,7 @@
 import { isPremium } from '../billing/entitlement.js';
 import { Loudness } from '../folder/plugins.js';
 import { getFiles } from '../library/library-data.js';
-import { flushGains, hasGain, saveGain } from './gain-store.js';
+import { hasGain, saveGain } from './gain-store.js';
 
 // Нормализация в фоне: нативная часть измеряет файлы по одному, а мы сохраняем поправки и показываем ход работы.
 // status: idle | running | done | cancelled | battery (остановлено, чтобы не посадить слабую батарею)
@@ -28,7 +28,6 @@ function onEvent(e) {
     saveGain(e.uri, e.gain);
     return set({ done: state.done + 1 });
   }
-  flushGains();
   listener?.remove();
   listener = null;
   set({ status: FINISH[e.status] ?? 'done', failed: e.failed, current: '' });

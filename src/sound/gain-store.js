@@ -1,39 +1,9 @@
-import { readStored, writeStored } from '../core/storage.js';
+import { createMapStore } from '../core/map-store.js';
 
-// uri файла -> поправка громкости, дБ (результат нормализации). Держим в памяти, пишем пачками.
-const KEY = 'audioshelf.gain';
-const DELAY = 800;
-let cache = null;
-let timer = 0;
+// uri файла -> поправка громкости, дБ (результат нормализации). Хранится в базе по строке на файл.
+const store = createMapStore('audioshelf.gain');
 
-function load() {
-  if (cache) return cache;
-  try {
-    cache = JSON.parse(readStored(KEY)) ?? {};
-  } catch {
-    cache = {};
-  }
-  return cache;
-}
-
-export const flushGains = () => {
-  clearTimeout(timer);
-  timer = 0;
-  if (cache) writeStored(KEY, JSON.stringify(cache));
-};
-
-export const getGain = (uri) => load()[uri] ?? 0;
-export const hasGain = (uri) => uri in load();
-
-export function saveGain(uri, db) {
-  load()[uri] = db;
-  if (!timer) timer = setTimeout(flushGains, DELAY);
-}
-
-export function moveGain(from, to) {
-  const map = load();
-  if (from === to || !(from in map)) return;
-  map[to] = map[from];
-  delete map[from];
-  flushGains();
-}
+export const getGain = (uri) => store.get(uri) ?? 0;
+export const hasGain = (uri) => uri in store.all();
+export const saveGain = (uri, db) => store.set(uri, db);
+export const moveGain = store.move;

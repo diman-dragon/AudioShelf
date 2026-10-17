@@ -1,25 +1,5 @@
 import './styles/index.css';
-import { initLanguage } from './i18n/language.js';
-import { initTheme } from './theme/theme.js';
-import { mountApp } from './app/app.js';
-import { initBack } from './app/back.js';
-import { initLibrarySync } from './library/library-sync.js';
-import { initPlayer } from './player/player-state.js';
-import { initBilling, initDevCode } from './billing/entitlement.js';
-import { initAutoNormalize } from './sound/auto-normalize.js';
-import { initProgressWatch } from './library/progress-watch.js';
-import { applyOffload } from './player/energy-pref.js';
-import { initSoundSync } from './sound/sound-sync.js';
+import { initStorage } from './core/storage.js';
 
-initLanguage();
-initTheme();
-mountApp(document.getElementById('app'));
-initBack();
-initLibrarySync();
-initPlayer();
-initSoundSync();
-initBilling();
-initProgressWatch();
-initAutoNormalize();
-initDevCode();
-applyOffload();
+// Сначала база данных загружается в память (модули читают настройки уже при подключении), потом запускается приложение.
+initStorage().finally(() => import('./start.js'));

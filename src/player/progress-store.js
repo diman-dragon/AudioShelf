@@ -8,20 +8,20 @@ const store = createMapStore('audioshelf.progress2');
 const LAST = 'audioshelf.last2'; // последняя книга целиком
 const SPEED = 'audioshelf.speed';
 
-// pc — процент прослушанного по всей книге (для полоски в библиотеке).
+// pc — процент прослушанного по всей книге (для полоски в библиотеке). Длины глав узнаются, когда книгу открывают;
+// до этого процент 0 (или оценка по уже известным длинам).
 export const saveProgress = (id, { i, p, d, done, x, pc }) => {
-  store.set(id, { i, p: Math.floor(p), d: Math.floor(d), done: Boolean(done), x: x ? 1 : 0, pc: pc ?? 0, t: Date.now() });
-  document.dispatchEvent(new Event('progresschange'));
+  store.set(id, { i: i, p: Math.floor(p), d: Math.floor(d), done: Boolean(done), x: x ? 1 : 0, pc: pc ?? 0, t: Date.now() });
+  document.dispatchEvent(new CustomEvent('progresschange', { detail: id }));
 };
 
-// Сколько процентов книги прослушано: null — не начата. Для записей без pc считаем по одному файлу.
-export function percentOf(id) {
-  const r = store.get(id);
+// Процент по записи: null — не начата.
+export function percentFrom(r) {
   if (!r) return null;
   if (r.done) return 100;
-  const pc = r.pc ?? (!r.x && r.i === 0 && r.d > 0 ? Math.floor((100 * r.p) / r.d) : 0);
-  return pc > 0 || r.i > 0 || r.p > 1 ? Math.max(1, Math.min(99, pc)) : null; // начатая книга: хотя бы 1%
+  return r.pc > 0 || r.i > 0 || r.p > 1 ? Math.max(0, Math.min(99, r.pc ?? 0)) : null;
 }
+export const percentOf = (id) => percentFrom(store.get(id));
 
 // Книга стала раскладываться на главы внутри файла: запись без пометки x переносим на новые номера.
 export function remapProgress(id, map) {
