@@ -5,7 +5,6 @@ import androidx.media3.common.PlaybackParameters;
 import androidx.media3.common.Player;
 import java.util.function.Consumer;
 
-/** Tells JavaScript the moment the player changes, so it does not have to ask all the time. */
 final class StateEvents implements Player.Listener {
   private final Player player;
   private final Consumer<Player> send;

@@ -6,7 +6,6 @@ import android.provider.DocumentsContract;
 import android.provider.DocumentsContract.Document;
 import com.getcapacitor.JSObject;
 
-/** What the scanner asks the provider for, and how a found file is described to JavaScript. */
 final class ScanFile {
   static final String[] COLS = {
     Document.COLUMN_DOCUMENT_ID,
@@ -18,7 +17,6 @@ final class ScanFile {
 
   private ScanFile() {}
 
-  /** path is the folder the file lies in; the files of one folder make one book. */
   static JSObject describe(Uri tree, Cursor c, String dir, String path) {
     JSObject o = new JSObject();
     o.put("dir", path);

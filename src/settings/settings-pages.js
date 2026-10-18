@@ -15,7 +15,6 @@ import { createThemeSwitch } from '../ui/theme-switch.js';
 
 const heading = (key) => bindText(el('h2', 'sound-h set-h'), key);
 
-// Три страницы настроек: приложение, «О нас», Премиум. build() собирает содержимое страницы.
 export const PAGES = [
   {
     id: 'app',

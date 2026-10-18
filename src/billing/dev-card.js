@@ -3,7 +3,6 @@ import { bindText } from '../i18n/bind.js';
 import { t } from '../i18n/i18n.js';
 import { applyDevCode, getFingerprint, hasDevCode, removeDevCode } from './entitlement.js';
 
-// Копирование без системных окон: сначала clipboard API, затем выделенный временный текст.
 async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text);
@@ -18,14 +17,12 @@ async function copyText(text) {
     try {
       ok = document.execCommand('copy');
     } catch {
-      /* ignore */
     }
     area.remove();
     return ok;
   }
 }
 
-// Код разработчика: отпечаток телефона (его присылают разработчику) и поле для полученного кода.
 export function createDevCard() {
   const node = el('div', 'devcode');
   const fp = el('div', 'dev-fp');

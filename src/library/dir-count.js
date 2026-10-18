@@ -1,4 +1,3 @@
-// Сколько файлов лежит в папке и во всех её подпапках: по этому узнаём, можно ли удалять папку целиком.
 export function countUnder(files) {
   const under = new Map();
   files.forEach((file) => {

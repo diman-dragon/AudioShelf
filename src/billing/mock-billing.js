@@ -1,6 +1,5 @@
 import { readStored, writeStored } from '../core/storage.js';
 
-// Заглушка для браузера: «Google Play» отвечает через 0.5 с, Премиум запоминается.
 const OWNED = 'audioshelf.mockPremium';
 const PRICES = [
   { id: 'premium', price: '$9.99' },

@@ -8,7 +8,6 @@ function iconButton(className, icon, ariaKey, onClick) {
   return bindAria(btn, ariaKey);
 }
 
-// Ряд кнопок: [глава −] [назад N с] [пуск/пауза] [вперёд N с] [глава +].
 export function createControls({ onPrev, onBack, onToggle, onForward, onNext }) {
   const node = el('div', 'pcontrols');
   const prev = iconButton('pskip', PREV_ICON, 'player.prev', onPrev);
@@ -18,8 +17,6 @@ export function createControls({ onPrev, onBack, onToggle, onForward, onNext }) 
   const toggle = iconButton('pplay', PLAY_ICON, 'player.play', onToggle);
   node.append(prev, back, toggle, forward, next);
 
-  // Значок и подпись меняем только когда они правда изменились: если пересоздавать содержимое кнопки
-  // на каждом опросе плеера (дважды в секунду), палец «теряет» нажатую кнопку и тап не срабатывает.
   let shownSkip = '';
   let shownPlaying = null;
   return {
@@ -30,7 +27,6 @@ export function createControls({ onPrev, onBack, onToggle, onForward, onNext }) 
         toggle.innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
         bindAria(toggle, playing ? 'player.pause' : 'player.play');
       }
-      // «Назад» есть всегда (у одного файла он вернёт к началу); «вперёд» без следующей главы неактивна.
       prev.hidden = false;
       next.hidden = false;
       next.disabled = !multi;

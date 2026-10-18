@@ -5,7 +5,6 @@ import { BOOSTS, getBoost, setBoost } from './boost-pref.js';
 
 const items = BOOSTS.map((p) => ({ id: p, label: `${p}%` }));
 
-// «Усиление громкости»: 100% — как в файле; больше — программное усиление с мягким ограничителем пиков.
 export function createBoostCard() {
   const node = el('div', 'boostcard');
   node.append(

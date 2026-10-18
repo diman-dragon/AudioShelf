@@ -3,10 +3,9 @@ package com.audioshelf.app;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-/** Collects the loudness of decoded PCM: mean energy of 100 ms blocks (silence skipped) and the peak. */
 final class LoudnessStats {
-  private static final double SILENCE = Math.pow(10, -50.0 / 10); // blocks quieter than -50 dBFS are not counted
-  static final double TARGET_DB = -16; // wanted level, dBFS (RMS)
+  private static final double SILENCE = Math.pow(10, -50.0 / 10);
+  static final double TARGET_DB = -16;
   static final double MAX_GAIN_DB = 12;
 
   private final long blockSamples;
@@ -20,7 +19,6 @@ final class LoudnessStats {
     blockSamples = Math.max(1, sampleRate / 10) * (long) channels;
   }
 
-  /** Adds decoded samples: 16-bit PCM, or 32-bit float when isFloat. */
   void add(ByteBuffer data, boolean isFloat) {
     ByteBuffer buf = data.duplicate().order(ByteOrder.nativeOrder());
     while (buf.remaining() >= (isFloat ? 4 : 2)) {
@@ -39,12 +37,11 @@ final class LoudnessStats {
     }
   }
 
-  /** Gain in dB that brings the file to the target level without clipping; 0 if nothing was heard. */
   double gainDb() {
     if (energyBlocks == 0 || peak <= 0) return 0;
     double loud = 10 * Math.log10(energySum / energyBlocks);
     double gain = Math.max(-MAX_GAIN_DB, Math.min(MAX_GAIN_DB, TARGET_DB - loud));
-    double headroom = -1 - 20 * Math.log10(peak); // keep the peak under -1 dBFS
+    double headroom = -1 - 20 * Math.log10(peak);
     if (gain > headroom) gain = Math.max(-MAX_GAIN_DB, headroom);
     return Math.round(gain * 10) / 10.0;
   }

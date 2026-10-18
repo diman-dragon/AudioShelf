@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { mockBook, open, pass } from './helpers.mjs';
 
-// У книги два режима, с паузой после главы и без неё; кнопка режима переключает их.
 const app = await open({ storage: { 'audioshelf.last2': JSON.stringify(mockBook(3)) } });
 await app.tab('Плеер');
 const mode = app.page.locator('.pextra').nth(3);

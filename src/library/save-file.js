@@ -11,8 +11,6 @@ import { moveHidden } from './hidden-store.js';
 import { notifyLibrary, patchFiles } from './library-data.js';
 import { moveMeta, saveMeta } from './meta-store.js';
 
-// Теги и (для одиночного файла) имя из окна «Изменить». Переименование меняет uri —
-// а с ним id записи — поэтому переносим всё, что к нему привязано.
 export async function saveFile(book, meta, base) {
   const file = book.files[0];
   const [oldBase, ext] = splitName(file.name);

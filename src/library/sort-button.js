@@ -5,7 +5,6 @@ import { openSheet } from '../ui/sheet.js';
 import { SORTS, getFilter, setFilter } from './filter-state.js';
 import { SORT_ICON } from './icons.js';
 
-// Кнопка «Сортировка»: нижнее меню, текущий вариант отмечен галочкой.
 function openMenu() {
   const current = getFilter().sort;
   openSheet(t('lib.sort'), SORTS.map((id) => ({

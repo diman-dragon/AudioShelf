@@ -6,9 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import org.json.JSONArray;
-import org.json.JSONObject;
 
-/** The app's own database: one table of (store, key) -> JSON text. Progress, bookmarks, chapters, durations, gains, settings. */
 final class AppDb extends SQLiteOpenHelper {
   private static AppDb instance;
 
@@ -19,7 +17,7 @@ final class AppDb extends SQLiteOpenHelper {
 
   private AppDb(Context ctx) {
     super(ctx, "audioshelf.db", null, 1);
-    setWriteAheadLoggingEnabled(true); // a commit appends to a log instead of syncing the whole file: far fewer flash writes
+    setWriteAheadLoggingEnabled(true);
   }
 
   @Override
@@ -38,7 +36,6 @@ final class AppDb extends SQLiteOpenHelper {
     return rows;
   }
 
-  /** ops: [["p", store, key, value] | ["d", store, key] | ["c", store]] in one transaction. */
   synchronized void apply(JSONArray ops) throws Exception {
     SQLiteDatabase db = getWritableDatabase();
     db.beginTransaction();

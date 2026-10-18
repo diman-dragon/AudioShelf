@@ -1,24 +1,22 @@
 import { Sleep } from '../folder/plugins.js';
 
-// Таймер сна: выкл, N минут воспроизведения или до конца главы. Считает нативный плеер, мы запоминаем выбор для подсветки.
-export const SLEEP_OPTIONS = ['off', 15, 30, 45, 60, 'chapter'];
+const SLEEP_OPTIONS = ['off', 15, 30, 45, 60, 'chapter'];
 
 let choice = 'off';
 let armedAt = 0;
-const GRACE = 1500; // мс: пока нативный таймер заводится, состояние ещё старое
+const GRACE = 1500;
 
 export const getSleepChoice = () => choice;
 
 const notify = () => document.dispatchEvent(new Event('sleepchange'));
 
-export function setSleepChoice(id) {
+function setSleepChoice(id) {
   choice = id;
   armedAt = Date.now();
   notify();
   return Sleep.setSleep({ minutes: typeof id === 'number' ? id : 0, chapter: id === 'chapter' }).catch(() => {});
 }
 
-// Таймер сработал (или плеер закрыли) — выбор сбрасывается.
 export function syncSleep(status) {
   if (choice !== 'off' && Date.now() - armedAt > GRACE && !(status.sleepLeft > 0 || status.sleepEnd)) {
     choice = 'off';
@@ -26,5 +24,4 @@ export function syncSleep(status) {
   }
 }
 
-// Кнопка в плеере: следующий вариант таймера по кругу.
 export const cycleSleep = () => setSleepChoice(SLEEP_OPTIONS[(SLEEP_OPTIONS.indexOf(choice) + 1) % SLEEP_OPTIONS.length]);

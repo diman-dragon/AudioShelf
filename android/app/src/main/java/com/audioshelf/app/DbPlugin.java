@@ -6,10 +6,8 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
-/** Access to the app database (see AppDb). JS keeps a copy in memory and writes changes in batches. */
 @CapacitorPlugin(name = "Db")
 public class DbPlugin extends Plugin {
-  /** -> { rows: [[store, key, value]] } */
   @PluginMethod
   public void all(PluginCall call) {
     try {
@@ -19,7 +17,6 @@ public class DbPlugin extends Plugin {
     }
   }
 
-  /** ops: [["p", store, key, value] | ["d", store, key] | ["c", store]] */
   @PluginMethod
   public void apply(PluginCall call) {
     try {

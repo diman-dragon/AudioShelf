@@ -1,14 +1,3 @@
-// Подпись сборок. Ключей в репозитории нет: они приходят из переменных окружения (так их передаёт GitHub Actions
-// из секретов) или из файла android/keystore.properties (для сборки на своём компьютере; файл в .gitignore).
-//
-// debug (APK для личной установки): постоянный ключ. Пока он один и тот же, новая версия ставится поверх старой.
-//   AUDIOSHELF_DEBUG_KEYSTORE_FILE, AUDIOSHELF_DEBUG_KEYSTORE_PASSWORD, AUDIOSHELF_DEBUG_KEY_ALIAS, AUDIOSHELF_DEBUG_KEY_PASSWORD
-//   Если данных нет (чужой форк, первая сборка на компьютере), берётся обычный временный debug-ключ Android:
-//   такой APK собирается, но поверх APK с вашим ключом не ставится.
-//
-// release (для Google Play): ключ ЗАГРУЗКИ.
-//   AUDIOSHELF_KEYSTORE_FILE, AUDIOSHELF_KEYSTORE_PASSWORD, AUDIOSHELF_KEY_ALIAS, AUDIOSHELF_KEY_PASSWORD
-//   Если данных нет, release-сборка остаётся неподписанной.
 def keyProps = new Properties()
 def keyFile = rootProject.file('keystore.properties')
 if (keyFile.exists()) keyFile.withInputStream { keyProps.load(it) }

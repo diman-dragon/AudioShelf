@@ -9,7 +9,6 @@ export function closeModal() {
   node = null;
 }
 
-// Своё окно по центру: заголовок + содержимое. Закрывается по тапу мимо и системной «Назад».
 export function openModal(title, content) {
   closeModal();
   const box = el('div', 'modal-box');

@@ -12,7 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/** Sound settings of the one player: equalizer bands and a loudness trim for each file. */
 final class PlayerSound {
   private static final SoundProcessor PROCESSOR = new SoundProcessor();
   private static final Map<String, Float> TRIMS = new ConcurrentHashMap<>();
@@ -21,12 +20,10 @@ final class PlayerSound {
 
   private PlayerSound() {}
 
-  /** Goes into the audio sink when the player is built. */
   static SoundProcessor processor() {
     return PROCESSOR;
   }
 
-  /** Called once, right after the player is built (main thread). */
   static void attach(ExoPlayer p) {
     player = p;
     p.addListener(
@@ -42,7 +39,6 @@ final class PlayerSound {
     player = null;
   }
 
-  /** {bands: [10 dB values], trims: {file uri: dB}, boost: linear factor} as sent by JavaScript. Any thread. */
   static void applyJson(JSONObject d) {
     JSONArray list = d.optJSONArray("bands");
     float[] bands = new float[SoundProcessor.BANDS];
@@ -64,7 +60,7 @@ final class PlayerSound {
   private static void apply(float[] bands, Map<String, Float> trims, float boost) {
     boolean flat = trims.isEmpty() && boost <= 1f;
     for (float b : bands) flat &= b == 0;
-    PlayerOffload.setNeutral(flat); // offload would bypass the equalizer and the trims
+    PlayerOffload.setNeutral(flat);
     PROCESSOR.setBands(bands);
     PROCESSOR.setBoost(boost);
     TRIMS.clear();

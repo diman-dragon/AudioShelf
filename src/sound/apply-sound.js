@@ -6,9 +6,8 @@ import { getGain } from './gain-store.js';
 import { getBoost } from './boost-pref.js';
 import { isNormOn } from './norm-pref.js';
 
-let sent = ''; // последнее отправленное: одинаковое повторно не шлём
+let sent = '';
 
-// Отправляет плееру эквалайзер книги и поправки громкости её файлов. Без Премиума эквалайзер и поправки не работают; усиление громкости доступно всем.
 export function applySound(book) {
   const trims = {};
   if (book && isNormOn() && isPremium()) {
@@ -22,6 +21,6 @@ export function applySound(book) {
   if (json === sent) return Promise.resolve();
   sent = json;
   return Sound.setSound(sound).catch(() => {
-    sent = ''; // не дошло — в следующий раз отправим снова
+    sent = '';
   });
 }

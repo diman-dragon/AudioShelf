@@ -13,7 +13,6 @@ import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import java.util.List;
 
-/** Operations on library files: add (copy in), remove, rename, open in another app. */
 @CapacitorPlugin(name = "FileOps")
 public class FileOpsPlugin extends SafPlugin {
 
@@ -37,7 +36,6 @@ public class FileOpsPlugin extends SafPlugin {
     }
     List<Uri> sources = PickedUris.from(data);
     Uri parent = Saf.treeRoot(Uri.parse(call.getString("tree")));
-    // Files can be large: copy off the main thread.
     new Thread(
             () -> {
               JSObject o = new JSObject();

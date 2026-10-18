@@ -2,9 +2,8 @@ import { getFolder } from '../folder/folder-store.js';
 import { finishScan, getStatus, isScanning, restoreLibrary, setProgress, setScanning } from './library-data.js';
 import { cancelScan, scanFolder } from './scan.js';
 
-let again = false; // пока шёл обход, папку сменили или снова нажали «Обновить»
+let again = false;
 
-// Обход папки с подпапками в фоне: прогресс по ходу, остановка по кнопке.
 export async function rescan() {
   const folder = getFolder();
   if (!folder) return restoreLibrary();
@@ -17,7 +16,6 @@ export async function rescan() {
   let failed = false;
   try {
     const result = await scanFolder(folder.uri, setProgress);
-    // Остановили обход — прежний список не трогаем (кроме самого первого обхода).
     if (!again && (!result.cancelled || getStatus() !== 'ok')) files = result.files;
   } catch {
     failed = !again;

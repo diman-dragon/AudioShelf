@@ -6,13 +6,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-/** What survives the death of the process: the last book, where we stopped, and the settings to restore. */
 final class ResumeStore {
-  static final String SESSION = "session"; // {id, title, artist, items: [{uri, title}]}
-  static final String PROFILE = "profile"; // last setProfile arguments
-  static final String SOUND = "sound"; // last setSound arguments
+  static final String SESSION = "session";
+  static final String PROFILE = "profile";
+  static final String SOUND = "sound";
   static final String SPEED = "speed";
-  static final String OFFLOAD = "offload"; // "1" when hardware playback is allowed
+  static final String OFFLOAD = "offload";
 
   private ResumeStore() {}
 
@@ -28,7 +27,6 @@ final class ResumeStore {
     prefs(ctx).edit().putString(key, value).apply();
   }
 
-  /** A book was loaded: remember what it is and where we start. Items are [{uri, title}] as sent by JavaScript. */
   static void saveSession(Context ctx, String id, String title, String artist, JSONArray items, int index, long position)
       throws JSONException {
     JSONObject session = new JSONObject();
@@ -40,7 +38,6 @@ final class ResumeStore {
     putSpot(ctx, index, position);
   }
 
-  /** Where playback stopped: chapter index and position inside it. */
   static void putSpot(Context ctx, int index, long position) {
     prefs(ctx)
         .edit()
@@ -62,7 +59,6 @@ final class ResumeStore {
     return prefs(ctx).getLong("t", 0L);
   }
 
-  /** The book was deleted or closed on purpose: nothing to resume. */
   static void forgetSession(Context ctx) {
     prefs(ctx).edit().remove(SESSION).remove("index").remove("position").remove("t").apply();
   }

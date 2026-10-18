@@ -1,7 +1,5 @@
 import { readStored, writeStored } from '../core/storage.js';
 
-// Что показывать в библиотеке: тип (все / книги / альбомы), сортировка и строка поиска.
-// Тип и сортировку помним, поиск — нет.
 export const KINDS = ['all', 'book', 'album'];
 export const SORTS = ['date', 'name', 'played'];
 const KEYS = { kind: 'audioshelf.libkind', sort: 'audioshelf.libsort' };

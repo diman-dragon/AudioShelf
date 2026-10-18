@@ -5,7 +5,6 @@ import { REFRESH_ICON } from './icons.js';
 import { rescan } from './rescan.js';
 import { createViewSwitch } from './view-switch.js';
 
-// Панель над списком: вид, «Обновить» (повторное сканирование) и «Добавить». Названия папки нет.
 export function createLibBar() {
   const node = el('div', 'lib-bar');
   const refreshBtn = button('icon-btn', rescan);

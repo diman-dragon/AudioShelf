@@ -8,7 +8,6 @@ import com.android.billingclient.api.QueryPurchasesParams;
 import java.util.List;
 import java.util.function.Consumer;
 
-/** What the purchases mean: Premium is granted and confirmed to Google, tips are used up so they can be bought again. */
 final class PurchaseHandler {
   private final BillingClient client;
   private boolean premium;
@@ -25,7 +24,6 @@ final class PurchaseHandler {
     premium = true;
   }
 
-  /** Asks Google Play what is owned and applies it (Premium can also be taken away, e.g. after a refund). */
   void refresh(Runnable next, Consumer<String> onFail) {
     client.queryPurchasesAsync(
         QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build(),
@@ -40,7 +38,6 @@ final class PurchaseHandler {
         });
   }
 
-  /** Grants Premium, confirms it to Google, and uses up tips. Returns true if a purchase is still pending. */
   boolean handle(List<Purchase> purchases) {
     boolean pending = false;
     if (purchases == null) return false;

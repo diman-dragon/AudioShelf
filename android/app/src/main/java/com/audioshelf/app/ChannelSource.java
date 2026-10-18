@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
-/** A content:// file opened for random reading. */
 final class ChannelSource implements ByteSource, Closeable {
   private final ParcelFileDescriptor pfd;
   private final FileInputStream in;
@@ -43,7 +42,6 @@ final class ChannelSource implements ByteSource, Closeable {
       in.close();
       pfd.close();
     } catch (IOException ignored) {
-      // nothing left to release
     }
   }
 }

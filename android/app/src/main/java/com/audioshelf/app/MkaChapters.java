@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Chapters of a Matroska file (MKA, MKV): the first visible edition, leaf chapters only. */
 final class MkaChapters {
   private static final long CHAPTERS = 0x1043A770L;
   private static final long EDITION = 0x45B9L;
@@ -33,7 +32,6 @@ final class MkaChapters {
     return new ArrayList<>();
   }
 
-  /** Walks the atoms of an edition (or of a parent atom). Returns true when it found nested atoms. */
   private static boolean atoms(ByteSource src, long from, long to, List<Chapter> out) throws IOException {
     boolean any = false;
     for (long p = from; p < to; ) {

@@ -7,7 +7,6 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
-/** Developer code: device fingerprint and code check (the check itself lives in DevLicense). */
 @CapacitorPlugin(name = "License")
 public class LicensePlugin extends Plugin {
   private String fingerprint() {
@@ -15,7 +14,6 @@ public class LicensePlugin extends Plugin {
     return DevLicense.fingerprint(id == null ? "" : id, getContext().getPackageName());
   }
 
-  /** Returns { fingerprint }, and { valid } when a code is given. */
   @PluginMethod
   public void check(PluginCall call) {
     String fp = fingerprint();

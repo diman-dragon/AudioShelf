@@ -1,7 +1,6 @@
 import { el, button } from '../core/dom.js';
 import { bindAria, bindText } from '../i18n/bind.js';
 
-// Содержимое кнопки: пиктограмма (SVG-строка) или подпись (ключ перевода / готовый текст).
 function fill(btn, item) {
   if (item.icon) btn.innerHTML = item.icon;
   if (item.labelKey) bindText(btn, item.labelKey);
@@ -9,7 +8,6 @@ function fill(btn, item) {
   if (item.ariaKey) bindAria(btn, item.ariaKey);
 }
 
-// Переключатель «один из N» в одну полоску; выбранный вариант подсвечен.
 export function createSegmented(items, getCurrent, onPick) {
   const box = el('div', 'seg');
   const buttons = new Map();

@@ -3,7 +3,6 @@ import { bindText } from '../i18n/bind.js';
 import { pickPreset } from './eq-actions.js';
 import { PRESETS } from './presets.js';
 
-// Пресеты кнопками-«таблетками»; выбранный подсвечен (при ручной подстройке подсветки нет).
 export function createPresetChips() {
   const node = el('div', 'chips');
   const chips = new Map();

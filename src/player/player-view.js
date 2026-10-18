@@ -2,7 +2,6 @@ import { onNavigate } from '../app/router.js';
 import { createPainter } from './player-paint.js';
 import { createParts } from './player-parts.js';
 
-// Экран плеера: части собираются один раз и перерисовываются по событиям.
 export function renderPlayer() {
   const parts = createParts();
   const { paint, tick, repaintIfDirty } = createPainter(parts);

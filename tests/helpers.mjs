@@ -1,6 +1,5 @@
 import { chromium } from 'playwright';
 
-// Общее для браузерных тестов: приложение запускается в браузере с заглушками вместо нативных плагинов (mock).
 export const URL = process.env.TEST_URL ?? 'http://localhost:4183';
 
 export const mockBook = (n, id = `bk${n}`) => ({
@@ -10,7 +9,6 @@ export const mockBook = (n, id = `bk${n}`) => ({
   files: Array.from({ length: n }, (_, i) => ({ uri: `mock://t/${id}/${i}`, name: `Глава ${i + 1}.mp3`, size: 1e7, modified: 1, dir: 'Тест', dirUri: 'mock://dir/t' })),
 });
 
-// storage: настройки, которые кладутся в хранилище до запуска (ключи 'audioshelf.*', значения — строки).
 export async function open({ storage = {}, wait = 800 } = {}) {
   const browser = await chromium.launch();
   const page = await (await browser.newContext({ locale: 'ru-RU', viewport: { width: 390, height: 800 } })).newPage();
@@ -31,7 +29,6 @@ export async function open({ storage = {}, wait = 800 } = {}) {
       await page.locator('.tabbar').getByText(name, { exact: true }).click();
       await page.waitForTimeout(300);
     },
-    // Конец теста: браузер закрывается, а любая ошибка страницы или диалог системы считаются провалом.
     async done() {
       await browser.close();
       if (errors.length) throw new Error(`Ошибки на странице: ${errors.join('; ')}`);
@@ -39,7 +36,6 @@ export async function open({ storage = {}, wait = 800 } = {}) {
   };
 }
 
-// «Выбрать папку» в настройках (в заглушке находятся 11 файлов), затем вернуться в библиотеку.
 export async function pickFolder(app) {
   await app.tab('Настройки');
   await app.page.getByRole('button', { name: /Выбрать|Сменить|папк/i }).first().click();
@@ -47,7 +43,6 @@ export async function pickFolder(app) {
   await app.tab('Библиотека');
 }
 
-// Сколько раз за время fn записывались строки в хранилище, по хранилищам (браузерная «база» пишет в localStorage).
 export async function countWrites(page, fn) {
   await page.evaluate(() => {
     window.__w = {};

@@ -1,12 +1,11 @@
-const MIN_DIST = 60; // минимальная длина свайпа, px
-const RATIO = 1.5; // горизонталь должна явно побеждать вертикаль
-const EDGE = 24; // у краёв экрана живут системные жесты — не трогаем
+const MIN_DIST = 60;
+const RATIO = 1.5;
+const EDGE = 24;
 
-// Горизонтальный свайп: влево → onSwipe(+1), вправо → onSwipe(-1).
 export function initSwipe(node, onSwipe) {
   let startX = 0;
   let startY = 0;
-  let blocked = false; // свайп начался внутри своей прокрутки (страницы настроек): вкладки не переключаем
+  let blocked = false;
 
   node.addEventListener(
     'touchstart',

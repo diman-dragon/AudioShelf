@@ -4,7 +4,6 @@ import { presetBands } from './presets.js';
 
 const changed = () => document.dispatchEvent(new Event('eqchange'));
 
-// То, что сейчас показано на экране: у трека — его настройка (или общая, пока своей нет).
 export const shownEq = () => {
   const id = editingId();
   return id ? effectiveEq(id) : getGlobalEq();
@@ -30,7 +29,6 @@ export const pickPreset = (id) => write({ preset: id, bands: [...presetBands(id)
 
 export const resetBands = () => pickPreset('flat');
 
-// У трека снова общая настройка.
 export function useGlobalEq() {
   clearTrackEq(editingId());
   changed();

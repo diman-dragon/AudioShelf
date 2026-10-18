@@ -1,11 +1,9 @@
 import { delRow, putRow, readRows } from '../core/storage.js';
 
-// Длины глав книги (мс): строка на каждую главу, ключ «id книги, номер главы». Узнаём по мере прослушивания:
-// нужны для общего прогресса книги. Новая длина пишет одну строку, а не весь список.
 const STORE = 'durs';
 const SEP = '\u0001';
 
-let byBook = null; // id -> { номер главы: мс }
+let byBook = null;
 
 function load() {
   if (byBook) return byBook;
@@ -39,5 +37,4 @@ export function moveDurations(from, to) {
   Object.entries(known).forEach(([i, ms]) => put(to, i, ms));
 }
 
-// Длины глав, которые известны заранее (из оглавления файла).
 export const seedDurations = (id, known) => Object.entries(known).forEach(([i, ms]) => put(id, i, ms));

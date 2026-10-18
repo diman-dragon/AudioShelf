@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { open, pass } from './helpers.mjs';
 
-// Настройки в трёх страницах; на странице Премиума значок показывает, получен ли он (простой, без анимации).
 const free = await open();
 await free.tab('Настройки');
 const tabs = await free.page.locator('.stabs button').allInnerTexts();

@@ -5,7 +5,6 @@ import { MAX_DB, MIN_DB } from './bands.js';
 const SPAN = MAX_DB - MIN_DB;
 const fmtDb = (db) => (db > 0 ? `+${db}` : String(db));
 
-// Вертикальный ползунок одной полосы: ведём пальцем, шаг 1 дБ, ноль — посередине.
 export function createBandSlider(label, onChange) {
   const node = el('div', 'band');
   const value = el('span', 'band-db');

@@ -10,7 +10,6 @@ export function closeSheet() {
   node = null;
 }
 
-// Нижнее меню действий: заголовок, действия и «Отмена».
 export function openSheet(title, actions) {
   closeSheet();
   const box = el('div', 'sheet-box');

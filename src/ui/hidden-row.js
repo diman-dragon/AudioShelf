@@ -3,7 +3,6 @@ import { bindText } from '../i18n/bind.js';
 import { hiddenCount, restoreHidden } from '../library/hidden-store.js';
 import { notifyLibrary } from '../library/library-data.js';
 
-// Строка «Скрытые файлы: N — Вернуть»; видна, только если такие есть.
 export function createHiddenRow() {
   const row = el('div', 'row');
   const text = el('span');

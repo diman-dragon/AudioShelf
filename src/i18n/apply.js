@@ -2,7 +2,6 @@ import { t } from './i18n.js';
 
 const readParams = (raw) => (raw ? JSON.parse(raw) : undefined);
 
-// Перерисовывает все привязанные тексты после смены языка.
 export function applyTranslations(root = document) {
   root.querySelectorAll('[data-i18n]').forEach((node) => {
     node.textContent = t(node.dataset.i18n, readParams(node.dataset.i18nParams));

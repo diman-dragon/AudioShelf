@@ -1,4 +1,3 @@
-// Идентификаторы товаров в Google Play Console (одинаковые с Java: BillingProducts).
 export const PREMIUM = 'premium';
 export const TIPS = [
   { id: 'tip_small', nameKey: 'tip.small' },

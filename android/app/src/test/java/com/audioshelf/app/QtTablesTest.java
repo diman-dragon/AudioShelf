@@ -26,7 +26,7 @@ public class QtTablesTest {
     return out.toByteArray();
   }
 
-  private static final byte[] STSZ = box("stsz", ints(0, 0, 3, 10, 20, 30)); // version/flags, fixed size 0, 3 samples
+  private static final byte[] STSZ = box("stsz", ints(0, 0, 3, 10, 20, 30));
 
   @Test
   public void sizesAreReadPerSample() {
@@ -42,7 +42,7 @@ public class QtTablesTest {
 
   @Test
   public void startTimesComeFromTheTimeToSampleTable() {
-    byte[] payload = ints(0, 2, 2, 1000, 1, 500); // two entries: 2 samples of 1000, 1 sample of 500
+    byte[] payload = ints(0, 2, 2, 1000, 1, 500);
     assertArrayEquals(new long[] {0, 1000, 2000}, QtTables.starts(payload, new Mp4Box(0, payload.length), 3, 1000));
   }
 
@@ -54,8 +54,8 @@ public class QtTablesTest {
 
   @Test
   public void offsetsFollowChunksAndSampleSizes() {
-    byte[] stsc = box("stsc", ints(0, 1, 1, 2, 1)); // from chunk 1: 2 samples per chunk
-    byte[] stco = box("stco", ints(0, 2, 1000, 2000)); // two chunks
+    byte[] stsc = box("stsc", ints(0, 1, 1, 2, 1));
+    byte[] stco = box("stco", ints(0, 2, 1000, 2000));
     byte[] d = join(stsc, stco, STSZ);
     long[] offsets = QtTables.offsets(d, Mp4Box.whole(d), 3);
     assertArrayEquals(new long[] {1000, 1010, 2000}, offsets);

@@ -6,11 +6,9 @@ import com.getcapacitor.JSArray;
 import com.getcapacitor.PluginCall;
 import java.util.List;
 
-/** Loading a book: remembers the session for the notification/resume, builds the playlist (reads tags, so not on the main thread) and starts it. */
 final class PlayerLoad {
   private PlayerLoad() {}
 
-  /** items: [{uri, title}] — the files of one book; index/position say where to start. */
   static void run(Context ctx, PluginCall call, PlayerRunner runner, Runnable startService) {
     JSArray items = call.getArray("items");
     if (items == null || items.length() == 0) {

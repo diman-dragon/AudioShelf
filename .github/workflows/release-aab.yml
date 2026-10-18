@@ -1,12 +1,10 @@
 name: Release AAB (Google Play)
 
-# Запускается только вручную: Actions → Release AAB → Run workflow.
-# Собирает подписанный ключом загрузки AAB для Google Play и кладёт его в Artifacts (не в публичный релиз).
 on:
   workflow_dispatch:
 
 permissions:
-  contents: read # артефакт кладётся в Artifacts, репозиторий не меняется
+  contents: read
 
 jobs:
   bundle:
@@ -29,7 +27,6 @@ jobs:
           fi
           echo "$KEYSTORE_BASE64" | base64 -d > "$AUDIOSHELF_KEYSTORE_FILE"
 
-      # Capacitor 8 требует Node 22+ и Java 21.
       - uses: actions/setup-node@v4
         with:
           node-version: 22

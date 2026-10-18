@@ -11,7 +11,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
-/** Adds a "Close" (✕) button to the media notification and handles it. */
 final class SessionCallback implements MediaSession.Callback {
   private static final SessionCommand CLOSE = new SessionCommand("audioshelf.close", Bundle.EMPTY);
 
@@ -41,7 +40,6 @@ final class SessionCallback implements MediaSession.Callback {
         .build();
   }
 
-  /** Play was pressed when nothing is loaded (the process was killed): bring back the last book. */
   @Override
   public ListenableFuture<MediaSession.MediaItemsWithStartPosition> onPlaybackResumption(
       MediaSession session, MediaSession.ControllerInfo controller) {

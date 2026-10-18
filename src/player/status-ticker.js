@@ -2,8 +2,6 @@ import { applyStatus, getStatus } from './player-state.js';
 import { getAnchor } from './status-anchor.js';
 import { needsSync, project } from './status-project.js';
 
-// Пока играет и приложение видно, раз в секунду двигаем позицию сами, а у плеера спрашиваем только раз в SYNC_EVERY секунд.
-// На паузе и в фоне таймер не работает совсем: об изменениях плеер сообщает событиями.
 const STEP_MS = 1000;
 const SYNC_EVERY = 10;
 

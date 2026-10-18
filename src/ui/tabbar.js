@@ -7,7 +7,6 @@ function createTab(screen, onSelect) {
   return btn;
 }
 
-// Нижние вкладки: SVG-эмодзи + подпись, активная подсвечивается.
 export function createTabbar(screens, onSelect) {
   const node = el('nav', 'tabbar');
   const tabs = new Map();

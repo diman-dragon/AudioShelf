@@ -7,3 +7,5 @@ android/local.properties
 *.keystore
 *.jks
 android/keystore.properties
+Secrets/
+AudioShelfLicense/

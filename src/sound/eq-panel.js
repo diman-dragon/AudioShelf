@@ -9,7 +9,6 @@ import { editingId, trackAvailable } from './eq-scope.js';
 import { createPresetChips } from './preset-chips.js';
 import { createScopeSwitch } from './scope-switch.js';
 
-// Блок эквалайзера: для чего настраиваем, пресеты, 10 полос и сброс.
 export function createEqPanel() {
   const node = el('div', 'eqpanel');
   const scope = createScopeSwitch();

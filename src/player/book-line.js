@@ -2,7 +2,6 @@ import { el } from '../core/dom.js';
 import { t } from '../i18n/i18n.js';
 import { fmtTime } from './time.js';
 
-// Тонкая полоска «прогресс всей книги» и подпись под ней. У альбома её нет.
 export function createBookLine() {
   const node = el('div', 'pline');
   const bar = el('div', 'pline-bar');

@@ -7,5 +7,4 @@ const items = [
   { id: 'album', labelKey: 'filter.albums' },
 ];
 
-// Переключатель «Все / Книги / Альбомы».
 export const createKindTabs = () => createSegmented(items, () => getFilter().kind, (kind) => setFilter({ kind }));

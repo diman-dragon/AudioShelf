@@ -4,7 +4,6 @@ import { t } from '../i18n/i18n.js';
 import { buy, priceOf } from './entitlement.js';
 import { TIPS } from './products.js';
 
-// Три «чая»: разовая добровольная покупка, ничего не открывает. Можно сколько угодно раз.
 export function createTipsCard() {
   const node = el('div', 'tips');
   const row = el('div', 'tips-row');

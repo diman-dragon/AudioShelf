@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import org.json.JSONObject;
 
-/** Brings back the last book, place, mode, sound and speed when the system asks us to resume (notification, headset, car). */
 final class ResumeLoader {
   private static final ListeningExecutorService IO = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
 
@@ -36,7 +35,6 @@ final class ResumeLoader {
         });
   }
 
-  /** Mode, sound and speed are applied on the main thread, as JavaScript would have done. */
   private static void restoreSettings(Context app) {
     new Handler(Looper.getMainLooper())
         .post(
@@ -50,7 +48,6 @@ final class ResumeLoader {
                 String speed = ResumeStore.get(app, ResumeStore.SPEED);
                 if (speed != null) p.setPlaybackSpeed(Float.parseFloat(speed));
               } catch (Exception ignored) {
-                // a damaged setting must not stop playback
               }
             });
   }

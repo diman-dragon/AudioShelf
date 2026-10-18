@@ -7,7 +7,6 @@ import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
 import androidx.media3.exoplayer.ExoPlayer;
 
-/** Writes the playing position to disk natively, so it survives a frozen WebView or a killed process. */
 final class PositionSaver implements Player.Listener, Runnable {
   private static final long EVERY_MS = 10_000;
   private static PositionSaver current;
@@ -26,7 +25,6 @@ final class PositionSaver implements Player.Listener, Runnable {
     current = new PositionSaver(app, player);
   }
 
-  /** Saves one last time and stops. */
   static synchronized void detach() {
     if (current == null) return;
     current.handler.removeCallbacks(current);
@@ -34,7 +32,6 @@ final class PositionSaver implements Player.Listener, Runnable {
     current = null;
   }
 
-  /** Call before anything that clears the playlist or ends the process. */
   static synchronized void flush() {
     if (current != null) current.save();
   }

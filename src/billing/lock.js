@@ -3,7 +3,6 @@ import { bindAria, bindText } from '../i18n/bind.js';
 import { isPremium } from './entitlement.js';
 import { openPremium } from './premium-dialog.js';
 
-// Без Премиума блок виден, но приглушён; тап по нему открывает окно покупки.
 export function lockable(node) {
   const wrap = el('div', 'lockable');
   const veil = bindAria(button('lock-veil', openPremium), 'premium.unlock');
@@ -14,7 +13,6 @@ export function lockable(node) {
   return wrap;
 }
 
-// Полоса над заблокированным звуком: что нужно и кнопка «Открыть Премиум».
 export function createLockBanner() {
   const node = el('div', 'lock-banner');
   node.append(bindText(el('span'), 'premium.locked'), bindText(button('btn', openPremium), 'premium.unlock'));

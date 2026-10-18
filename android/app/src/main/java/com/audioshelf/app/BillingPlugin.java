@@ -14,7 +14,6 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import java.util.Collections;
 import java.util.List;
 
-/** Google Play Billing for JavaScript: Premium (bought once) and three consumable tips. */
 @CapacitorPlugin(name = "Billing")
 public class BillingPlugin extends Plugin implements PurchasesUpdatedListener {
   private BillingConnection connection;
@@ -28,7 +27,6 @@ public class BillingPlugin extends Plugin implements PurchasesUpdatedListener {
     purchases = new PurchaseHandler(connection.client);
   }
 
-  /** Current state: owns Premium or not, and the localized price of every product. */
   @PluginMethod
   public void getState(PluginCall call) {
     connection.run(
@@ -40,7 +38,6 @@ public class BillingPlugin extends Plugin implements PurchasesUpdatedListener {
     return catalog.state(purchases.premium());
   }
 
-  /** Opens the Google Play purchase sheet. Resolves {status: ok | cancelled | pending | error}. */
   @PluginMethod
   public void buy(PluginCall call) {
     ProductDetails d = catalog.get(call.getString("id", ""));

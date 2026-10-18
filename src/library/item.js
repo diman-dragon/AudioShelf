@@ -7,7 +7,6 @@ import { getMeta } from './meta-store.js';
 import { applyPlaceholder } from './placeholder.js';
 import { percentOf } from '../player/progress-store.js';
 
-// Полоска «сколько прослушано» под сведениями: видна у начатых книг.
 export function paintProgress(bar) {
   const pc = percentOf(bar.dataset.id);
   bar.hidden = pc === null;
@@ -17,17 +16,15 @@ export function paintProgress(bar) {
   bar.lastChild.textContent = `${pc}%`;
 }
 
-// Сведения: «Книга · 2019 · Файлов: 12 · 1,2 ГБ · 13.10.2026» (у одиночного файла вместо числа — формат).
 function infoOf(book) {
   const { year } = getMeta(book.id);
   const what = book.folder ? t('info.files', { n: book.files.length }) : splitName(book.files[0].name)[1].slice(1).toUpperCase();
   return [t(`kind.${kindOf(book)}`), year, what, fmtSize(book.size), fmtDate(book.modified)].filter(Boolean).join(' · ');
 }
 
-// Одна книга (папка) или файл: обложка (пока нет — эмодзи), название, автор, сведения и «⋮».
 export function createItem(book, { onOpen, onMenu }) {
   const item = el('div', 'item');
-  item._file = book.files[0]; // обложку берём из первого файла
+  item._file = book.files[0];
   item._book = book;
 
   const thumb = el('div', 'thumb');

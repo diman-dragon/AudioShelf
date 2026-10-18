@@ -7,7 +7,6 @@ const items = [
   { id: 'track', labelKey: 'sound.track' },
 ];
 
-// «Для всех / Для трека». Если трек не выбран, вторая кнопка неактивна.
 export function createScopeSwitch() {
   const node = el('div', 'scope');
   const paint = () => {

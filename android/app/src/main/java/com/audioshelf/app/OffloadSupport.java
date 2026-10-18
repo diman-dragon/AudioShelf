@@ -6,7 +6,6 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.os.Build;
 
-/** Whether this phone can play the usual audiobook formats on its audio chip (audio offload). */
 final class OffloadSupport {
   private OffloadSupport() {}
 

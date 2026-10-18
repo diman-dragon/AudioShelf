@@ -3,7 +3,6 @@ import { THEMES } from './themes.js';
 
 const KEY = 'audioshelf.theme';
 
-// null — пользователь тему не выбирал.
 export function loadTheme() {
   const saved = readStored(KEY);
   return THEMES.some((t) => t.id === saved) ? saved : null;

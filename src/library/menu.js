@@ -5,7 +5,6 @@ import { openEditDialog } from './edit-dialog.js';
 import { openExternal, playFromLibrary } from './actions.js';
 import { titleOf } from './file-info.js';
 
-// Меню «⋮» у файла.
 export const openFileMenu = (book) =>
   openSheet(titleOf(book), [
     { label: t('lib.play'), run: () => playFromLibrary(book) },

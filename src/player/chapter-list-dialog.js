@@ -8,7 +8,6 @@ import { createChapterRow } from './chapter-row.js';
 import { getDurations } from './durations.js';
 import { getTrack } from './player-state.js';
 
-// Окно со списком глав (у альбома — треков): играющая выделена, нажатие — перейти и играть.
 export function openChapterList() {
   const book = getTrack();
   if (!book) return;

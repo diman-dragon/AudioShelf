@@ -8,7 +8,6 @@ import com.android.billingclient.api.PendingPurchasesParams;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 import java.util.function.Consumer;
 
-/** The connection to Google Play Billing: one client, connected on demand. */
 final class BillingConnection {
   final BillingClient client;
 
@@ -20,7 +19,6 @@ final class BillingConnection {
             .build();
   }
 
-  /** Runs the task once connected to Google Play; onFail gets a short reason. */
   void run(Runnable task, Consumer<String> onFail) {
     if (client.isReady()) {
       task.run();

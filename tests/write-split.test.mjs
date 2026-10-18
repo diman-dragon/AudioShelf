@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { countWrites, mockBook, open, pass } from './helpers.mjs';
 
-// Во время игры пишется только позиция, и редко; остальное (процент, длины) — только когда изменилось.
 const app = await open({ storage: { 'audioshelf.last2': JSON.stringify(mockBook(3)) } });
 await app.tab('Плеер');
 const writes = await countWrites(app.page, async () => {

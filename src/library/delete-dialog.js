@@ -5,7 +5,6 @@ import { t } from '../i18n/i18n.js';
 import { hideBook, removeBook } from './actions.js';
 import { titleOf } from './file-info.js';
 
-// Блок «кнопка + пояснение, что произойдёт».
 function choice(labelKey, hintKey, className, run) {
   const box = el('div', 'choice');
   const btn = bindText(button(`btn ${className}`, () => {
@@ -16,7 +15,6 @@ function choice(labelKey, hintKey, className, run) {
   return box;
 }
 
-// Удаление: убрать из библиотеки (файлы остаются) или стереть с диска.
 export function openDeleteDialog(book) {
   const cancel = bindText(button('btn ghost', closeModal), 'lib.cancel');
   const actions = el('div', 'modal-actions');

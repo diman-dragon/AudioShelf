@@ -10,10 +10,8 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/** Chapters stored inside audio files (MKA, M4B/M4A/MP4, MP3). A file that cannot be read just has none. */
 @CapacitorPlugin(name = "Chapters")
 public class ChaptersPlugin extends Plugin {
-  /** uris: [string] -> { items: [{ uri, chapters: [{ title, start, end }] }] }; end is -1 for "to the end of the file". */
   @PluginMethod
   public void read(PluginCall call) {
     JSONArray uris = call.getArray("uris");
@@ -39,7 +37,6 @@ public class ChaptersPlugin extends Plugin {
         out.put(new JSONObject().put("title", c.title).put("start", c.startMs).put("end", c.endMs));
       }
     } catch (Throwable ignored) {
-      // damaged or unreadable file: no chapters
     }
     return out;
   }

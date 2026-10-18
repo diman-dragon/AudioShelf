@@ -5,17 +5,12 @@ import java.security.MessageDigest;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-/**
- * Lifetime developer key: a short HMAC of the device fingerprint, issued by the developer's generator.
- * No Android classes here, so the logic can be checked on a plain JVM.
- */
 final class DevLicense {
   private static final String ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
   private static final String PREFIX = "audioshelf-dev:2:";
 
   private DevLicense() {}
 
-  /** Device fingerprint, "ABCD-EFGH-JKLM-NPQR": the first 80 bits of SHA-256(androidId:package). */
   static String fingerprint(String androidId, String packageName) {
     try {
       byte[] hash = MessageDigest.getInstance("SHA-256").digest((androidId + ":" + packageName).getBytes(StandardCharsets.UTF_8));
@@ -38,7 +33,6 @@ final class DevLicense {
     }
   }
 
-  /** The key a developer issues for this fingerprint: 100 bits of HMAC-SHA256 as "XXXXX-XXXXX-XXXXX-XXXXX". */
   static String expected(String fingerprint) {
     try {
       byte[] secret = new byte[LicenseKey.SECRET_HEX.length() / 2];
@@ -64,7 +58,6 @@ final class DevLicense {
     }
   }
 
-  /** True when code is the key for this device's fingerprint. Case, dashes and spaces are ignored. */
   static boolean valid(String code, String fingerprint) {
     if (code == null || fingerprint == null || fingerprint.isEmpty()) return false;
     String given = code.toUpperCase().replaceAll("[^A-Z2-7]", "");

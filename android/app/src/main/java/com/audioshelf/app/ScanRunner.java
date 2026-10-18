@@ -5,7 +5,6 @@ import android.net.Uri;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.PluginCall;
 
-/** Runs a folder scan on its own thread and settles the call when it ends. */
 final class ScanRunner {
   private ScanRunner() {}
 

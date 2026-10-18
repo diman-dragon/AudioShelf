@@ -1,6 +1,5 @@
 package com.audioshelf.app;
 
-/** One peaking equalizer band (RBJ cookbook), normalized coefficients. */
 final class Biquad {
   final float b0;
   final float b1;

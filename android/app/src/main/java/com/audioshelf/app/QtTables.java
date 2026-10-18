@@ -2,7 +2,6 @@ package com.audioshelf.app;
 
 import java.nio.ByteBuffer;
 
-/** Sample tables of a QuickTime text track: sizes (stsz), file offsets (stsc + stco/co64) and start times (stts). */
 final class QtTables {
   private QtTables() {}
 
@@ -16,7 +15,6 @@ final class QtTables {
     return out;
   }
 
-  /** File offset of every sample, from the chunk table (stsc) and chunk offsets (stco / co64). */
   static long[] offsets(byte[] d, Mp4Box stbl, int samples) {
     Mp4Box stsc = stbl.one(d, "stsc");
     Mp4Box stco = stbl.one(d, "stco");

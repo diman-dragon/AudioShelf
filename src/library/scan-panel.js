@@ -2,7 +2,6 @@ import { el, button } from '../core/dom.js';
 import { bindText } from '../i18n/bind.js';
 import { cancelScan } from './scan.js';
 
-// Плашка «Сканирование…»: счётчик найденного, бегущая полоса и «Остановить».
 export function createScanPanel() {
   const node = el('div', 'scan');
   const count = el('div', 'small muted');

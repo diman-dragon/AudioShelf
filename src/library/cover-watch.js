@@ -1,6 +1,5 @@
 import { loadCover } from './cover-queue.js';
 
-// Обложку грузим, только когда строка подъехала к экрану.
 const observer = new IntersectionObserver(
   (entries) => {
     entries.forEach((entry) => {

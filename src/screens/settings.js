@@ -3,8 +3,6 @@ import { bindText } from '../i18n/bind.js';
 import { PAGES } from '../settings/settings-pages.js';
 import { getPageIndex, setPageIndex } from '../settings/settings-nav.js';
 
-// Настройки страничками: сверху названия разделов (можно нажать), ниже страницы, которые листаются свайпом.
-// Каждая страница прокручивается по вертикали сама.
 export function renderSettings() {
   const root = el('section', 'settings');
   const tabs = el('div', 'stabs');
@@ -45,7 +43,6 @@ export function renderSettings() {
   });
 
   root.append(tabs, pager, dots);
-  // Экран вставляется в документ позже: возвращаемся на прежнюю страницу, когда у ленты появилась ширина.
   const restore = () => {
     if (!pager.clientWidth) return requestAnimationFrame(restore);
     pager.scrollLeft = getPageIndex() * pager.clientWidth;

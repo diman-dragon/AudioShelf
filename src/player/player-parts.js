@@ -14,7 +14,6 @@ import { createSeek } from './seek-bar.js';
 import { cycleSleep } from './sleep-actions.js';
 import { nextSpeed } from './speeds.js';
 
-// Части экрана плеера: обложка, названия, бегунок, общий прогресс, кнопки и ряд под ними.
 export function createParts() {
   const root = el('section', 'player');
   const body = el('div', 'pbody');

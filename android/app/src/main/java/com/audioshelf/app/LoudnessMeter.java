@@ -10,14 +10,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.function.BooleanSupplier;
 
-/** Decodes the start of an audio file and measures how loud it is. */
 final class LoudnessMeter {
-  private static final long WINDOW_US = 5L * 60 * 1000000; // five minutes are enough, and it spares the battery
+  private static final long WINDOW_US = 5L * 60 * 1000000;
   private static final long WAIT_US = 10000;
 
   private LoudnessMeter() {}
 
-  /** Gain in dB for this file; throws if it cannot be decoded. */
   static double gainFor(Context ctx, Uri uri, BooleanSupplier stop) throws IOException {
     MediaExtractor extractor = new MediaExtractor();
     MediaCodec codec = null;
@@ -38,7 +36,6 @@ final class LoudnessMeter {
         try {
           codec.stop();
         } catch (Exception ignored) {
-          // already stopped
         }
         codec.release();
       }

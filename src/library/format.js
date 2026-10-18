@@ -13,7 +13,6 @@ export function fmtSize(bytes) {
 
 export const fmtDate = (ms) => new Date(ms).toLocaleDateString(getLang());
 
-// 'Книга.m4b' -> ['Книга', '.m4b']
 export function splitName(name) {
   const dot = name.lastIndexOf('.');
   return dot > 0 ? [name.slice(0, dot), name.slice(dot)] : [name, ''];

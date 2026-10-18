@@ -4,10 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/** What a Matroska audio file holds besides sound: chapters and an attached cover picture. */
 final class MkaFile {
   private static final long SEGMENT = 0x18538067L;
-  private static final long CLUSTER = 0x1F43B675L;
   private static final long ATTACHMENTS = 0x1941A469L;
   private static final long FILE = 0x61A7L;
   private static final long NAME = 0x466EL;
@@ -49,7 +47,6 @@ final class MkaFile {
     return out;
   }
 
-  /** The best picture among the attachments: an image named like "cover" first, any image otherwise. */
   private static byte[] cover(ByteSource src, Ebml.Element attachments) throws IOException {
     byte[] best = null;
     boolean bestNamed = false;

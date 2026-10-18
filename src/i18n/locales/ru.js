@@ -178,7 +178,6 @@ export default {
   'mode.short.all': 'Все',
   'mode.short.one': 'Повтор',
   'mode.short.shuffle': 'Микс',
-  'sleep.off': 'Выкл',
   'sleep.chapter': 'Глава',
 
   'unit.kb': 'КБ',

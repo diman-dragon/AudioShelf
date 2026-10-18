@@ -1,4 +1,3 @@
-// Заглушка для работы в браузере (npm run dev): файлы живут только в памяти.
 import { demoFiles } from './mock-data.js';
 
 const listeners = new Set();
@@ -10,7 +9,6 @@ export const mock = {
   async pickFolder() {
     return { uri: 'content://com.android.externalstorage.documents/tree/primary%3AAudiobooks%2FBooks', name: 'Books' };
   },
-  // Сканирование с «прогрессом»: подпапки обходятся по очереди, как на телефоне.
   async scan() {
     cancelled = false;
     const total = files.length;
@@ -46,6 +44,5 @@ export const mock = {
     return { uri };
   },
   async open() {
-    /* в браузере открывать нечем */
   },
 };

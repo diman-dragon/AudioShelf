@@ -3,7 +3,6 @@ import { LABELS } from './bands.js';
 import { createBandSlider } from './band-slider.js';
 import { setBand } from './eq-actions.js';
 
-// Ряд из 10 ползунков.
 export function createEqBands() {
   const node = el('div', 'bands');
   const sliders = LABELS.map((label, i) => createBandSlider(label, (db) => setBand(i, db)));

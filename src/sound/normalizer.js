@@ -3,11 +3,9 @@ import { Loudness } from '../folder/plugins.js';
 import { getFiles } from '../library/library-data.js';
 import { hasGain, saveGain } from './gain-store.js';
 
-// Нормализация в фоне: нативная часть измеряет файлы по одному, а мы сохраняем поправки и показываем ход работы.
-// status: idle | running | done | cancelled | battery (остановлено, чтобы не посадить слабую батарею)
 let state = { status: 'idle', done: 0, total: 0, failed: 0, current: '' };
 let listener = null;
-const FINISH = { cancelled: 'cancelled', battery: 'battery', unplugged: 'idle' }; // unplugged: автозапуск ждёт зарядку
+const FINISH = { cancelled: 'cancelled', battery: 'battery', unplugged: 'idle' };
 
 export const getNorm = () => state;
 export const pendingFiles = () => getFiles().filter((f) => !hasGain(f.uri));
@@ -21,7 +19,6 @@ const set = (patch) => {
   document.dispatchEvent(new Event('normchange'));
 };
 
-// Ход работы (очередной файл готов): состояние обновляем сразу, а экраны и плеер уведомляем не чаще раза в секунду.
 const step = (patch) => {
   state = { ...state, ...patch };
   if (!timer) timer = setTimeout(() => set({}), 1000);
@@ -30,7 +27,6 @@ const step = (patch) => {
 function onEvent(e) {
   if (e.type === 'start') return step({ current: e.name });
   if (e.type === 'file') {
-    // Файл, который не удалось измерить, тоже запоминаем (поправка 0): иначе его пробовали бы заново при каждом запуске.
     if (e.gain == null) {
       saveGain(e.uri, 0);
       return step({ done: state.done + 1, failed: state.failed + 1 });
@@ -43,7 +39,6 @@ function onEvent(e) {
   set({ status: FINISH[e.status] ?? 'done', failed: e.failed, current: '' });
 }
 
-// auto — запуск без участия человека: работает только пока телефон на зарядке.
 export async function startNormalize({ auto = false } = {}) {
   if (state.status === 'running' || !isPremium()) return;
   const todo = pendingFiles();
@@ -60,7 +55,6 @@ export async function startNormalize({ auto = false } = {}) {
 
 export const stopNormalize = () => Loudness.cancel().catch(() => {});
 
-// Остановка не по просьбе человека (началось воспроизведение): автозапуск потом продолжит с оставшихся файлов.
 export const pauseNormalize = () => {
   state = { ...state, paused: true };
   return stopNormalize();

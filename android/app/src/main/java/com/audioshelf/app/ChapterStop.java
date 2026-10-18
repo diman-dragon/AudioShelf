@@ -2,7 +2,6 @@ package com.audioshelf.app;
 
 import androidx.media3.common.Player;
 
-/** Book mode "pause after chapter": when a file ends and the next one starts by itself, pause. */
 final class ChapterStop implements Player.Listener {
   private final Player player;
   private volatile boolean enabled;

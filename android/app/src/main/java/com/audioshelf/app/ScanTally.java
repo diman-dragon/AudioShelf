@@ -7,7 +7,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-/** Thread-safe counters and results of a running scan, with throttled progress reports. */
 final class ScanTally {
   private static final long REPORT_EVERY_MS = 150;
 
@@ -23,7 +22,6 @@ final class ScanTally {
     folders.incrementAndGet();
   }
 
-  /** Reports at most every 150 ms, whichever worker thread gets there first. */
   void report(FolderScanner.Progress progress) {
     long now = System.currentTimeMillis();
     long last = lastReport.get();

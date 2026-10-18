@@ -12,10 +12,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * Walks a SAF folder tree (subfolders included) on a small thread pool: every folder is its own task,
- * so slow provider calls overlap. Reports progress while it works.
- */
 final class FolderScanner {
   interface Progress {
     void on(int files, int folders);
@@ -37,7 +33,6 @@ final class FolderScanner {
     return cancelled;
   }
 
-  /** The root must be readable (otherwise throws); unreadable subfolders are skipped. */
   JSArray scan(ContentResolver cr, Uri tree, Progress progress) throws Exception {
     ExecutorService pool = Executors.newFixedThreadPool(THREADS);
     try {
@@ -51,9 +46,8 @@ final class FolderScanner {
     return tally.files();
   }
 
-  /** dir is the document id, path is the folder path relative to the chosen root ("" for the root). */
   private void submit(ExecutorService pool, ContentResolver cr, Uri tree, String dir, String path, boolean root, Progress progress) {
-    pending.incrementAndGet(); // counted before the parent task ends, so it can't reach 0 early
+    pending.incrementAndGet();
     pool.execute(
         () -> {
           try {

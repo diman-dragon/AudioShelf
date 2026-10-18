@@ -3,7 +3,6 @@ package com.audioshelf.app;
 import android.content.Context;
 import android.os.SystemClock;
 
-/** Checks the battery during long background work, at most once every few seconds; once it trips it stays tripped. */
 final class BatteryWatch {
   private static final long EVERY_MS = 5000;
 

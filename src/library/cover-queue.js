@@ -1,8 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { Cover } from '../folder/plugins.js';
 
-// Обложки из тегов файла: по одной за раз + кэш в памяти.
-const cache = new Map(); // ключ -> dataURL, '' = у файла нет обложки
+const cache = new Map();
 const queue = [];
 let busy = false;
 
@@ -35,7 +34,6 @@ async function run() {
     if (!job.img.isConnected) continue;
     try {
       const result = await Cover.read({ uri: job.uri, sig: job.sig, width: 360 });
-      // Нативная часть кладёт обложку файлом в кэш, WebView грузит его сама; если не получилось — просим данные в ответе.
       const src = result.path ? Capacitor.convertFileSrc(result.path) : result.data;
       cache.set(job.key, src);
       if (result.path) job.img.onerror = () => inline(job);

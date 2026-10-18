@@ -1,8 +1,6 @@
 import { paintProgress } from './item.js';
 import { applyPlaceholder } from './placeholder.js';
 
-// Книга сохранила прогресс (изменился процент или состояние «начата/дослушана»): в списке меняется только её строка —
-// полоска и значок-эмодзи, без перерисовки списка.
 export function initProgressWatch() {
   document.addEventListener('progresschange', (e) => {
     document.querySelectorAll('.fprog').forEach((bar) => {

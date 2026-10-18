@@ -5,7 +5,6 @@ import { t } from '../i18n/i18n.js';
 import { createEditForm } from './edit-form.js';
 import { saveFile } from './save-file.js';
 
-// Окно «Изменить»: тип, теги и имя файла.
 export function openEditDialog(book) {
   const form = createEditForm(book);
   const save = bindText(button('btn', () => {

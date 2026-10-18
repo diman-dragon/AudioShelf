@@ -1,6 +1,5 @@
 import { FLAT_BANDS } from './bands.js';
 
-// Пресеты: усиление по 10 полосам (дБ), от 31 Гц до 16 кГц. Название — ключ preset.<id>.
 export const PRESETS = [
   { id: 'flat', bands: FLAT_BANDS },
   { id: 'voice', bands: [-6, -5, -3, -1, 1, 3, 4, 4, 2, 0] },

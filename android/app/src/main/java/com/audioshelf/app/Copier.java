@@ -12,11 +12,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
-/** Copies picked files into the library folder. Run off the main thread. */
 final class Copier {
   private Copier() {}
 
-  /** Returns the files that were copied (uri, name, size, modified); failed copies are removed. */
   static JSArray copyAll(ContentResolver cr, List<Uri> sources, Uri parent) {
     JSArray added = new JSArray();
     for (Uri src : sources) {
@@ -31,7 +29,6 @@ final class Copier {
     try {
       String name = Saf.queryString(cr, src, OpenableColumns.DISPLAY_NAME);
       if (name == null) name = "audio";
-      // The provider appends its own extension for known MIME types, so give it the full name.
       dst = DocumentsContract.createDocument(cr, parent, AudioFiles.mimeFor(name), name);
       if (dst == null) return null;
       try (InputStream in = cr.openInputStream(src);

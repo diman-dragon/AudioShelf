@@ -1,6 +1,5 @@
 import { getDurations } from './durations.js';
 
-// Прогресс всей книги. Длины неслушанных глав берём средними по известным — поэтому «примерно».
 export function bookProgress(id, count, index, position) {
   const known = getDurations(id);
   const values = Object.values(known);

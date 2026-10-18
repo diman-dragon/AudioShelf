@@ -1,7 +1,5 @@
 import { el } from '../core/dom.js';
 
-// Держит все экраны в DOM и показывает только активный (состояние не теряется).
-// dir > 0 — экран приходит справа, dir < 0 — слева, 0 — без анимации.
 export function createHost(screens) {
   const node = el('main', 'host');
   const wraps = new Map();

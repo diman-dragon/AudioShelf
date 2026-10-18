@@ -13,7 +13,6 @@ import { forgetHidden, hide } from './hidden-store.js';
 import { forgetMeta } from './meta-store.js';
 import { notifyLibrary, patchFiles } from './library-data.js';
 
-// Нажатие на книгу: играть во встроенном плеере и показать его.
 export function playFromLibrary(book) {
   playBook(book);
   navigate('player');
@@ -26,8 +25,6 @@ export function hideBook(book) {
   notifyLibrary();
 }
 
-// С диска: если в папке книги нет ничего чужого — удаляется папка (у книги из дисков — каждый диск),
-// иначе только файлы этой записи.
 export function removeBook(book) {
   const targets = book.folder && book.ownsDir ? book.dirUris : book.files.map((f) => f.uri);
   Promise.all(targets.map((uri) => FileOps.remove({ uri })))
@@ -46,8 +43,6 @@ export function removeBook(book) {
     .catch(fail);
 }
 
-// Скопированные файлы сразу попадают в список — повторный обход не нужен.
-// Лежат они прямо в выбранной папке, поэтому это отдельные записи.
 export const addFiles = () =>
   FileOps.add({ tree: getFolder().uri })
     .then((result) => patchFiles((list) => [...list, ...result.files]))

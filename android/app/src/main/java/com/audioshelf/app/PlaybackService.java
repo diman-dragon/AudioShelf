@@ -8,7 +8,6 @@ import androidx.media3.session.DefaultMediaNotificationProvider;
 import androidx.media3.session.MediaSession;
 import androidx.media3.session.MediaSessionService;
 
-/** Keeps playback alive in the background and shows the system media notification. */
 public class PlaybackService extends MediaSessionService {
   private MediaSession session;
 
@@ -28,12 +27,9 @@ public class PlaybackService extends MediaSessionService {
         new DefaultMediaNotificationProvider.Builder(this).build();
     provider.setSmallIcon(R.drawable.ic_stat_player);
     setMediaNotificationProvider(provider);
-    // Nobody binds to the service (the player is driven by the plugin), so without this
-    // the session is never attached and no notification is ever shown.
     addSession(session);
   }
 
-  /** ✕ in the notification: stop, forget the item and remove the notification. */
   private void close() {
     PositionSaver.flush();
     Player p = session.getPlayer();
@@ -51,7 +47,6 @@ public class PlaybackService extends MediaSessionService {
 
   @Override
   public void onTaskRemoved(@Nullable Intent rootIntent) {
-    // App swiped away from recents: save the place, stop playback and remove the notification.
     PositionSaver.flush();
     pauseAllPlayersAndStopSelf();
   }

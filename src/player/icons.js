@@ -1,7 +1,5 @@
-// Пиктограммы плеера (currentColor).
 const open = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
 
-// Круговая стрелка с числом секунд внутри.
 const skip = (arrow, seconds) =>
   `${open}>${arrow}<text x="12" y="15.5" text-anchor="middle" font-size="7.5" font-weight="700" stroke="none" fill="currentColor">${seconds}</text></svg>`;
 

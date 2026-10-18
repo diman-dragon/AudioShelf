@@ -7,7 +7,6 @@ export function textInput(value = '', placeholder = '') {
   return input;
 }
 
-// Поле формы: подпись, элемент ввода и подсказка «где это будет показано».
 export function createField(labelKey, hintKey, control, hintParams) {
   const node = el('label', 'field');
   const label = bindText(el('span', 'field-label'), labelKey);

@@ -6,7 +6,6 @@ import { folderPath } from '../library/folder-path.js';
 import { createFolderStat } from './folder-stat.js';
 import { openForgetDialog } from './forget-dialog.js';
 
-// Строка «Папка с аудио»: путь, подсказка, «Выбрать» (системный выбор папки) и «Убрать» (перестать следить).
 export function createFolderRow() {
   const name = el('div', 'small');
   const text = el('div');
@@ -21,7 +20,7 @@ export function createFolderRow() {
     const folder = getFolder();
     forget.hidden = !folder;
     if (folder) {
-      delete name.dataset.i18n; // путь собирается сам (с переводом «Память устройства»)
+      delete name.dataset.i18n;
       name.textContent = folderPath(folder);
     } else {
       bindText(name, 'settings.noFolder');

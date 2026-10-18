@@ -5,17 +5,13 @@ import android.os.Looper;
 import android.os.SystemClock;
 import androidx.media3.common.Player;
 
-/**
- * Sleep timer: pauses after N minutes of actual playback, or at the end of the current chapter.
- * The last 15 seconds fade the sound out instead of cutting it.
- */
 final class SleepTimer implements Player.Listener, Runnable {
   private static final long TICK_MS = 1000;
   private static final long FADE_TICK_MS = 200;
   private static final long FADE_MS = 15_000;
 
   private final Player player;
-  private final Runnable onChange; // applies the volume
+  private final Runnable onChange;
   private final Handler handler = new Handler(Looper.getMainLooper());
   private volatile long left;
   private volatile boolean atChapterEnd;
@@ -27,7 +23,6 @@ final class SleepTimer implements Player.Listener, Runnable {
     player.addListener(this);
   }
 
-  /** minutes > 0: count down while playing; chapter: pause when the current file ends; both 0/false: off. */
   void set(long minutes, boolean chapter) {
     handler.post(
         () -> {
@@ -48,7 +43,6 @@ final class SleepTimer implements Player.Listener, Runnable {
     return atChapterEnd;
   }
 
-  /** 1 normally, falling to 0 over the last 15 seconds of the countdown. */
   float factor() {
     long l = left;
     return l > 0 && l < FADE_MS ? (float) l / FADE_MS : 1f;
@@ -63,12 +57,12 @@ final class SleepTimer implements Player.Listener, Runnable {
   @Override
   public void run() {
     long now = SystemClock.elapsedRealtime();
-    if (player.isPlaying()) left -= now - lastTick; // paused time does not count
+    if (player.isPlaying()) left -= now - lastTick;
     lastTick = now;
     if (left <= 0) {
       left = 0;
       player.pause();
-      onChange.run(); // volume is back to normal for the next start
+      onChange.run();
       return;
     }
     onChange.run();
@@ -86,6 +80,6 @@ final class SleepTimer implements Player.Listener, Runnable {
 
   @Override
   public void onPlaybackStateChanged(int state) {
-    if (state == Player.STATE_ENDED) atChapterEnd = false; // the last file ended by itself
+    if (state == Player.STATE_ENDED) atChapterEnd = false;
   }
 }

@@ -4,13 +4,12 @@ import androidx.media3.common.C;
 import androidx.media3.common.audio.BaseAudioProcessor;
 import java.nio.ByteBuffer;
 
-/** 10-band equalizer plus a per-file loudness trim and volume boost, applied to 16-bit PCM before the output. */
 final class SoundProcessor extends BaseAudioProcessor {
   static final int BANDS = EqChain.BANDS;
 
   private volatile float[] bandsDb = new float[BANDS];
   private volatile float trimDb;
-  private volatile float boost = 1f; // linear, 1 = as recorded
+  private volatile float boost = 1f;
 
   private final EqChain eq = new EqChain();
   private int rate;
@@ -29,14 +28,13 @@ final class SoundProcessor extends BaseAudioProcessor {
     trimDb = db;
   }
 
-  /** Volume above 100%: linear factor (1..4); loud peaks are then softly limited instead of clipped. */
   void setBoost(float factor) {
     boost = Math.max(1f, Math.min(4f, factor));
   }
 
   @Override
   protected AudioFormat onConfigure(AudioFormat input) throws UnhandledAudioFormatException {
-    if (input.encoding != C.ENCODING_PCM_16BIT) return AudioFormat.NOT_SET; // leave other formats alone
+    if (input.encoding != C.ENCODING_PCM_16BIT) return AudioFormat.NOT_SET;
     rate = input.sampleRate;
     channels = input.channelCount;
     eq.reset(channels);
@@ -44,14 +42,13 @@ final class SoundProcessor extends BaseAudioProcessor {
     return input;
   }
 
-  /** Rebuilds filters and the output gain when the settings changed. */
   private void refresh() {
     float[] db = bandsDb;
     float trim = trimDb;
     float factor = boost;
     if (db == builtFor && trim == builtTrim && factor == builtBoost) return;
     float peak = eq.build(db, rate);
-    gain = (float) Math.pow(10, (trim - peak) / 20) * factor; // boosting bands lowers the level: no clipping
+    gain = (float) Math.pow(10, (trim - peak) / 20) * factor;
     limit = factor > 1f;
     builtBoost = factor;
     builtFor = db;
@@ -64,7 +61,7 @@ final class SoundProcessor extends BaseAudioProcessor {
     if (size == 0) return;
     refresh();
     ByteBuffer out = replaceOutputBuffer(size);
-    if (gain == 1f && eq.flat()) { // nothing to do: copy as is
+    if (gain == 1f && eq.flat()) {
       out.put(input);
       out.flip();
       return;

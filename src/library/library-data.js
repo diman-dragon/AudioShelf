@@ -3,14 +3,12 @@ import { isHidden } from './hidden-store.js';
 import { groupBooks } from './books.js';
 import { loadLibrary, saveLibrary } from './library-cache.js';
 
-// Состояние библиотеки: все файлы папки (в том числе скрытые) и что с ними сейчас происходит.
-// Обход папки — в rescan.js; здесь только хранение и сообщения экранам.
 let all = [];
-let status = 'nofolder'; // nofolder | unscanned | ok | error
+let status = 'nofolder';
 let scanning = false;
 let progress = { files: 0, folders: 0 };
 
-let books = null; // сгруппированные книги: считаются заново только после изменения библиотеки
+let books = null;
 
 export const notifyLibrary = (name = 'librarychange') => {
   if (name === 'librarychange') books = null;
@@ -29,7 +27,6 @@ export const getBooks = () => {
   return books;
 };
 
-// Поднимает сохранённый список для выбранной папки (при запуске и после выбора папки).
 export function restoreLibrary() {
   const folder = getFolder();
   const saved = folder && loadLibrary(folder.uri);
@@ -38,7 +35,6 @@ export function restoreLibrary() {
   notifyLibrary();
 }
 
-// Меняет список без обхода (добавили, удалили, переименовали файл) и сохраняет его.
 export function patchFiles(change) {
   all = change(all);
   saveLibrary(getFolder().uri, all);
@@ -56,7 +52,6 @@ export function setProgress(next) {
   notifyLibrary('scanprogress');
 }
 
-// Итог обхода: новый список (или null — прежний остаётся) либо ошибка.
 export function finishScan(files, failed) {
   if (failed) status = 'error';
   else if (files) {

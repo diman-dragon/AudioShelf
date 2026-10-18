@@ -13,7 +13,6 @@ const SWITCH = [
   { id: 'off', labelKey: 'norm.off' },
 ];
 
-// Нормализация громкости: кнопка с ходом работы, полоса «сколько файлов уже проанализировано», статус и переключатель.
 export function createNormCard() {
   const node = el('div', 'normcard');
   const bar = el('div', 'norm-bar');

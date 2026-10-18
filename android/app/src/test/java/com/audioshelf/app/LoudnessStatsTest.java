@@ -26,19 +26,16 @@ public class LoudnessStatsTest {
 
   @Test
   public void quietFileIsRaisedToTheTarget() {
-    // sine RMS -26 dBFS -> amplitude 0.0709; the target is -16 dBFS, so about +10 dB
     assertEquals(10.0, measured(0.0709, 3).gainDb(), 0.3);
   }
 
   @Test
   public void loudFileIsLowered() {
-    // sine RMS -6 dBFS -> amplitude 0.709; about -10 dB
     assertEquals(-10.0, measured(0.709, 3).gainDb(), 0.3);
   }
 
   @Test
   public void correctionIsLimitedToTwelveDecibels() {
-    // very quiet but audible (above the silence threshold): wanted +20 dB, allowed +12
     assertEquals(12.0, measured(0.011, 3).gainDb(), 0.1);
   }
 }

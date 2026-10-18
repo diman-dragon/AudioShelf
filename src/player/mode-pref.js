@@ -3,7 +3,6 @@ import { MODES } from './modes.js';
 
 const key = (kind) => `audioshelf.mode.${kind}`;
 
-// Режим запоминаем отдельно для книг и для альбомов.
 export function getMode(kind) {
   const saved = readStored(key(kind));
   return MODES[kind].includes(saved) ? saved : MODES[kind][0];

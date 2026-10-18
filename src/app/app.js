@@ -7,7 +7,6 @@ import { initSwipe } from './swipe.js';
 
 const indexOf = (id) => SCREENS.findIndex((s) => s.id === id);
 
-// Собирает оболочку: шапка + экраны + нижние вкладки + свайпы.
 export function mountApp(root) {
   const header = createHeader();
   const host = createHost(SCREENS);

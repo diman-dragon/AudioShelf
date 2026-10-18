@@ -11,7 +11,6 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
-/** Audio folder via Storage Access Framework: pick a folder and list its audio files. */
 @CapacitorPlugin(name = "Folder")
 public class FolderPlugin extends SafPlugin {
 
@@ -45,7 +44,6 @@ public class FolderPlugin extends SafPlugin {
     call.resolve(o);
   }
 
-  /** Scans the folder and its subfolders in the background; progress arrives as "scan" events. */
   @PluginMethod
   public void scan(PluginCall call) {
     String tree = need(call, "tree");
@@ -65,7 +63,6 @@ public class FolderPlugin extends SafPlugin {
         call);
   }
 
-  /** The folder is no longer tracked: give the system permission back. */
   @PluginMethod
   public void release(PluginCall call) {
     String tree = need(call, "uri");
@@ -74,7 +71,6 @@ public class FolderPlugin extends SafPlugin {
       cr().releasePersistableUriPermission(
           Uri.parse(tree), Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
     } catch (Exception ignored) {
-      // permission was already gone
     }
     call.resolve();
   }

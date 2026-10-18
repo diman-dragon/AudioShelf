@@ -9,7 +9,6 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Comparator;
 
-/** Small covers cached on disk (cache dir, the system may clear it). A file without a cover is remembered as ".none". */
 final class CoverCache {
   private static final int MAX_FILES = 300;
   private static final int DROP = 60;
@@ -29,7 +28,6 @@ final class CoverCache {
     return d;
   }
 
-  /** The cached cover file (a .jpg so that the WebView takes it for an image), or null. */
   static File file(Context ctx, String key) {
     File f = new File(dir(ctx), key + ".jpg");
     return f.isFile() ? f : null;
@@ -73,7 +71,6 @@ final class CoverCache {
     prune(dir(ctx));
   }
 
-  /** Keeps the cache small: past MAX_FILES the oldest files go. */
   private static void prune(File dir) {
     File[] all = dir.listFiles();
     if (all == null || all.length <= MAX_FILES) return;

@@ -9,7 +9,6 @@ import com.getcapacitor.PluginCall;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-/** ExoPlayer lives on the main thread; plugin calls arrive on another one. Runs a job there and resolves with the new state. */
 final class PlayerRunner {
   private final Handler main = new Handler(Looper.getMainLooper());
   private final Context context;
@@ -26,7 +25,7 @@ final class PlayerRunner {
         () -> {
           try {
             ExoPlayer p = PlayerHolder.get(context);
-            if (p != listened) { // changes from outside (notification, headset, call) reach JavaScript at once
+            if (p != listened) {
               listened = p;
               new StateEvents(p, (player) -> notify.accept("state", PlayerState.of(player)));
             }

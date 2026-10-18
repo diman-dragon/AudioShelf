@@ -1,4 +1,3 @@
-// Копия базы в памяти: хранилище -> Map(ключ -> строка). Чтение всегда отсюда.
 const mem = new Map();
 
 export const bucket = (store) => {

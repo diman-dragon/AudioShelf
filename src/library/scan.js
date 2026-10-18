@@ -1,6 +1,5 @@
 import { Folder } from '../folder/plugins.js';
 
-// Сканирует папку с подпапками. onProgress({ files, folders }) вызывается по ходу обхода.
 export async function scanFolder(tree, onProgress) {
   const listener = await Folder.addListener('scan', onProgress);
   try {

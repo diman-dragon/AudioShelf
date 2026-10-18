@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { mockBook, open, pass } from './helpers.mjs';
 
-// Кнопка «пуск/пауза» не теряет нажатий: при подряд идущих тапах состояние чередуется.
 const app = await open({ storage: { 'audioshelf.last2': JSON.stringify(mockBook(3)) } });
 await app.tab('Плеер');
 const label = () => app.page.locator('.pplay').getAttribute('aria-label');

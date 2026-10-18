@@ -4,12 +4,8 @@ import { getStatus } from '../player/player-state.js';
 import { isNormOn } from './norm-pref.js';
 import { getNorm, pauseNormalize, pendingFiles, startNormalize } from './normalizer.js';
 
-// Нормализация идёт сама: новые файлы библиотеки измеряются в фоне, когда это ничему не мешает.
-// Не мешает — значит: Премиум и «Применять» включены, библиотека не сканируется, ничего не играет, человек не нажимал «Остановить»,
-// а батарею бережёт нативная часть (она сама останавливает анализ при экономии заряда и ниже 20%).
-// Найденные поправки сохраняются по каждому файлу (gain-store), так что работа не повторяется.
-const RETRY = 10 * 60000; // мс: телефон не на зарядке — спросим снова позже
-const WAIT = 4000; // мс спокойствия перед запуском: библиотека и плеер успели «устояться»
+const RETRY = 10 * 60000;
+const WAIT = 4000;
 let timer = 0;
 let blockedUntil = 0;
 let retry = 0;
@@ -34,19 +30,18 @@ function plan() {
 export function initAutoNormalize() {
   ['librarychange', 'premiumchange', 'normchange'].forEach((name) => document.addEventListener(name, plan));
   document.addEventListener('playerchange', () => {
-    if (getStatus().playing && getNorm().status === 'running') pauseNormalize(); // музыку не трогаем
+    if (getStatus().playing && getNorm().status === 'running') pauseNormalize();
     plan();
   });
-  // Нажали «Остановить» или батарея села: до следующего изменения библиотеки или запуска приложения не лезем.
   document.addEventListener('normchange', () => {
     const { status, paused } = getNorm();
     if (status === 'idle' && !paused && pendingFiles().length) {
-      blockedUntil = Date.now() + RETRY; // не на зарядке: до следующей попытки не лезем
+      blockedUntil = Date.now() + RETRY;
       clearTimeout(retry);
       retry = setTimeout(plan, RETRY + 500);
     }
     if ((status === 'cancelled' && !paused) || status === 'battery') blockedUntil = Number.MAX_SAFE_INTEGER;
-    if (status === 'done' && pendingFiles().length) blockedUntil = Date.now() + 30 * 60000; // что-то не отчиталось: не крутимся по кругу
+    if (status === 'done' && pendingFiles().length) blockedUntil = Date.now() + 30 * 60000;
   });
   document.addEventListener('scanprogress', () => (blockedUntil = 0));
   plan();

@@ -25,11 +25,11 @@
 
 .ph {
   object-fit: contain;
-  padding: 12.5%; /* эмодзи занимает 3/4 обложки */
+  padding: 12.5%;
 }
 
 .ph.flip {
-  transform: scaleX(-1); /* дослушанная книга — корешок вправо */
+  transform: scaleX(-1);
 }
 
 .pv {

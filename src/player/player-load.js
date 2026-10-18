@@ -6,7 +6,6 @@ import { applySound } from '../sound/apply-sound.js';
 import { loadSpeed } from './last-book.js';
 import { applyStatus, getTrack } from './player-state.js';
 
-// Загружает книгу в нативный плеер: главу index с позиции position.
 export async function load(index, position, autoplay) {
   const book = getTrack();
   const state = await Player.load({

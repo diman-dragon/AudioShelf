@@ -9,7 +9,6 @@ import android.os.Build;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-/** Starts the background service and asks for the notification permission (Android 13+). */
 final class PlaybackStarter {
   private PlaybackStarter() {}
 

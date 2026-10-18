@@ -4,7 +4,6 @@ import { groupDir, splitGroup } from './split-rules.js';
 
 const byName = (a, b) => (a.dir + '/' + a.name).localeCompare(b.dir + '/' + b.name, undefined, { numeric: true });
 
-// Один файл = одна запись (альбом-трек или книга одним файлом).
 const single = (file) => ({
   id: file.uri,
   folder: false,
@@ -17,8 +16,6 @@ const single = (file) => ({
   modified: file.modified,
 });
 
-// Несколько файлов одной папки = одна книга (главы) или альбом (треки), по порядку имён.
-// ownsDir — в папке (и подпапках) нет ничего чужого, её можно удалять целиком.
 const folderBook = (dir, files, under) => ({
   id: `dir:${dir}`,
   folder: true,
@@ -31,13 +28,11 @@ const folderBook = (dir, files, under) => ({
   modified: Math.max(...files.map((f) => f.modified)),
 });
 
-// Файл принадлежит ровно одной записи, у записи уникальный id: «три книги в одной записи» невозможны.
 const unique = (books) => {
   const seen = new Set();
   return books.filter((b) => !seen.has(b.id) && seen.add(b.id));
 };
 
-// Список файлов папки -> список книг и альбомов. Файлы прямо в выбранной папке остаются поодиночке.
 export function groupBooks(files) {
   const under = countUnder(files);
   const folders = new Map();

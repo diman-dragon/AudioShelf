@@ -1,4 +1,3 @@
-// Заглушки для браузера: звук не меняется, «нормализация» идёт по таймеру.
 export const mockSound = { setSound: async () => {} };
 
 let cancelled = false;

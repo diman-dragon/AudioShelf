@@ -3,8 +3,6 @@ import { authorOf, bylineOf, kindOf, titleOf } from '../library/file-info.js';
 import { splitName } from '../library/format.js';
 import { chapterLabel } from './chapter-label.js';
 
-// Что писать над ползунком. Книга: название, автор · чтец, «Глава N из M · файл».
-// Альбом из нескольких треков: название трека, альбом · исполнитель, «Трек N из M».
 export function headingOf(book, index) {
   const multi = book.files.length > 1;
   if (multi && kindOf(book) === 'album') {

@@ -1,5 +1,4 @@
-// Заглушка плеера для браузера (npm run dev): время идёт по часам, звука нет.
-const CHAPTER = 600000; // каждая глава 10 минут; у главы внутри файла — своя длина (start..end)
+const CHAPTER = 600000;
 const lengthOf = (i) => {
   const it = s.items[i];
   return it && it.end > 0 ? it.end - (it.start || 0) : CHAPTER;
@@ -11,7 +10,7 @@ function advance() {
   const now = Date.now();
   if (s.sleepLeft > 0) {
     s.sleepLeft = Math.max(0, s.sleepLeft - (now - s.at));
-    if (s.sleepLeft === 0) s.playing = false; // таймер сна сработал
+    if (s.sleepLeft === 0) s.playing = false;
   }
   s.position += (now - s.at) * s.speed;
   s.at = now;
@@ -69,20 +68,17 @@ export const mockPlayer = {
   skipTo: act(({ index }) => Object.assign(s, { index, position: 0 })),
   setSpeed: act(({ speed }) => (s.speed = speed)),
   stop: act(() => Object.assign(s, { items: [], index: 0, playing: false, position: 0 })),
-  setProfile: act(() => {}), // режимы и края файла — только на телефоне
+  setProfile: act(() => {}),
   state: async () => snap(),
-  addListener: async () => ({ remove: async () => {} }), // в браузере событий нет, остаётся опрос
+  addListener: async () => ({ remove: async () => {} }),
 };
 
-// Таймер сна в браузере: тот же счёт по часам, пока играет.
 export const mockSleep = {
   setSleep: act(({ minutes = 0, chapter = false }) => Object.assign(s, { sleepLeft: minutes * 60000, sleepEnd: chapter })),
 };
 
-// Нативная память места и настройка энергосбережения: в браузере их нет.
 export const mockResume = { saved: async () => ({}) };
 
-// Главы внутри файла: в браузере есть только у файлов mock://chaptered/…, чтобы можно было проверить раскладку.
 export const mockChapters = {
   async read({ uris }) {
     const titles = ['Пролог', 'Глава 1. Начало', 'Глава 2', 'Эпилог'];

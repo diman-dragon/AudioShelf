@@ -5,7 +5,6 @@ import { LIST_ICON, MARK_ICON, MODE_ICONS, MOON_ICON } from './mode-icons.js';
 import { fmtSpeed } from './speeds.js';
 import { fmtTime } from './time.js';
 
-// Кнопка с пиктограммой и подписью под ней.
 function extra(onClick) {
   const btn = button('pextra', onClick);
   const icon = el('span', 'pi');
@@ -14,15 +13,12 @@ function extra(onClick) {
   return { btn, icon, label };
 }
 
-// Подпись таймера сна: «Сон», «15 мин» или оставшееся время; «Глава» — до конца главы.
 function sleepLabel({ choice, left, end }) {
   if (end) return t('sleep.chapter');
   if (left > 0) return fmtTime(left);
   return choice === 'off' ? t('player.sleep') : t('sleep.min', { n: choice });
 }
 
-// Ряд под кнопками плеера: [Скорость] [Сон] [Список] [Режим] [Закладки].
-// Режим зависит от типа (книга / альбом); скорость и сон переключаются по кругу одним нажатием.
 export function createExtras({ onMarks, onList, onMode, onSpeed, onSleep }) {
   const node = el('div', 'pextras');
   const marks = extra(onMarks);
@@ -42,7 +38,7 @@ export function createExtras({ onMarks, onList, onMode, onSpeed, onSleep }) {
   return {
     node,
     update({ markCount, mode: current, multi, speed: rate, sleep: sleepState }) {
-      list.btn.disabled = !multi; // список нужен, когда в книге больше одного файла
+      list.btn.disabled = !multi;
       bindText(marks.label, markCount ? 'player.marksN' : 'player.marks', { n: markCount });
       bindText(mode.label, `mode.short.${current}`);
       bindAria(mode.btn, `mode.${current}`);
@@ -50,7 +46,6 @@ export function createExtras({ onMarks, onList, onMode, onSpeed, onSleep }) {
       speed.icon.textContent = fmtSpeed(rate);
       this.updateSleep(sleepState);
     },
-    // Остаток таймера сна меняется каждую секунду, остальной ряд — нет.
     updateSleep(sleepState) {
       sleep.label.textContent = sleepLabel(sleepState);
       sleep.btn.classList.toggle('on', sleepState.choice !== 'off');

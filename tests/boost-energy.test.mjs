@@ -1,11 +1,10 @@
 import assert from 'node:assert/strict';
 import { open, pass } from './helpers.mjs';
 
-// Усиление громкости выбирается и запоминается; у «Энергосбережения» появляется строка состояния.
 const app = await open();
 await app.tab('Звук');
 await app.page.getByRole('button', { name: '200%' }).click();
-await app.page.waitForTimeout(500); // запись в базу идёт пачкой через 0,25 с
+await app.page.waitForTimeout(500);
 assert.equal(await app.page.evaluate(() => localStorage.getItem('audioshelf.boost')), '200');
 await app.page.reload();
 await app.page.waitForTimeout(800);

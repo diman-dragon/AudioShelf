@@ -3,7 +3,6 @@ import { readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-// Запускает собранное приложение (vite preview) и все tests/*.test.mjs по очереди, каждый в своём процессе.
 const dir = dirname(fileURLToPath(import.meta.url));
 const url = process.env.TEST_URL ?? 'http://localhost:4183';
 
@@ -14,7 +13,6 @@ async function ready() {
     try {
       if ((await fetch(url)).ok) return true;
     } catch {
-      /* ещё не поднялся */
     }
     await new Promise((r) => setTimeout(r, 500));
   }

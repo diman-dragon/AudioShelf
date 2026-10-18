@@ -1,6 +1,5 @@
 import { createMapStore } from '../core/map-store.js';
 
-// Файлы, убранные из библиотеки (на диске они остаются).
 const store = createMapStore('audioshelf.hidden');
 
 export const isHidden = (uri) => Boolean(store.get(uri));

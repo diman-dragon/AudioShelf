@@ -9,10 +9,6 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import java.io.File;
 
-/**
- * Cover art embedded in an audio file, cached on disk. Resolves with the cached file's path (the WebView loads it itself),
- * or with a data URL when inline is asked for. Rejects when the file has no cover.
- */
 @CapacitorPlugin(name = "Cover")
 public class CoverPlugin extends Plugin {
 
@@ -38,7 +34,6 @@ public class CoverPlugin extends Plugin {
     }
   }
 
-  /** The cover in the cache; read from the audio file and cached when it is not there yet (also "no cover"). */
   private File cached(String uri, String key, int width) throws Exception {
     File file = CoverCache.file(getContext(), key);
     if (file != null) return file;

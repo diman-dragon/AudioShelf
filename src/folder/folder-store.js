@@ -15,7 +15,6 @@ export function setFolder(folder) {
   document.dispatchEvent(new Event('folderchange'));
 }
 
-// Папку убрали из отслеживания.
 export function clearFolder() {
   removeStored(KEY);
   document.dispatchEvent(new Event('folderchange'));

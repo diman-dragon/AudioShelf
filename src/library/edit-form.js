@@ -10,7 +10,6 @@ const KINDS = [
   { id: 'album', labelKey: 'kind.album' },
 ];
 
-// Поля окна «Изменить»; у каждого подсказка, где оно будет видно.
 export function createEditForm(book) {
   const meta = getMeta(book.id);
   const [base, ext] = splitName(book.files[0].name);
@@ -31,7 +30,6 @@ export function createEditForm(book) {
   const fAuthor = createField('edit.authorBook', 'edit.authorHint', author);
   const fNarrator = createField('edit.narrator', 'edit.narratorHint', narrator);
 
-  // Тип меняет подпись «Автор / Исполнитель» и показывает «Чтеца» только у книги.
   function sync() {
     bindText(fAuthor.label, kind === 'book' ? 'edit.authorBook' : 'edit.authorAlbum');
     fNarrator.node.hidden = kind !== 'book';
@@ -45,7 +43,7 @@ export function createEditForm(book) {
       fAuthor.node,
       fNarrator.node,
       createField('edit.year', 'edit.yearHint', year).node,
-      ...(book.folder ? [] : [createField('edit.file', 'edit.fileHint', name, { ext }).node]), // папку книги не переименовываем
+      ...(book.folder ? [] : [createField('edit.file', 'edit.fileHint', name, { ext }).node]),
     ],
     meta: () => ({
       kind,

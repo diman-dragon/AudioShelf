@@ -5,7 +5,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Box lookup inside an MP4 box tree held in memory. A box is [start, end) of its payload. */
 final class Mp4Box {
   final int start;
   final int end;
@@ -19,7 +18,6 @@ final class Mp4Box {
     return new Mp4Box(0, d.length);
   }
 
-  /** Children of the given type, in order. */
   List<Mp4Box> all(byte[] d, String type) {
     List<Mp4Box> out = new ArrayList<>();
     for (int p = start; p + 8 <= end; ) {
@@ -43,7 +41,6 @@ final class Mp4Box {
     return list.isEmpty() ? null : list.get(0);
   }
 
-  /** Path like "mdia/minf/stbl". */
   Mp4Box path(byte[] d, String path) {
     Mp4Box box = this;
     for (String part : path.split("/")) {

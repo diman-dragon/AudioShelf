@@ -6,7 +6,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-/** QuickTime chapter track: a text track that the audio track points to with tref/chap. */
 final class QtChapters {
   private QtChapters() {}
 

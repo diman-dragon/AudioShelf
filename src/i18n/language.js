@@ -15,7 +15,6 @@ function activate() {
   document.dispatchEvent(new Event('langchange'));
 }
 
-// При старте: выбор пользователя, а при «Авто» — язык устройства.
 export function initLanguage() {
   pref = loadLangPref();
   activate();

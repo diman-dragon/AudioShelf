@@ -4,12 +4,11 @@ import { watchCover } from './cover-watch.js';
 import { playFromLibrary } from './actions.js';
 import { openFileMenu } from './menu.js';
 
-const BATCH = 40; // сколько строк рисуем за один заход, чтобы большой список не вешал экран
+const BATCH = 40;
 
-// Контейнер файлов; вид (list | cards) задаётся классом.
 export function createItems() {
   const node = el('div', 'lib-items');
-  let run = 0; // номер текущей отрисовки: новая отменяет старую
+  let run = 0;
 
   function fill(books, from, id) {
     if (id !== run) return;

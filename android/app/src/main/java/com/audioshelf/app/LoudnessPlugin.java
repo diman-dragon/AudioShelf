@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.json.JSONObject;
 
-/** Background loudness analysis of library files. Progress arrives as 'loudness' events. */
 @CapacitorPlugin(name = "Loudness")
 public class LoudnessPlugin extends Plugin {
   private final LoudnessRunner runner = new LoudnessRunner();
@@ -26,7 +25,6 @@ public class LoudnessPlugin extends Plugin {
     notifyListeners("loudness", o);
   }
 
-  /** files: [{uri, name}], onlyCharging: run only while charging. Events: start {name}, file {uri, name, gain|null}, finish {status, failed}. */
   @PluginMethod
   public void start(PluginCall call) {
     JSArray raw = call.getArray("files");

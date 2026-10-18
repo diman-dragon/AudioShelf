@@ -11,8 +11,6 @@ import { resumeAt } from './progress-store.js';
 import { getSleepChoice } from './sleep-actions.js';
 import { getSkip } from './skip-pref.js';
 
-// Рисует экран плеера. paint — целиком, когда изменилось что-то заметное (глава, пауза/игра, закладки, язык...);
-// tick — только время: бегунок, общий прогресс, остаток сна. Пока экран не открыт, не рисуем вовсе.
 export function createPainter({ body, empty, cover, title, byline, chapter, seek, line, controls, extras }) {
   let shown = null;
   let dirty = true;
@@ -23,7 +21,7 @@ export function createPainter({ body, empty, cover, title, byline, chapter, seek
     const s = getStatus();
     const position = loaded ? s.position : resumeAt(book.id).p;
     seek.update(position, loaded ? s.duration : 0);
-    line.update(kindOf(book) === 'book' ? bookProgress(book.id, book.files.length, index, position) : null); // общий прогресс — только у книги
+    line.update(kindOf(book) === 'book' ? bookProgress(book.id, book.files.length, index, position) : null);
     extras.updateSleep({ choice: getSleepChoice(), left: s.sleepLeft, end: s.sleepEnd });
   };
 
@@ -66,7 +64,7 @@ export function createPainter({ body, empty, cover, title, byline, chapter, seek
   const tick = () => {
     const book = getTrack();
     if (!book) return;
-    if (!visible() || dirty) return paint(); // paint сам запомнит, что экран надо дорисовать
+    if (!visible() || dirty) return paint();
 
     timePart(book, chapterIndex());
   };

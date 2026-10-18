@@ -8,18 +8,16 @@ import { refreshChapters } from './refresh-chapters.js';
 import { getSkip } from './skip-pref.js';
 
 export async function playBook(book) {
-  if (progressState(book.id) === 'new') saveProgress(book.id, { i: 0, p: 1, d: 0 }); // «начато»: значок книги сразу меняется
+  if (progressState(book.id) === 'new') saveProgress(book.id, { i: 0, p: 1, d: 0 });
   setTrack(book);
   saveLast(book);
-  await refreshChapters(book); // главы внутри файла (MKA, M4B, MP3): узнаём до запуска, чтобы начать с нужного места
+  await refreshChapters(book);
   const { i, p } = resumeAt(book.id);
   return load(i, p, true).catch(() => {});
 }
 
-let toggling = false; // пока предыдущее нажатие не обработано, следующие не запускают вторую загрузку или второй «пуск»
+let toggling = false;
 
-// Пуск/пауза. Что делать, решает нативный плеер по своему настоящему состоянию (а не по нашей копии, которая могла отстать),
-// а кнопка сразу показывает результат: ответ приходит позже.
 export async function togglePlay() {
   if (!getTrack() || toggling) return;
   toggling = true;
@@ -44,7 +42,6 @@ export async function seekTo(ms) {
   applyStatus(await Player.seek({ position: ms }));
 }
 
-// Перемотка на столько секунд, сколько выбрано в настройках.
 export function skip(forward) {
   const { position, duration } = getStatus();
   const { back, forward: ahead } = getSkip();
@@ -52,7 +49,6 @@ export function skip(forward) {
   return seekTo(Math.round(Math.max(0, duration ? Math.min(duration, target) : target)));
 }
 
-// Скорость из настроек: запоминаем и сразу применяем к играющему.
 export async function setSpeed(speed) {
   saveSpeed(speed);
   document.dispatchEvent(new Event('speedchange'));

@@ -4,7 +4,6 @@ import { forgetFolder } from '../library/forget-folder.js';
 import { t } from '../i18n/i18n.js';
 import { closeModal, openModal } from './modal.js';
 
-// Подтверждение: убрать папку из отслеживания.
 export function openForgetDialog() {
   const actions = el('div', 'modal-actions');
   actions.append(

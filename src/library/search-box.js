@@ -2,9 +2,8 @@ import { el } from '../core/dom.js';
 import { t } from '../i18n/i18n.js';
 import { setFilter } from './filter-state.js';
 
-const DELAY = 150; // мс: не перерисовываем список на каждую букву
+const DELAY = 150;
 
-// Поле поиска по названию, автору, чтецу и году.
 export function createSearch() {
   const input = el('input', 'lib-search');
   Object.assign(input, { type: 'search', autocomplete: 'off', enterKeyHint: 'search' });

@@ -1,10 +1,8 @@
 import { bookProgress } from './book-progress.js';
 import { saveProgress } from './progress-store.js';
 
-const END_GAP = 3000; // до конца последней главы меньше 3 с — считаем дослушанной
+const END_GAP = 3000;
 
-// Запоминает прогресс книги: каждые ~2 с при игре, при паузе, перемотке и когда плеер закрыли из шторки.
-// at — последнее известное состояние плеера; пишется позиция, а процент и «дослушана» — только если изменились (см. progress-store).
 export function remember(track, prev, next) {
   const at = next.loaded ? next : prev;
   const last = at.index === track.files.length - 1;

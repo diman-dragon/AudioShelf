@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Chapters (and, for Matroska, a cover) found inside one audio file, whatever its container. */
 final class FileChapters {
   final List<Chapter> chapters;
   final byte[] cover;

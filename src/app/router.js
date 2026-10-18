@@ -1,4 +1,3 @@
-// Состояние навигации: какой экран открыт сейчас.
 export const HOME = 'library';
 
 let current = HOME;

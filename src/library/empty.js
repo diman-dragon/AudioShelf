@@ -10,7 +10,6 @@ const TEXT = {
   ok: ['lib.empty', 'lib.emptyHint'],
 };
 
-// Пустое состояние: нет папки / ошибка / ещё не сканировали / в папке нет аудио.
 export function createEmpty() {
   const node = el('div', 'empty');
   const title = el('div', 'empty-title');
@@ -23,7 +22,7 @@ export function createEmpty() {
       const [a, b] = TEXT[status];
       bindText(title, a);
       bindText(hint, b);
-      go.hidden = status !== 'nofolder' && status !== 'error'; // иначе действия есть на панели сверху
+      go.hidden = status !== 'nofolder' && status !== 'error';
     },
   };
 }

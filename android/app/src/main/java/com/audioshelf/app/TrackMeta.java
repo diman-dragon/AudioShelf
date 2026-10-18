@@ -4,11 +4,9 @@ import android.content.Context;
 import android.net.Uri;
 import androidx.media3.common.MediaMetadata;
 
-/** Title, author and cover shown in the media notification and on the lock screen. */
 final class TrackMeta {
   private TrackMeta() {}
 
-  /** Embedded cover as a small JPEG, or null if the file has none. */
   static byte[] cover(Context ctx, String uri) {
     try {
       return CoverArt.jpeg(ctx, Uri.parse(uri), 512);

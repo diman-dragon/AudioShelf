@@ -3,11 +3,9 @@ package com.audioshelf.app;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-/** Minimal EBML (Matroska) element reading. */
 final class Ebml {
   static final long UNKNOWN = -1;
 
-  /** An element header: id, where its data starts, and its size (UNKNOWN for live streams). */
   static final class Element {
     final long id;
     final long dataPos;

@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { open, pass, pickFolder } from './helpers.mjs';
 
-// У начатой книги в библиотеке есть полоска прогресса; она сохраняется после перезапуска.
 const app = await open();
 await pickFolder(app);
 assert.equal(await app.page.locator('.fprog:visible').count(), 0, 'у неначатых книг полоски нет');

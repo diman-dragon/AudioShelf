@@ -6,18 +6,15 @@ import android.content.IntentFilter;
 import android.os.BatteryManager;
 import android.os.PowerManager;
 
-/** Heavy background work (loudness analysis) must not drain a weak battery. */
 final class BatteryGuard {
   private static final int LOW_PERCENT = 20;
 
   private BatteryGuard() {}
 
-  /** True when not charging and either Battery Saver is on or the charge is below 20%. */
   static boolean shouldPause(Context ctx) {
     return shouldPause(ctx, false);
   }
 
-  /** onlyCharging: automatic background work runs only on the charger, so any unplugged state pauses it. */
   static boolean shouldPause(Context ctx, boolean onlyCharging) {
     Intent battery = ctx.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
     if (battery == null) return false;

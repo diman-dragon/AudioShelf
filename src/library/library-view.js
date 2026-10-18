@@ -21,8 +21,6 @@ export function renderLibrary() {
   const noMatch = createNoMatch();
   root.append(bar.node, filter, scan.node, items.node, noMatch, empty.node);
 
-  // Список строк пересобирается, только когда что-то в нём правда изменилось: данные (force) или состав и порядок книг.
-  // Пока вкладка не открыта, не рисуем вовсе, а при возвращении дорисовываем, если что-то менялось.
   let drawn = '';
   let dirty = false;
 
@@ -55,7 +53,7 @@ export function renderLibrary() {
   document.addEventListener('filterchange', () => paint());
   document.addEventListener('scanprogress', () => scan.update(getProgress()));
   document.addEventListener('viewchange', () => items.setView(getView()));
-  onNavigate((id) => id === 'library' && paint()); // вернулись: порядок мог измениться (сортировка «недавно слушали»)
+  onNavigate((id) => id === 'library' && paint());
   paint();
   return root;
 }

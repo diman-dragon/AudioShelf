@@ -6,7 +6,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Chapters of an MP4 / M4B / M4A: the Nero "chpl" list, or a QuickTime chapter track. */
 final class Mp4Chapters {
   private static final int MAX_MOOV = 64 << 20;
 
@@ -47,7 +46,6 @@ final class Mp4Chapters {
     return list.isEmpty() ? Chapter.tidy(QtChapters.read(src, d, moov)) : list;
   }
 
-  /** Nero chapter list: version+flags (4), reserved (4), count (1), then start (8, units of 100 ns), length (1), title. */
   private static List<Chapter> chpl(byte[] d, Mp4Box box) {
     List<Chapter> out = new ArrayList<>();
     if (box == null || box.end - box.start < 9) return out;

@@ -1,6 +1,5 @@
 import { readStored, writeStored } from '../core/storage.js';
 
-// Книга, открытая в плеере последней, и скорость воспроизведения: по одной настройке, каждая пишется отдельно.
 const LAST = 'audioshelf.last2';
 const SPEED = 'audioshelf.speed';
 

@@ -13,13 +13,11 @@ function apply(id) {
   syncSystemBars(theme);
 }
 
-// Выбор пользователя запоминаем; тему системы — нет, чтобы она продолжала действовать.
 export function setTheme(id) {
   apply(id);
   saveTheme(current);
 }
 
-// Вызывается один раз при старте, до отрисовки интерфейса.
 export function initTheme() {
   apply(loadTheme() ?? systemTheme());
 }

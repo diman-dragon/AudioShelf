@@ -5,7 +5,6 @@ import android.net.Uri;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Files chosen in the system picker (one or several). */
 final class PickedUris {
   private PickedUris() {}
 

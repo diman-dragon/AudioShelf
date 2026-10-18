@@ -4,7 +4,6 @@ import { getMeta } from './meta-store.js';
 
 const norm = (text) => String(text ?? '').toLowerCase();
 
-// Где ищем: название, имя папки/файла, автор, чтец, год.
 function haystack(book) {
   const { author, narrator, year } = getMeta(book.id);
   return norm([titleOf(book), book.name, author, narrator, year].join(' '));

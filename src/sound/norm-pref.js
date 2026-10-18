@@ -1,6 +1,5 @@
 import { readStored, writeStored } from '../core/storage.js';
 
-// Применять ли найденные поправки громкости при воспроизведении (по умолчанию да).
 const KEY = 'audioshelf.normOn';
 
 export const isNormOn = () => readStored(KEY) !== '0';

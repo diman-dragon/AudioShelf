@@ -5,16 +5,12 @@ import android.os.Looper;
 import androidx.media3.common.Player;
 import androidx.media3.exoplayer.ExoPlayer;
 
-/**
- * Fade-in at the start of every file and fade-out at its end (a book: none, an album: long).
- * It only wakes up near a file edge: with no fades set, or in the middle of a file, nothing runs.
- */
 final class EdgeFader implements Runnable, Player.Listener {
-  private static final long TICK_MS = 100; // smooth enough for a fade
-  private static final long CHECK_MS = 10_000; // longest sleep in the middle of a file
+  private static final long TICK_MS = 100;
+  private static final long CHECK_MS = 10_000;
 
   private final ExoPlayer player;
-  private final Runnable onChange; // applies the volume (edge fade times the sleep-timer fade)
+  private final Runnable onChange;
   private final Handler handler = new Handler(Looper.getMainLooper());
   private volatile int fadeIn;
   private volatile int fadeOut;
@@ -25,7 +21,6 @@ final class EdgeFader implements Runnable, Player.Listener {
     player.addListener(this);
   }
 
-  /** Durations in milliseconds; 0 means no fade on that edge. */
   void set(int fadeInMs, int fadeOutMs) {
     fadeIn = fadeInMs;
     fadeOut = fadeOutMs;
@@ -36,7 +31,6 @@ final class EdgeFader implements Runnable, Player.Listener {
     handler.removeCallbacksAndMessages(null);
   }
 
-  /** 0..1 from the position in the current file; very short files are left alone. */
   float factor() {
     int in = fadeIn;
     int out = fadeOut;
@@ -48,7 +42,6 @@ final class EdgeFader implements Runnable, Player.Listener {
     return Math.max(0f, Math.min(up, down));
   }
 
-  /** Applies the volume now and decides when to look again. */
   @Override
   public void run() {
     handler.removeCallbacks(this);

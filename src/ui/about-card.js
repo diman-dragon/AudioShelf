@@ -5,7 +5,6 @@ const LOGO = `<svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="cu
 <path d="M9 40h30"/><rect x="11" y="13" width="7" height="27" rx="1.5"/><rect x="20.5" y="8" width="7" height="32" rx="1.5"/>
 <path d="M30 40L36.5 12.5l6.2 1.5L36 41.5"/><path d="M24 17v14" stroke-width="1.6"/></svg>`;
 
-// «О нас»: карточка в двойной рамке с уголками — название, версия, чьё это приложение.
 export function createAboutCard() {
   const frame = el('div', 'about');
   const inner = el('div', 'about-in');

@@ -7,7 +7,6 @@ import { createMarkRow } from './bookmark-row.js';
 import { getMarks, removeMark } from './bookmark-store.js';
 import { getTrack, isLoaded } from './player-state.js';
 
-// Окно «Закладки»: добавить в текущем месте, перейти к закладке, удалить.
 export function openMarksDialog() {
   const book = getTrack();
   if (!book) return;

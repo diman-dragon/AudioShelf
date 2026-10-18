@@ -1,6 +1,5 @@
 import { createMapStore } from '../core/map-store.js';
 
-// uri файла -> поправка громкости, дБ (результат нормализации). Хранится в базе по строке на файл.
 const store = createMapStore('audioshelf.gain');
 
 export const getGain = (uri) => store.get(uri) ?? 0;

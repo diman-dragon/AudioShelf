@@ -6,7 +6,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-/** ID3v2 chapter frames (CHAP) of an MP3: id, start and end in ms, and a TIT2 title. */
 final class Id3Chapters {
   private static final int MAX_TAG = 32 << 20;
 
@@ -27,7 +26,7 @@ final class Id3Chapters {
     byte[] d = src.bytes(10, size);
     if (d == null) return out;
     int p = 0;
-    if ((h[5] & 0x40) != 0 && d.length >= 4) p = version == 4 ? syncsafe(d, 0) : 4 + beInt(d, 0); // extended header
+    if ((h[5] & 0x40) != 0 && d.length >= 4) p = version == 4 ? syncsafe(d, 0) : 4 + beInt(d, 0);
     while (p + 10 <= d.length && d[p] != 0) {
       int len = version == 4 ? syncsafe(d, p + 4) : beInt(d, p + 4);
       if (len < 0 || p + 10 + len > d.length) break;
@@ -39,7 +38,7 @@ final class Id3Chapters {
 
   private static void chapter(byte[] d, int from, int to, int version, List<Chapter> out) {
     int p = from;
-    while (p < to && d[p] != 0) p++; // element id
+    while (p < to && d[p] != 0) p++;
     p++;
     if (p + 16 > to) return;
     long start = beInt(d, p) & 0xffffffffL;

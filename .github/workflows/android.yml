@@ -6,7 +6,6 @@ on:
   pull_request:
   workflow_dispatch:
 
-# Права по умолчанию только на чтение: запись нужна лишь задаче release.
 permissions:
   contents: read
 
@@ -16,7 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Capacitor 8 требует Node 22+ и Java 21.
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -57,7 +55,6 @@ jobs:
           java-version: 21
           cache: gradle
 
-      # Постоянный ключ подписи лежит в секретах (см. store/PUBLISHING.md). Без секретов (чужой форк) подпись обычная debug.
       - name: Restore the signing key
         env:
           KEYSTORE_BASE64: ${{ secrets.AUDIOSHELF_DEBUG_KEYSTORE_BASE64 }}
@@ -100,7 +97,7 @@ jobs:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
-      contents: write # только здесь: публикация релиза
+      contents: write
     steps:
       - uses: actions/checkout@v4
 

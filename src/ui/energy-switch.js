@@ -9,9 +9,8 @@ const items = [
   { id: 'on', labelKey: 'energy.on' },
   { id: 'off', labelKey: 'energy.off' },
 ];
-const SETTLE_MS = 400; // нативная часть узнаёт о смене звука чуть позже JS
+const SETTLE_MS = 400;
 
-// Переключатель «аппаратное воспроизведение» с пояснением и строкой состояния (работает ли оно сейчас на этом телефоне).
 export function createEnergySwitch() {
   const node = el('div', 'energy');
   const status = el('div', 'note energy-status');
@@ -30,7 +29,7 @@ export function createEnergySwitch() {
   }
   const later = () => {
     clearTimeout(timer);
-    if (getScreen() === 'settings') timer = setTimeout(refresh, SETTLE_MS); // только пока открыты настройки
+    if (getScreen() === 'settings') timer = setTimeout(refresh, SETTLE_MS);
   };
 
   ['eqchange', 'normchange', 'boostchange', 'premiumchange'].forEach((name) => document.addEventListener(name, later));

@@ -1,8 +1,7 @@
 import { createMapStore } from '../core/map-store.js';
 
-// id книги -> [{ i: глава, p: позиция мс, t: когда добавлена, x: 1 — глава внутри файла }], по порядку в книге.
 const store = createMapStore('audioshelf.marks');
-const NEAR = 1000; // мс: две закладки ближе друг к другу — одна
+const NEAR = 1000;
 
 export const getMarks = (id) => store.get(id) ?? [];
 
@@ -13,7 +12,6 @@ export function addMark(id, i, p, x = false) {
   store.set(id, next.sort((a, b) => a.i - b.i || a.p - b.p));
 }
 
-// Книга стала раскладываться на главы внутри файла: закладки без пометки x переносим на новые номера.
 export function remapMarks(id, map) {
   const list = getMarks(id);
   if (!list.some((m) => !m.x)) return;

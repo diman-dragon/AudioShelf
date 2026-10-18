@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Копирует debug-APK под именем AudioShelf-<версия>.apk (версия из package.json)
-# и отдаёт версию и имя файла следующим шагам workflow.
 set -euo pipefail
 
 VERSION=$(node -p "require('./package.json').version")

@@ -5,7 +5,6 @@ import { kindOf } from '../library/file-info.js';
 import { fmtDate } from '../library/format.js';
 import { fmtTime } from './time.js';
 
-// Строка закладки: «Глава 3 · 1:02:05», дата; справа ✕.
 export function createMarkRow(book, mark, { onJump, onRemove }) {
   const row = el('div', 'mrow');
   const go = button('mgo', () => onJump(mark));

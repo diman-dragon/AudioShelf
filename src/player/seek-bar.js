@@ -1,7 +1,6 @@
 import { el } from '../core/dom.js';
 import { fmtTime } from './time.js';
 
-// Ползунок перемотки и время: прошло / всего.
 export function createSeek(onSeek) {
   const node = el('div', 'seek');
   const range = el('input');

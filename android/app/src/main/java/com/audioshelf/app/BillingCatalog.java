@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** The products and their localized prices, as Google Play reports them. */
 final class BillingCatalog {
   private final Map<String, ProductDetails> details = new HashMap<>();
 
@@ -18,7 +17,6 @@ final class BillingCatalog {
     return details.get(id);
   }
 
-  /** Asks Google Play for Premium and the three tips, then runs next. */
   void load(BillingClient client, Runnable next) {
     List<QueryProductDetailsParams.Product> list = new ArrayList<>();
     list.add(product(BillingProducts.PREMIUM));
@@ -36,7 +34,6 @@ final class BillingCatalog {
     return QueryProductDetailsParams.Product.newBuilder().setProductId(id).setProductType(BillingClient.ProductType.INAPP).build();
   }
 
-  /** {premium, products: [{id, price}]} for JavaScript. */
   JSObject state(boolean premium) {
     JSObject out = new JSObject();
     out.put("premium", premium);

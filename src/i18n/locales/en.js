@@ -178,7 +178,6 @@ export default {
   'mode.short.all': 'Repeat',
   'mode.short.one': 'Repeat 1',
   'mode.short.shuffle': 'Shuffle',
-  'sleep.off': 'Off',
   'sleep.chapter': 'Chapter',
 
   'unit.kb': 'KB',

@@ -8,7 +8,6 @@ import android.net.Uri;
 import android.util.Base64;
 import java.io.ByteArrayOutputStream;
 
-/** Embedded cover from audio tags, as a small JPEG data URL. */
 final class CoverArt {
   private CoverArt() {}
 
@@ -16,13 +15,12 @@ final class CoverArt {
     return "data:image/jpeg;base64," + Base64.encodeToString(jpeg(ctx, uri, width), Base64.NO_WRAP);
   }
 
-  /** Small JPEG of the embedded cover (also used as notification artwork). */
   static byte[] jpeg(Context ctx, Uri uri, int width) throws Exception {
     MediaMetadataRetriever mmr = new MediaMetadataRetriever();
     try {
       mmr.setDataSource(ctx, uri);
       byte[] raw = mmr.getEmbeddedPicture();
-      if (raw == null) raw = attached(ctx, uri); // Matroska keeps pictures as attachments
+      if (raw == null) raw = attached(ctx, uri);
       if (raw == null) throw new Exception("no cover");
       Bitmap bmp = decode(raw, width);
       if (bmp == null) throw new Exception("bad cover");
