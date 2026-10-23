@@ -3,13 +3,7 @@ name: AudioShelf (native)
 on:
   push:
     branches: [main, master]
-    paths:
-      - 'AudioShelf/**'
-      - '.github/workflows/audioshelf-android.yml'
   pull_request:
-    paths:
-      - 'AudioShelf/**'
-      - '.github/workflows/audioshelf-android.yml'
   workflow_dispatch:
 
 permissions:
@@ -18,10 +12,6 @@ permissions:
 concurrency:
   group: audioshelf-${{ github.ref }}
   cancel-in-progress: true
-
-defaults:
-  run:
-    working-directory: AudioShelf
 
 jobs:
   build:
@@ -38,8 +28,6 @@ jobs:
           java-version: 21
 
       - uses: gradle/actions/setup-gradle@v4
-        with:
-          build-root-directory: AudioShelf
 
       - name: Restore the signing key
         env:
@@ -77,7 +65,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: AudioShelf-${{ steps.apk.outputs.version }}
-          path: AudioShelf/${{ steps.apk.outputs.file }}
+          path: ${{ steps.apk.outputs.file }}
 
   test:
     runs-on: ubuntu-latest
@@ -91,8 +79,6 @@ jobs:
           java-version: 21
 
       - uses: gradle/actions/setup-gradle@v4
-        with:
-          build-root-directory: AudioShelf
 
       - name: Unit tests and screenshots
         run: |
@@ -104,7 +90,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: screenshots
-          path: AudioShelf/app/build/screenshots/*.png
+          path: app/build/screenshots/*.png
           if-no-files-found: warn
 
       - name: Upload test report
@@ -112,7 +98,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-report
-          path: AudioShelf/app/build/reports/tests/
+          path: app/build/reports/tests/
 
   release:
     needs: build
@@ -120,9 +106,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    defaults:
-      run:
-        working-directory: .
     steps:
       - uses: actions/checkout@v4
 
