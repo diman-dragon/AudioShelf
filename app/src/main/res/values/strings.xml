@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AudioShelf</string>
+
+    <string name="nav_library">Library</string>
+    <string name="nav_player">Player</string>
+    <string name="nav_sound">Sound</string>
+    <string name="nav_settings">Settings</string>
+
+    <string name="soon_title">Coming soon</string>
+    <string name="soon_hint">This screen is not built yet</string>
+
+    <string name="player_empty">Nothing is playing</string>
+    <string name="player_empty_hint">Pick a file in the library</string>
+    <string name="player_to_library">To library</string>
+
+    <string name="player_chapter_of">Chapter %1$d of %2$d</string>
+    <string name="player_track_of">Track %1$d of %2$d</string>
+    <string name="player_book_left">Book: %1$d%% · %2$s left</string>
+    <string name="player_book_left_approx">Book: %1$d%% · ~%2$s left</string>
+
+    <string name="player_prev">Previous chapter</string>
+    <string name="player_next">Next chapter</string>
+    <string name="player_back">Back %1$d s</string>
+    <string name="player_forward">Forward %1$d s</string>
+    <string name="player_play">Play</string>
+    <string name="player_pause">Pause</string>
+    <string name="player_seek">Position</string>
+
+    <string name="player_speed">Speed</string>
+    <string name="player_sleep">Sleep</string>
+    <string name="player_list">List</string>
+    <string name="player_marks">Bookmarks</string>
+    <string name="player_marks_n">Bookmarks: %1$d</string>
+    <string name="sleep_min">%1$d min</string>
+    <string name="sleep_chapter">Chapter</string>
+
+    <string name="mode_continue">Continuous</string>
+    <string name="mode_chapter">Pause after each chapter</string>
+    <string name="mode_off">In order</string>
+    <string name="mode_all">Repeat all</string>
+    <string name="mode_one">Repeat track</string>
+    <string name="mode_shuffle">Shuffle</string>
+    <string name="mode_short_continue">No pause</string>
+    <string name="mode_short_chapter">Pause</string>
+    <string name="mode_short_off">In order</string>
+    <string name="mode_short_all">Repeat</string>
+    <string name="mode_short_one">Repeat 1</string>
+    <string name="mode_short_shuffle">Shuffle</string>
+</resources>

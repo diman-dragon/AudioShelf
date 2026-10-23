@@ -1,7 +1,0 @@
-import groovy.json.JsonSlurper
-
-def pkg = new JsonSlurper().parse(file('../../package.json'))
-def (major, minor, patch) = pkg.version.tokenize('.').collect { it.toInteger() }
-
-ext.appVersionName = pkg.version
-ext.appVersionCode = major * 10000 + minor * 100 + patch

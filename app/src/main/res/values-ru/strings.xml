@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_library">Библиотека</string>
+    <string name="nav_player">Плеер</string>
+    <string name="nav_sound">Звук</string>
+    <string name="nav_settings">Настройки</string>
+
+    <string name="soon_title">Скоро</string>
+    <string name="soon_hint">Этот экран ещё не готов</string>
+
+    <string name="player_empty">Ничего не играет</string>
+    <string name="player_empty_hint">Выберите файл в библиотеке</string>
+    <string name="player_to_library">В библиотеку</string>
+
+    <string name="player_chapter_of">Глава %1$d из %2$d</string>
+    <string name="player_track_of">Трек %1$d из %2$d</string>
+    <string name="player_book_left">Книга: %1$d%% · осталось %2$s</string>
+    <string name="player_book_left_approx">Книга: %1$d%% · осталось ~%2$s</string>
+
+    <string name="player_prev">Предыдущая глава</string>
+    <string name="player_next">Следующая глава</string>
+    <string name="player_back">Назад на %1$d с</string>
+    <string name="player_forward">Вперёд на %1$d с</string>
+    <string name="player_play">Играть</string>
+    <string name="player_pause">Пауза</string>
+    <string name="player_seek">Позиция</string>
+
+    <string name="player_speed">Скорость</string>
+    <string name="player_sleep">Сон</string>
+    <string name="player_list">Список</string>
+    <string name="player_marks">Закладки</string>
+    <string name="player_marks_n">Закладки: %1$d</string>
+    <string name="sleep_min">%1$d мин</string>
+    <string name="sleep_chapter">Глава</string>
+
+    <string name="mode_continue">Подряд</string>
+    <string name="mode_chapter">Пауза после главы</string>
+    <string name="mode_off">По порядку</string>
+    <string name="mode_all">Повтор всех</string>
+    <string name="mode_one">Повтор трека</string>
+    <string name="mode_shuffle">Вперемешку</string>
+    <string name="mode_short_continue">Без паузы</string>
+    <string name="mode_short_chapter">С паузой</string>
+    <string name="mode_short_off">Порядок</string>
+    <string name="mode_short_all">Все</string>
+    <string name="mode_short_one">Повтор</string>
+    <string name="mode_short_shuffle">Микс</string>
+</resources>

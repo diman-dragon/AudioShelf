@@ -1,3 +1,0 @@
-*.sh text eol=lf
-gradlew text eol=lf
-*.keystore binary

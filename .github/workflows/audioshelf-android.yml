@@ -1,0 +1,145 @@
+name: AudioShelf (native)
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'AudioShelf/**'
+      - '.github/workflows/audioshelf-android.yml'
+  pull_request:
+    paths:
+      - 'AudioShelf/**'
+      - '.github/workflows/audioshelf-android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: audioshelf-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: AudioShelf
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.apk.outputs.version }}
+      file: ${{ steps.apk.outputs.file }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          build-root-directory: AudioShelf
+
+      - name: Restore the signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.AUDIOSHELF_DEBUG_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.AUDIOSHELF_DEBUG_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.AUDIOSHELF_DEBUG_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.AUDIOSHELF_DEBUG_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$STORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/audioshelf-debug.jks"
+            {
+              echo "AUDIOSHELF_DEBUG_KEYSTORE_FILE=$RUNNER_TEMP/audioshelf-debug.jks"
+              echo "AUDIOSHELF_DEBUG_KEYSTORE_PASSWORD=$STORE_PASSWORD"
+              echo "AUDIOSHELF_DEBUG_KEY_ALIAS=$KEY_ALIAS"
+              echo "AUDIOSHELF_DEBUG_KEY_PASSWORD=$KEY_PASSWORD"
+            } >> "$GITHUB_ENV"
+          else
+            echo "::warning::Signing secrets are not set: the APK is signed with a temporary debug key and will not install over an APK signed with your key."
+          fi
+
+      - name: Build debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Name the APK
+        id: apk
+        run: |
+          VERSION=$(tr -d '[:space:]' < version.txt)
+          FILE="AudioShelf-$VERSION.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "$FILE"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "file=$FILE" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AudioShelf-${{ steps.apk.outputs.version }}
+          path: AudioShelf/${{ steps.apk.outputs.file }}
+
+  test:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          build-root-directory: AudioShelf
+
+      - name: Unit tests and screenshots
+        run: |
+          chmod +x gradlew
+          ./gradlew testDebugUnitTest --no-daemon --stacktrace
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: AudioShelf/app/build/screenshots/*.png
+          if-no-files-found: warn
+
+      - name: Upload test report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: AudioShelf/app/build/reports/tests/
+
+  release:
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: AudioShelf-${{ needs.build.outputs.version }}
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.build.outputs.version }}
+          FILE: ${{ needs.build.outputs.file }}
+        run: |
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            gh release upload "v$VERSION" "$FILE" --clobber
+          else
+            gh release create "v$VERSION" "$FILE" --target "$GITHUB_SHA" \
+              --title "AudioShelf $VERSION" --generate-notes
+          fi

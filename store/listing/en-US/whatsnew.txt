@@ -1,7 +1,0 @@
-First store release.
-• A library built from your folder: books, albums, search and sorting
-• Bookmarks, chapter list, sleep timer
-• Remembers your place and resumes 5 seconds earlier
-• Premium (one-time purchase): equalizer with presets and loudness normalization
-• Optional tips: cup of tea, teapot, samovar
-• Background playback with notification controls
