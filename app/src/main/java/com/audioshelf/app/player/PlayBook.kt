@@ -29,7 +29,7 @@ fun expandBook(book: Book, chaptersOf: (LibFile) -> List<ChapterRec>?): PlayBook
 
 fun remapper(book: Book, expanded: PlayBook): (Int, Long) -> Pair<Int, Long> = { index, position ->
     val file = book.files.getOrNull(index)
-    val parts = if (file == null) emptyList() else expanded.items.withIndex().filter { it.value.uri == file.uri }
+    val parts: List<IndexedValue<PlayItem>> = if (file == null) emptyList() else expanded.items.withIndex().filter { it.value.uri == file.uri }
     when {
         parts.isEmpty() -> 0 to position
         !parts[0].value.clipped -> parts[0].index to position

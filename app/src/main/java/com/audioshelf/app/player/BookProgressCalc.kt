@@ -6,7 +6,7 @@ fun bookProgress(known: Map<Int, Long>, count: Int, index: Int, positionMs: Long
     var before = 0.0
     var total = 0.0
     for (i in 0 until count) {
-        val length = (known[i] ?: average)
+        val length: Double = known[i]?.toDouble() ?: average
         total += length
         if (i < index) before += length
     }

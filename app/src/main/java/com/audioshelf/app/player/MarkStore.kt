@@ -57,7 +57,7 @@ class MarkStore(private val kv: Kv) {
     }
 
     private fun write(id: String, marks: List<Mark>) {
-        val sorted = marks.sortedWith(compareBy({ it.index }, { it.positionMs }))
+        val sorted = marks.sortedWith(compareBy<Mark>({ it.index }, { it.positionMs }))
         val rows = sorted.map { linkedMapOf("i" to it.index, "p" to it.positionMs, "t" to it.created, "x" to if (it.expanded) 1 else 0) }
         kv.put(STORE, id, Json.write(rows))
         counter.value++

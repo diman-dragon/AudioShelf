@@ -169,8 +169,8 @@
     <string name="preset_bass">Bass</string>
     <string name="preset_treble">Treble</string>
     <string name="boost_title">Volume boost</string>
-    <string name="boost_hint">100%% is as recorded in the file. Higher values amplify the signal in software so quiet recordings sound louder.</string>
-    <string name="boost_warn">At high values loud parts are limited and may distort slightly. Mind your hearing: start with 125%%.</string>
+    <string name="boost_hint">100% is as recorded in the file. Higher values amplify the signal in software so quiet recordings sound louder.</string>
+    <string name="boost_warn">At high values loud parts are limited and may distort slightly. Mind your hearing: start with 125%.</string>
     <string name="norm_title">Volume normalization</string>
     <string name="norm_hint">Loudness of new library files is measured automatically in the background, only when nothing else is going on: nothing is playing and the phone is charging (the button runs it without charging too). The result is saved and applied during playback. The files themselves are not changed.</string>
     <string name="norm_start">Normalize library</string>

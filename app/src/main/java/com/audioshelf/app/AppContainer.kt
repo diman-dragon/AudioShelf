@@ -64,18 +64,23 @@ class AppContainer(app: Application) {
     val soundPrefs = SoundPrefs(kv)
     private val offload = OffloadControl()
     private val output = SoundOutput(offload::setNeutral)
-    val engine = PlaybackEngine(
+    lateinit var session: PlayerSession
+        private set
+
+    val engine: PlaybackEngine = PlaybackEngine(
         app, scope, output, offload,
         { prefs.skipBack.value * 1000L },
         { prefs.skipForward.value * 1000L },
         { session.remember() },
     )
-    val session = PlayerSession(
-        scope, app, engine, library, meta, progress, durations, prefs, playPrefs,
-        chapters, ChapterScanner(app, chapters), marks, coverBytes, durationReader,
-    )
-    val normalizer = Normalizer(scope, app, { library.files.value }, gains)
-    val sound = SoundModel(scope, library, session.track, eqStore, gains, soundPrefs, normalizer)
+    init {
+        session = PlayerSession(
+            scope, app, engine, library, meta, progress, durations, prefs, playPrefs,
+            chapters, ChapterScanner(app, chapters), marks, coverBytes, durationReader,
+        )
+    }
+    val normalizer: Normalizer = Normalizer(scope, app, { library.files.value }, gains)
+    val sound: SoundModel = SoundModel(scope, library, session.track, eqStore, gains, soundPrefs, normalizer)
 
     init {
         offload.setAllowed(prefs.offload.value)
