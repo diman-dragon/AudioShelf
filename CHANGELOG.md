@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.2
+Launcher icon: the three bars above the book are replaced by the Datalou D (adaptive, round, legacy and monochrome).
+
 ## 1.2.1
 Covers in the player and next to audio files.
 - The player shows the real cover instead of only the placeholder.
