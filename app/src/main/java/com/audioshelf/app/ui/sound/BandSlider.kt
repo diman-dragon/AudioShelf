@@ -51,7 +51,7 @@ fun BandSlider(label: String, db: Int, onChange: (Int) -> Unit, modifier: Modifi
         AText(fmtDb(db), 11f, c.muted, tabular = true, maxLines = 1)
         Box(
             Modifier
-                .width(34.dp)
+                .fillMaxWidth()
                 .height(TRACK_HEIGHT)
                 .noSwipe()
                 .pointerInput(Unit) {

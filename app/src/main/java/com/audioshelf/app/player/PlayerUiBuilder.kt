@@ -39,6 +39,7 @@ fun buildPlayerUi(i: UiInput): PlayerUi {
             started -> Placeholder.OpenBook
             else -> Placeholder.ClosedBook
         },
+        coverFile = items[index].file,
         positionMs = position,
         durationMs = duration,
         playing = i.loaded && i.state.playing,

@@ -3,7 +3,6 @@ package com.audioshelf.app.ui
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -69,9 +68,6 @@ fun AudioShelfApp(container: AppContainer, player: PlayerViewModel) {
         AudioShelfTheme(dark) {
             CompositionLocalProvider(LocalOverlay provides overlays) {
                 val pickTree = rememberLauncherForActivityResult(PickTree()) { uri: Uri? -> if (uri != null) library.chooseFolder(uri) }
-                val pickFiles = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris: List<Uri> ->
-                    library.addFiles(uris)
-                }
                 val playerActions = remember(player) {
                     object : PlayerActions by player {
                         override fun onToLibrary() = goTo(Screen.Library)
@@ -100,7 +96,6 @@ fun AudioShelfApp(container: AppContainer, player: PlayerViewModel) {
 
                         override fun onRescan() = library.rescan()
                         override fun onStop() = library.cancelScan()
-                        override fun onAdd() = pickFiles.launch(arrayOf("audio/*"))
                         override fun onKind(kind: KindFilter) = prefs.setLibKind(kind)
                         override fun onSort(sort: SortMode) = prefs.setLibSort(sort)
                         override fun onView(view: LibView) = prefs.setLibView(view)
@@ -140,7 +135,7 @@ fun AudioShelfApp(container: AppContainer, player: PlayerViewModel) {
                             }
                             Screen.Player -> {
                                 val ui by player.ui.collectAsState()
-                                PlayerScreen(ui, playerActions)
+                                PlayerScreen(ui, playerActions, container.covers)
                             }
                             Screen.Sound -> {
                                 val ui by container.sound.ui.collectAsState()

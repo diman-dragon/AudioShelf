@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1
+Covers in the player and next to audio files.
+- The player shows the real cover instead of only the placeholder.
+- Images beside tracks: same name as the track (01. Name.jpg for 01. Name.mp3) and a general one (00.jpg, cover, folder, front, or a single unmatched image).
+- The player prefers the track image, the library prefers the general cover.
+
 ## 1.2.0
 Real playback and the Sound screen.
 - Media3 player in a media session service: notification, lock screen, headset buttons.

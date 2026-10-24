@@ -54,9 +54,9 @@ fun EqPanel(ui: SoundUi, actions: SoundActions) {
             }
         }
         AText(stringResource(R.string.sound_bands), 13f, c.muted, weight = FontWeight.SemiBold)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
             BAND_LABELS.forEachIndexed { i, label ->
-                BandSlider(label, ui.eq.bands[i], { actions.onBand(i, it) })
+                BandSlider(label, ui.eq.bands[i], { actions.onBand(i, it) }, Modifier.weight(1f))
             }
         }
         Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

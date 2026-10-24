@@ -16,6 +16,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.asImageBitmap
+import com.audioshelf.app.library.CoverSource
+import com.audioshelf.app.library.LibFile
+import com.audioshelf.app.library.NoCovers
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,7 +50,7 @@ private val COVER_MIN = 64.dp
 private val BODY_MAX = 420.dp
 
 @Composable
-fun PlayerScreen(ui: PlayerUi, actions: PlayerActions, modifier: Modifier = Modifier) {
+fun PlayerScreen(ui: PlayerUi, actions: PlayerActions, covers: CoverSource = NoCovers, modifier: Modifier = Modifier) {
     if (!ui.loaded) {
         EmptyState(
             emoji = R.drawable.emoji_headphones,
@@ -63,7 +70,7 @@ fun PlayerScreen(ui: PlayerUi, actions: PlayerActions, modifier: Modifier = Modi
             Modifier.widthIn(max = BODY_MAX).fillMaxHeight().align(Alignment.TopCenter),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Cover(ui.placeholder, Modifier.weight(1f).fillMaxWidth())
+            Cover(ui.placeholder, ui.coverFile, covers, Modifier.weight(1f).fillMaxWidth())
             Spacer(Modifier.height(12.dp))
             AText(heading.title, 18f, c.text, Modifier.fillMaxWidth(), FontWeight.Bold, TextAlign.Center)
             if (heading.sub.isNotEmpty()) {
@@ -107,8 +114,11 @@ private fun heading(ui: PlayerUi): Heading {
 }
 
 @Composable
-private fun Cover(placeholder: Placeholder, modifier: Modifier = Modifier) {
+private fun Cover(placeholder: Placeholder, file: LibFile?, covers: CoverSource, modifier: Modifier = Modifier) {
     val c = AppTheme.colors
+    val bitmap by produceState(file?.let { covers.peek(it, true) }, file?.uri, file?.modified, file?.size) {
+        value = file?.let { covers.load(it, true) }
+    }
     BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
         val side: Dp = minOf(maxWidth, maxHeight, COVER_MAX).coerceAtLeast(COVER_MIN)
         val shape = RoundedCornerShape(Dimens.radius)
@@ -132,6 +142,15 @@ private fun Cover(placeholder: Placeholder, modifier: Modifier = Modifier) {
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize().padding((side - 2.dp) * 0.125f),
             )
+            bitmap?.let { b ->
+                val image = remember(b) { b.asImageBitmap() }
+                Image(
+                    bitmap = image,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         }
     }
 }

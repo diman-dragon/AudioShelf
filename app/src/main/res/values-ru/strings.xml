@@ -53,7 +53,6 @@
     <string name="lib_empty_hint">Нажмите «Добавить» или положите файлы в папку и обновите библиотеку</string>
     <string name="lib_error">Не удалось открыть папку</string>
     <string name="lib_error_hint">Выберите папку заново в настройках</string>
-    <string name="lib_add">Добавить</string>
     <string name="lib_list">Строки</string>
     <string name="lib_cards">Карточки</string>
     <string name="lib_open">Открыть в другом приложении</string>

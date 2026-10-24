@@ -29,7 +29,6 @@ interface LibraryActions {
     fun onPlay(book: Book)
     fun onRescan()
     fun onStop()
-    fun onAdd()
     fun onKind(kind: KindFilter)
     fun onSort(sort: SortMode)
     fun onView(view: LibView)
@@ -45,7 +44,6 @@ interface LibraryActions {
             override fun onPlay(book: Book) {}
             override fun onRescan() {}
             override fun onStop() {}
-            override fun onAdd() {}
             override fun onKind(kind: KindFilter) {}
             override fun onSort(sort: SortMode) {}
             override fun onView(view: LibView) {}

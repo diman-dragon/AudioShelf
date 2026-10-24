@@ -189,7 +189,7 @@ class PlayerSession(
 
     private suspend fun plan(t: PlayBook, index: Int, positionMs: Long): ResumePlan {
         val m = library.metaOf(t.base)
-        val art = withContext(Dispatchers.IO) { runCatching { covers.jpeg(Uri.parse(t.items[0].uri), ART_WIDTH) }.getOrNull() }
+        val art = withContext(Dispatchers.IO) { runCatching { covers.jpeg(t.items[0].file, ART_WIDTH) }.getOrNull() }
         val album = m.title.ifEmpty { t.base.name }
         val items = t.items.map { mediaItemOf(it, album, m.author, art) }
         return ResumePlan(items, index.coerceIn(0, items.lastIndex), positionMs)
@@ -208,7 +208,7 @@ class PlayerSession(
         val t = trackFlow.value ?: throw IllegalStateException("nothing to resume")
         val (index, position) = progress.resume(t.id)
         val m = library.metaOf(t.base)
-        val art = runCatching { covers.jpeg(Uri.parse(t.items[0].uri), ART_WIDTH) }.getOrNull()
+        val art = runCatching { covers.jpeg(t.items[0].file, ART_WIDTH) }.getOrNull()
         val album = m.title.ifEmpty { t.base.name }
         val items = t.items.map { mediaItemOf(it, album, m.author, art) }
         scope.launch {

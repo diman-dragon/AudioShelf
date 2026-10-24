@@ -19,13 +19,13 @@ private const val MAX_FILES = 300
 private const val DROP_FILES = 60
 
 interface CoverSource {
-    fun peek(file: LibFile): Bitmap?
-    suspend fun load(file: LibFile): Bitmap?
+    fun peek(file: LibFile, track: Boolean = false): Bitmap?
+    suspend fun load(file: LibFile, track: Boolean = false): Bitmap?
 }
 
 object NoCovers : CoverSource {
-    override fun peek(file: LibFile): Bitmap? = null
-    override suspend fun load(file: LibFile): Bitmap? = null
+    override fun peek(file: LibFile, track: Boolean): Bitmap? = null
+    override suspend fun load(file: LibFile, track: Boolean): Bitmap? = null
 }
 
 class CoverLoader(private val context: Context, private val art: CoverBytes) : CoverSource {
@@ -35,16 +35,16 @@ class CoverLoader(private val context: Context, private val art: CoverBytes) : C
     private val missing: MutableSet<String> = ConcurrentHashMap.newKeySet()
     private val gate = Mutex()
 
-    private fun keyOf(file: LibFile) = "${file.uri}|${file.modified}|${file.size}"
+    private fun keyOf(file: LibFile, track: Boolean) = "${file.uri}|${file.modified}|${file.size}|${if (track) "t" else "b"}"
 
-    override fun peek(file: LibFile): Bitmap? = memory.get(keyOf(file))
+    override fun peek(file: LibFile, track: Boolean): Bitmap? = memory.get(keyOf(file, track))
 
-    override suspend fun load(file: LibFile): Bitmap? {
-        val key = keyOf(file)
+    override suspend fun load(file: LibFile, track: Boolean): Bitmap? {
+        val key = keyOf(file, track)
         memory.get(key)?.let { return it }
         if (key in missing) return null
         return gate.withLock {
-            memory.get(key) ?: withContext(Dispatchers.IO) { read(file, key) }.also { bitmap ->
+            memory.get(key) ?: withContext(Dispatchers.IO) { read(file, key, track) }.also { bitmap ->
                 if (bitmap != null) memory.put(key, bitmap) else missing.add(key)
             }
         }
@@ -52,14 +52,14 @@ class CoverLoader(private val context: Context, private val art: CoverBytes) : C
 
     private fun dir(): File = File(context.cacheDir, "covers").apply { mkdirs() }
 
-    private fun read(file: LibFile, key: String): Bitmap? {
+    private fun read(file: LibFile, key: String, track: Boolean): Bitmap? {
         val name = sha1("$key|$WIDTH")
         val jpg = File(dir(), "$name.jpg")
         val none = File(dir(), "$name.none")
         if (jpg.isFile) return BitmapFactory.decodeFile(jpg.path)
         if (none.isFile) return null
         return try {
-            val bytes = extract(Uri.parse(file.uri))
+            val bytes = extract(file, track)
             jpg.writeBytes(bytes)
             prune()
             BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
@@ -69,7 +69,7 @@ class CoverLoader(private val context: Context, private val art: CoverBytes) : C
         }
     }
 
-    private fun extract(uri: Uri): ByteArray = art.jpeg(uri, WIDTH) ?: throw IllegalStateException("no cover")
+    private fun extract(file: LibFile, track: Boolean): ByteArray = art.jpeg(file, WIDTH, track) ?: throw IllegalStateException("no cover")
 
     private fun prune() {
         val all = dir().listFiles() ?: return

@@ -1,5 +1,7 @@
 package com.audioshelf.app.player
 
+import com.audioshelf.app.library.LibFile
+
 enum class Kind { Book, Album }
 
 enum class PlayMode { Continue, Chapter, Off, All, One, Shuffle }
@@ -25,6 +27,7 @@ data class PlayerUi(
     val author: String = "",
     val chapter: ChapterInfo = ChapterInfo(0, 1, ""),
     val placeholder: Placeholder = Placeholder.ClosedBook,
+    val coverFile: LibFile? = null,
     val positionMs: Long = 0,
     val durationMs: Long = 0,
     val playing: Boolean = false,
