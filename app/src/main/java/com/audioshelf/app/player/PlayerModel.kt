@@ -70,3 +70,5 @@ interface PlayerActions {
         }
     }
 }
+
+class ChapterRow(val index: Int, val title: String, val durationMs: Long?, val current: Boolean)

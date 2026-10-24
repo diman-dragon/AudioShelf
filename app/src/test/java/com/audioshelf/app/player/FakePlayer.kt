@@ -2,14 +2,7 @@ package com.audioshelf.app.player
 
 import kotlin.random.Random
 
-val SPEEDS = listOf(0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
-
-val MODES = mapOf(
-    Kind.Book to listOf(PlayMode.Continue, PlayMode.Chapter),
-    Kind.Album to listOf(PlayMode.Off, PlayMode.All, PlayMode.One, PlayMode.Shuffle),
-)
-
-class FakeChapter(val name: String, val durationMs: Long)
+class FakeChapter(val name: String, var durationMs: Long)
 
 class FakeBook(
     val kind: Kind,
@@ -73,7 +66,7 @@ class FakeSession(
             sleep = SleepUi(sleep, sleepLeftMs),
             mode = mode,
             marks = marks,
-            progress = if (book.kind == Kind.Book) {
+            progress = if (book.kind == Kind.Book && total > 0) {
                 BookProgress((elapsed * 100 / total).toInt(), (total - elapsed).coerceAtLeast(0), exact = false)
             } else null,
         )
@@ -91,7 +84,7 @@ class FakeSession(
                 return
             }
         }
-        if (positionMs >= chapter.durationMs) finishChapter()
+        if (chapter.durationMs > 0 && positionMs >= chapter.durationMs) finishChapter()
     }
 
     private fun finishChapter() {

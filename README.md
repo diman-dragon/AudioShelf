@@ -7,10 +7,13 @@ Version lives in `version.txt` (`1.0.0`); bump the last digit for every build yo
 
 ## Status
 
-Stages 1–2 of the rewrite:
+1. App skeleton: theme (sand / AMOLED), header, tab bar, swipe navigation, CI.
+2. Library: SAF folder scan, grouping into books and albums, search / filter / sort, list and cards, covers (embedded tags and Matroska attachments), progress, edit / hide / delete, add files. Storage is the same `kv` SQLite as the old app.
+3. Settings: folder, hidden books, skip intervals, theme, language, About.
+4. Player on Media3: foreground service with notification, chapters from m4b / mka / mp3 (ID3 CHAP), bookmarks, sleep timer with fade, speed, play modes, resume with rewind, position saved in the background.
+5. Sound: 10-band equalizer (global or per book), presets, volume boost with soft limiter, background loudness normalization (battery aware).
 
-1. App skeleton: theme (sand / AMOLED, follows the system), header, tab bar with colour emoji icons, swipe navigation between the four tabs, system Back to Library, CI.
-2. Player window on fake data (`player/FakePlayer.kt`): cover, title, seek bar, book progress, controls, speed / sleep / list / mode / bookmarks. Library, Sound and Settings are placeholders.
+Premium / billing is not ported: every feature is available.
 
 ## Build
 

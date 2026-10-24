@@ -46,4 +46,6 @@ val LightColors = AppColors(
     isLight = true,
 )
 
+val DangerColor = Color(0xFFE5484D)
+
 val LocalAppColors = staticCompositionLocalOf { DarkColors }

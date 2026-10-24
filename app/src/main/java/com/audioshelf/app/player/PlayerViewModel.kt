@@ -1,54 +1,31 @@
 package com.audioshelf.app.player
 
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import com.audioshelf.app.AppContainer
+import com.audioshelf.app.library.Book
 
-private const val TICK_MS = 250L
+class PlayerViewModel(private val container: AppContainer) : ViewModel(), PlayerActions by container.session {
+    val ui get() = container.session.ui
 
-class PlayerViewModel : ViewModel(), PlayerActions {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private val session = FakeSession(SAMPLE_BOOK)
-    private val state = MutableStateFlow(session.toUi())
-    private var ticker: Job? = null
+    fun open(book: Book) = container.session.open(book)
 
-    val ui: StateFlow<PlayerUi> = state.asStateFlow()
+    fun remember() = container.session.remember()
 
-    private fun publish() {
-        state.value = session.toUi()
-        if (session.playing && ticker?.isActive != true) {
-            ticker = scope.launch {
-                while (session.playing) {
-                    delay(TICK_MS)
-                    session.tick(TICK_MS)
-                    state.value = session.toUi()
-                }
-            }
-        }
-    }
+    fun chapterRows() = container.session.chapterRows()
 
-    override fun onToggle() { session.toggle(); publish() }
-    override fun onPrev() { session.previous(); publish() }
-    override fun onNext() { if (session.book.chapters.size > 1) { session.step(1); publish() } }
-    override fun onBack() { session.skip(false); publish() }
-    override fun onForward() { session.skip(true); publish() }
-    override fun onSeek(positionMs: Long) { session.seek(positionMs); publish() }
-    override fun onSpeed() { session.cycleSpeed(); publish() }
-    override fun onSleep() { session.cycleSleep(); publish() }
-    override fun onList() {}
-    override fun onMode() { session.cycleMode(); publish() }
-    override fun onMarks() { session.marks++; publish() }
-    override fun onToLibrary() {}
+    fun playChapter(index: Int) = container.session.playChapter(index)
 
-    override fun onCleared() {
-        scope.cancel()
-    }
+    fun markList() = container.session.markList()
+
+    fun canMark() = container.session.canMark()
+
+    fun addMark() = container.session.addMark()
+
+    fun removeMark(created: Long) = container.session.removeMark(created)
+
+    fun jumpTo(mark: Mark) = container.session.jumpTo(mark)
+
+    fun isMulti() = container.session.isMulti()
+
+    fun kind() = container.session.currentKind()
 }
