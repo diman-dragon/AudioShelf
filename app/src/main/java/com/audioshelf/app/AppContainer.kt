@@ -24,10 +24,7 @@ import com.audioshelf.app.player.OffloadControl
 import com.audioshelf.app.player.PlayPrefs
 import com.audioshelf.app.player.PlaybackEngine
 import com.audioshelf.app.player.PlayerSession
-import com.audioshelf.app.sound.AutoNormalize
 import com.audioshelf.app.sound.EqStore
-import com.audioshelf.app.sound.GainStore
-import com.audioshelf.app.sound.Normalizer
 import com.audioshelf.app.sound.SoundMix
 import com.audioshelf.app.sound.SoundModel
 import com.audioshelf.app.sound.SoundOutput
@@ -60,7 +57,6 @@ class AppContainer(app: Application) {
     val chapters = ChapterStore(kv)
     val marks = MarkStore(kv)
     val eqStore = EqStore(kv)
-    val gains = GainStore(kv)
     val soundPrefs = SoundPrefs(kv)
     private val offload = OffloadControl()
     private val output = SoundOutput(offload::setNeutral)
@@ -79,18 +75,12 @@ class AppContainer(app: Application) {
             chapters, ChapterScanner(app, chapters), marks, coverBytes, durationReader,
         )
     }
-    val normalizer: Normalizer = Normalizer(scope, app, { library.files.value }, gains)
-    val sound: SoundModel = SoundModel(scope, library, session.track, eqStore, gains, soundPrefs, normalizer)
+    val sound: SoundModel = SoundModel(scope, session.track, eqStore, soundPrefs, library)
 
     init {
         offload.setAllowed(prefs.offload.value)
         scope.launch { prefs.offload.collect { offload.setAllowed(it) } }
-        SoundMix(scope, session.track, eqStore, gains, soundPrefs, output).start()
-        AutoNormalize(
-            scope, normalizer, soundPrefs.normOn, library.libraryStatus, library.scanning,
-            engine.state.map { it.playing }.stateIn(scope, SharingStarted.Eagerly, false),
-            library.files,
-        ).start()
+        SoundMix(scope, session.track, eqStore, output).start()
     }
 }
 

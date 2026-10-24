@@ -1,6 +1,5 @@
 package com.audioshelf.app.sound
 
-import com.audioshelf.app.library.LibFile
 import com.audioshelf.app.library.LibraryController
 import com.audioshelf.app.player.PlayBook
 import kotlinx.coroutines.CoroutineScope
@@ -9,42 +8,25 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
-private class Pick(val scope: EqScope, val boost: Int, val normOn: Boolean)
-
-private class Versions(val book: PlayBook?, val files: List<LibFile>)
-
 class SoundModel(
     scope: CoroutineScope,
-    private val library: LibraryController,
     private val track: StateFlow<PlayBook?>,
     private val eq: EqStore,
-    private val gains: GainStore,
     private val prefs: SoundPrefs,
-    private val normalizer: Normalizer,
+    private val library: LibraryController,
 ) : SoundActions {
-    private val inputs = combine(prefs.scope, prefs.boost, prefs.normOn) { s, b, n -> Pick(s, b, n) }
-    private val context = combine(track, library.files) { book, files -> Versions(book, files) }
-    private val changes = combine(eq.version, gains.version) { a, b -> a + b }
-
-    val ui: StateFlow<SoundUi> = combine(inputs, context, changes, normalizer.state) { pick, ctx, _, norm -> build(pick, ctx, norm) }
+    val ui: StateFlow<SoundUi> = combine(prefs.scope, track, eq.version) { pick, book, _ -> build(pick, book) }
         .stateIn(scope, SharingStarted.Eagerly, SoundUi())
 
-    private fun build(pick: Pick, ctx: Versions, norm: NormState): SoundUi {
-        val book = ctx.book
-        val editing = if (pick.scope == EqScope.Track && book != null) book.id else null
+    private fun build(pick: EqScope, book: PlayBook?): SoundUi {
+        val editing = if (pick == EqScope.Track && book != null) book.id else null
         val shown = if (editing != null) eq.effective(editing) else eq.global()
-        val pending = ctx.files.count { !gains.has(it.uri) }
         return SoundUi(
             scope = if (editing != null) EqScope.Track else EqScope.Global,
             trackAvailable = book != null,
             trackTitle = book?.let { library.metaOf(it.base).title.ifEmpty { it.base.name } } ?: "",
             eq = shown,
             ownEq = editing != null && eq.track(editing) != null,
-            boost = pick.boost,
-            normOn = pick.normOn,
-            norm = norm,
-            pending = pending,
-            totalFiles = ctx.files.size,
         )
     }
 
@@ -75,12 +57,4 @@ class SoundModel(
     override fun onUseGlobal() {
         editingId()?.let { eq.clearTrack(it) }
     }
-
-    override fun onBoost(percent: Int) = prefs.setBoost(percent)
-
-    override fun onNormOn(on: Boolean) = prefs.setNormOn(on)
-
-    override fun onNormStart() = normalizer.start()
-
-    override fun onNormStop() = normalizer.stop()
 }

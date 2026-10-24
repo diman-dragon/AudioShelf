@@ -40,21 +40,10 @@ class EqStoreTest {
     }
 
     @Test
-    fun gainsAndPrefs() {
+    fun scopeIsRemembered() {
         val kv = testKv()
-        val gains = GainStore(kv)
-        assertFalse(gains.has("u"))
-        gains.save("u", -3.5f)
-        assertTrue(gains.has("u"))
-        assertEquals(-3.5f, gains.get("u"), 0f)
-        gains.move("u", "v")
-        assertFalse(gains.has("u"))
-        val prefs = SoundPrefs(kv)
-        assertEquals(100, prefs.boost.value)
-        prefs.setBoost(150)
-        prefs.setNormOn(false)
-        val again = SoundPrefs(kv)
-        assertEquals(150, again.boost.value)
-        assertFalse(again.normOn.value)
+        assertEquals(EqScope.Global, SoundPrefs(kv).scope.value)
+        SoundPrefs(kv).setScope(EqScope.Track)
+        assertEquals(EqScope.Track, SoundPrefs(kv).scope.value)
     }
 }

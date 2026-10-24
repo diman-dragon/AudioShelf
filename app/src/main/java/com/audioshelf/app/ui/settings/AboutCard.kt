@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -68,56 +69,39 @@ private fun Logo(color: Color, modifier: Modifier) {
 @Composable
 fun AboutCard(version: String, modifier: Modifier = Modifier) {
     val c = AppTheme.colors
-    val outer = RoundedCornerShape(22.dp)
-    val inner = RoundedCornerShape(14.dp)
-    Box(
+    val shape = RoundedCornerShape(16.dp)
+    Column(
         modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .clip(outer)
-            .background(Brush.linearGradient(listOf(c.accentSoft, Color.Transparent)))
-            .border(1.dp, c.accent, outer)
-            .drawWithContent {
-                drawContent()
-                val r = 22.dp.toPx()
-                val s = Size(2 * r, 2 * r)
-                val w = Stroke(2.dp.toPx())
-                drawArc(c.accent, 180f, 90f, false, Offset(0f, 0f), s, style = w)
-                drawArc(c.accent, 270f, 90f, false, Offset(size.width - 2 * r, 0f), s, style = w)
-                drawArc(c.accent, 0f, 90f, false, Offset(size.width - 2 * r, size.height - 2 * r), s, style = w)
-                drawArc(c.accent, 90f, 90f, false, Offset(0f, size.height - 2 * r), s, style = w)
-            }
-            .padding(10.dp),
+            .clip(shape)
+            .background(c.surface)
+            .border(1.dp, c.line, shape)
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .clip(inner)
-                .background(c.surface)
-                .border(1.dp, c.line, inner)
-                .padding(start = 18.dp, end = 18.dp, top = 26.dp, bottom = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
-                Modifier.size(84.dp).clip(CircleShape).background(c.accentSoft).border(1.dp, c.accent, CircleShape),
+                Modifier.size(48.dp).clip(CircleShape).background(c.accentSoft).border(1.dp, c.accent, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Logo(c.accent, Modifier.size(48.dp))
+                Logo(c.accent, Modifier.size(28.dp))
             }
-            AText("AudioShelf", 26f, c.text, Modifier.padding(top = 6.dp), FontWeight.Bold, TextAlign.Center, letterSpacing = 0.5.sp)
-            AText(stringResource(R.string.about_tag), 14f, c.muted, align = TextAlign.Center)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                AText("AudioShelf", 17f, c.text, weight = FontWeight.Bold)
+                AText(stringResource(R.string.about_tag), 13f, c.muted)
+            }
             AText(
                 stringResource(R.string.settings_version, version),
                 12f,
                 c.accent,
-                Modifier.border(1.dp, c.accent, RoundedCornerShape(percent = 50)).padding(horizontal = 12.dp, vertical = 3.dp),
+                Modifier.border(1.dp, c.accent, RoundedCornerShape(percent = 50)).padding(horizontal = 10.dp, vertical = 3.dp),
                 FontWeight.Bold,
+                maxLines = 1,
             )
-            Box(Modifier.padding(top = 10.dp, bottom = 4.dp).width(56.dp).height(2.dp).background(c.accent))
-            AText(stringResource(R.string.about_lead), 14f, c.text, align = TextAlign.Center, lineHeight = 21.7f)
-            AText(stringResource(R.string.about_maker), 14f, c.text, align = TextAlign.Center, lineHeight = 21.7f)
-            AText("© ${Calendar.getInstance().get(Calendar.YEAR)} DataLaw", 12f, c.muted, Modifier.padding(top = 10.dp))
         }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(c.line))
+        AText(stringResource(R.string.about_lead), 12f, c.muted, lineHeight = 18f)
+        AText(stringResource(R.string.about_maker), 12f, c.muted, lineHeight = 18f)
+        AText("© ${Calendar.getInstance().get(Calendar.YEAR)} DataLaw", 12f, c.muted)
     }
 }

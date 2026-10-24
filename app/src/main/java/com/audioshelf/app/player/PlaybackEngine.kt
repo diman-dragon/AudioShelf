@@ -99,7 +99,6 @@ class PlaybackEngine(
         override fun onPlaybackStateChanged(playbackState: Int) = publish()
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            sound.useTrimOf(mediaItem?.mediaId)
             publish()
         }
 
@@ -154,7 +153,6 @@ class PlaybackEngine(
         p.prepare()
         p.setPlaybackSpeed(speed)
         p.playWhenReady = autoplay
-        sound.useTrimOf(items.getOrNull(index)?.mediaId)
         if (autoplay) startService()
         publish()
     }

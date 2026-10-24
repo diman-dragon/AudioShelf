@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.4
+Fix: switching the language crashed the app (the localized context hid the activity from back handling and the folder picker).
+Removed volume boost and loudness normalization (with the background analysis, battery guard and their settings). The Sound screen is the equalizer only.
+Settings is one screen; About is a compact card at the bottom.
+
 ## 1.2.3
 Settings controls.
 - Real switches for power saving, dark theme and loudness normalization.

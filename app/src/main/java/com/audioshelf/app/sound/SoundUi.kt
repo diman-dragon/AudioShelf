@@ -6,11 +6,6 @@ data class SoundUi(
     val trackTitle: String = "",
     val eq: Eq = Eq.Flat,
     val ownEq: Boolean = false,
-    val boost: Int = 100,
-    val normOn: Boolean = true,
-    val norm: NormState = NormState(),
-    val pending: Int = 0,
-    val totalFiles: Int = 0,
 )
 
 interface SoundActions {
@@ -19,10 +14,6 @@ interface SoundActions {
     fun onPreset(id: String)
     fun onReset()
     fun onUseGlobal()
-    fun onBoost(percent: Int)
-    fun onNormOn(on: Boolean)
-    fun onNormStart()
-    fun onNormStop()
 
     companion object {
         val None = object : SoundActions {
@@ -31,10 +22,6 @@ interface SoundActions {
             override fun onPreset(id: String) {}
             override fun onReset() {}
             override fun onUseGlobal() {}
-            override fun onBoost(percent: Int) {}
-            override fun onNormOn(on: Boolean) {}
-            override fun onNormStart() {}
-            override fun onNormStop() {}
         }
     }
 }

@@ -24,8 +24,6 @@ import com.audioshelf.app.player.Kind
 import com.audioshelf.app.ui.library.LibraryScreen
 import com.audioshelf.app.sound.Eq
 import com.audioshelf.app.sound.EqScope
-import com.audioshelf.app.sound.NormState
-import com.audioshelf.app.sound.NormStatus
 import com.audioshelf.app.sound.SoundActions
 import com.audioshelf.app.sound.SoundUi
 import com.audioshelf.app.ui.settings.SettingsActions
@@ -157,15 +155,11 @@ class PlayerScreenshotTest {
         trackAvailable = true,
         trackTitle = "Война и мир",
         eq = Eq.of("voice"),
-        boost = 125,
-        norm = NormState(NormStatus.Running, done = 14, total = 40, current = "01 Глава.mp3"),
-        pending = 26,
-        totalFiles = 40,
     )
 
     @Test
     fun soundDark() = captureContent("sound-dark", true, Screen.Sound) { SoundScreen(soundUi(), SoundActions.None) }
 
     @Test
-    fun soundLight() = captureContent("sound-light", false, Screen.Sound) { SoundScreen(soundUi().copy(norm = NormState()), SoundActions.None) }
+    fun soundLight() = captureContent("sound-light", false, Screen.Sound) { SoundScreen(soundUi(), SoundActions.None) }
 }

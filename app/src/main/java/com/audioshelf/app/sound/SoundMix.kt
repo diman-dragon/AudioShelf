@@ -10,26 +10,11 @@ class SoundMix(
     private val scope: CoroutineScope,
     private val track: StateFlow<PlayBook?>,
     private val eq: EqStore,
-    private val gains: GainStore,
-    private val prefs: SoundPrefs,
     private val output: SoundOutput,
 ) {
     fun start() {
         scope.launch {
-            combine(track, eq.version, gains.version, prefs.boost, prefs.normOn) { book, _, _, boost, norm ->
-                apply(book, boost, norm)
-            }.collect { }
+            combine(track, eq.version) { book, _ -> output.apply(eq.effective(book?.id).bands) }.collect { }
         }
-    }
-
-    private fun apply(book: PlayBook?, boost: Int, normOn: Boolean) {
-        val trims = HashMap<String, Float>()
-        if (book != null && normOn) {
-            book.base.files.forEach { file ->
-                val db = gains.get(file.uri)
-                if (db != 0f) trims[file.uri] = db
-            }
-        }
-        output.apply(eq.effective(book?.id).bands, trims, boost / 100f)
     }
 }

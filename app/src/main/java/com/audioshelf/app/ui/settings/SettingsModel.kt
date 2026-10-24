@@ -43,10 +43,6 @@ interface SettingsActions {
     }
 }
 
-object SettingsNav {
-    var index = 0
-}
-
 fun folderPath(uri: String, name: String, internal: String, card: String): String {
     val match = Regex("externalstorage\\.documents/tree/([^/?#]+)").find(uri) ?: return name
     val decoded = java.net.URLDecoder.decode(match.groupValues[1], "UTF-8")

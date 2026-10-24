@@ -11,7 +11,7 @@ Version lives in `version.txt` (`1.0.0`); bump the last digit for every build yo
 2. Library: SAF folder scan, grouping into books and albums, search / filter / sort, list and cards, covers (embedded tags and Matroska attachments), progress, edit / hide / delete, add files. Storage is the same `kv` SQLite as the old app.
 3. Settings: folder, hidden books, skip intervals, theme, language, About.
 4. Player on Media3: foreground service with notification, chapters from m4b / mka / mp3 (ID3 CHAP), bookmarks, sleep timer with fade, speed, play modes, resume with rewind, position saved in the background.
-5. Sound: 10-band equalizer (global or per book), presets, volume boost with soft limiter, background loudness normalization (battery aware).
+5. Sound: 10-band equalizer (global or per book), presets.
 
 Premium / billing is not ported: every feature is available.
 

@@ -21,6 +21,14 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
     else -> null
 }
 
+private class LocaleContext(base: Context, config: Configuration) : ContextWrapper(base) {
+    private val localized = base.createConfigurationContext(config).resources
+
+    override fun getResources() = localized
+
+    override fun getAssets() = localized.assets
+}
+
 @Composable
 fun LocalizedContent(language: String, content: @Composable () -> Unit) {
     val base = LocalContext.current
@@ -34,7 +42,7 @@ fun LocalizedContent(language: String, content: @Composable () -> Unit) {
                 setLocale(locale)
                 setLayoutDirection(locale)
             }
-            base.createConfigurationContext(changed) to changed
+            LocaleContext(base, changed) to changed
         }
     }
     CompositionLocalProvider(LocalContext provides pair.first, LocalConfiguration provides pair.second) { content() }
