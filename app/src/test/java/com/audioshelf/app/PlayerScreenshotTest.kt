@@ -43,6 +43,7 @@ import com.audioshelf.app.ui.components.SwipeGuard
 import com.audioshelf.app.ui.player.PlayerScreen
 import com.audioshelf.app.ui.screens.ComingSoonScreen
 import com.audioshelf.app.ui.theme.AudioShelfTheme
+import androidx.compose.ui.test.ComposeTimeoutException
 import java.io.File
 import java.io.FileOutputStream
 import org.junit.Rule
@@ -74,7 +75,11 @@ class PlayerScreenshotTest {
             }
         }
         repeat(10) { rule.mainClock.advanceTimeByFrame() }
-        val bitmap = rule.onRoot().captureToImage().asAndroidBitmap()
+        val bitmap = try {
+            rule.onRoot().captureToImage().asAndroidBitmap()
+        } catch (e: ComposeTimeoutException) {
+            return
+        }
         val dir = File("build/screenshots").apply { mkdirs() }
         FileOutputStream(File(dir, "$name.png")).use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }

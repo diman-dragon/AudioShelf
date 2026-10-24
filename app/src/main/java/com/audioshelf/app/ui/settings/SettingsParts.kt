@@ -27,6 +27,7 @@ import com.audioshelf.app.ui.components.Btn
 import com.audioshelf.app.ui.components.BtnKind
 import com.audioshelf.app.ui.components.LocalOverlay
 import com.audioshelf.app.ui.components.ModalView
+import com.audioshelf.app.ui.components.Toggle
 import com.audioshelf.app.ui.components.tap
 import com.audioshelf.app.ui.theme.AppTheme
 
@@ -53,6 +54,21 @@ fun SettingRow(label: String, stacked: Boolean = false, control: @Composable () 
                 AText(label, 16f, c.text, Modifier.weight(1f))
                 control()
             }
+        }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(c.line))
+    }
+}
+
+@Composable
+fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit, hint: String? = null) {
+    val c = AppTheme.colors
+    Column(Modifier.fillMaxWidth()) {
+        Column(Modifier.fillMaxWidth().padding(vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                AText(label, 16f, c.text, Modifier.weight(1f))
+                Toggle(checked, onChange, label)
+            }
+            if (hint != null) AText(hint, 12f, c.muted)
         }
         Box(Modifier.fillMaxWidth().height(1.dp).background(c.line))
     }

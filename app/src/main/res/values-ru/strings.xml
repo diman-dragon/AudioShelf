@@ -125,9 +125,11 @@
     <string name="settings_restore">Вернуть</string>
     <string name="settings_found">В библиотеке: %1$d · файлов: %2$d</string>
     <string name="settings_scanning">Сканирование… найдено: %1$d</string>
-    <string name="settings_skip_back">Перемотка назад, сек</string>
-    <string name="settings_skip_forward">Перемотка вперёд, сек</string>
+    <string name="settings_skip_back">Перемотка назад</string>
+    <string name="settings_skip_forward">Перемотка вперёд</string>
     <string name="settings_energy">Энергосбережение</string>
+    <string name="settings_dark">Тёмная тема</string>
+    <string name="unit_sec">%d с</string>
     <string name="settings_theme">Тема</string>
     <string name="settings_language">Язык</string>
     <string name="settings_version">Версия %1$s</string>

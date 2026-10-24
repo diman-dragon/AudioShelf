@@ -29,14 +29,14 @@ class DspTest {
     }
 
     @Test
-    fun boostBandRaisesItsFrequencyOnly() {
+    fun boostedBandStaysAndOthersDropByHeadroom() {
         val bands = FloatArray(BAND_COUNT).also { it[5] = 6f }
         val flat = rms(SoundChain(), 1000.0)
         val chain = SoundChain().also { it.setBands(bands) }
         val boosted = rms(chain, 1000.0)
         val far = rms(SoundChain().also { it.setBands(bands) }, 62.5)
-        assertTrue(boosted / flat > 1.7)
-        assertTrue(far < boosted)
+        assertEquals(1.0, boosted / flat, 0.1)
+        assertTrue(far / boosted < 0.6)
     }
 
     @Test

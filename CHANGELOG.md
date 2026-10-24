@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.3
+Settings controls.
+- Real switches for power saving, dark theme and loudness normalization.
+- Skip back and forward are tap-to-cycle buttons, like the sleep timer.
+
 ## 1.2.2
 Launcher icon: the three bars above the book are replaced by the Datalou D (adaptive, round, legacy and monochrome).
 

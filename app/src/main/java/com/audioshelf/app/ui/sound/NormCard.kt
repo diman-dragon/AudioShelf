@@ -23,7 +23,7 @@ import com.audioshelf.app.ui.components.Btn
 import com.audioshelf.app.ui.components.BtnKind
 import com.audioshelf.app.ui.components.SegItem
 import com.audioshelf.app.ui.components.Segmented
-import com.audioshelf.app.ui.settings.SettingRow
+import com.audioshelf.app.ui.settings.SwitchRow
 import com.audioshelf.app.ui.theme.AppTheme
 
 @Composable
@@ -46,13 +46,7 @@ fun NormCard(ui: SoundUi, actions: SoundActions) {
         }
         AText(status(ui), 13f, c.text)
         if (running && n.current.isNotEmpty()) AText(n.current, 12f, c.muted, maxLines = 1)
-        SettingRow(stringResource(R.string.norm_apply)) {
-            Segmented(
-                listOf(SegItem("on", stringResource(R.string.norm_on)), SegItem("off", stringResource(R.string.norm_off))),
-                if (ui.normOn) "on" else "off",
-                { actions.onNormOn(it == "on") },
-            )
-        }
+        SwitchRow(stringResource(R.string.norm_apply), ui.normOn, actions::onNormOn)
     }
 }
 

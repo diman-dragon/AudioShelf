@@ -26,8 +26,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.audioshelf.app.R
 import com.audioshelf.app.data.LANG_AUTO
-import com.audioshelf.app.data.SKIP_OPTIONS
+import com.audioshelf.app.data.nextSkip
 import com.audioshelf.app.ui.components.AText
+import com.audioshelf.app.ui.components.Cycler
 import com.audioshelf.app.ui.components.SegItem
 import com.audioshelf.app.ui.components.Segmented
 import com.audioshelf.app.ui.components.noSwipe
@@ -78,28 +79,21 @@ fun SettingsScreen(ui: SettingsUi, actions: SettingsActions, modifier: Modifier 
 @Composable
 private fun AppPage(ui: SettingsUi, actions: SettingsActions) {
     val c = AppTheme.colors
-    val skips = SKIP_OPTIONS.map { SegItem(it.toString(), it.toString()) }
-    val onOff = listOf(SegItem("on", stringResource(R.string.energy_on)), SegItem("off", stringResource(R.string.energy_off)))
-    val themes = listOf(SegItem("light", stringResource(R.string.theme_light)), SegItem("dark", stringResource(R.string.theme_dark)))
     val langs = listOf(SegItem(LANG_AUTO, stringResource(R.string.lang_auto)), SegItem("ru", "Русский"), SegItem("en", "English"))
     SectionHeading(stringResource(R.string.settings_section_library), first = true)
     FolderRow(ui, actions)
     if (ui.hidden > 0) HiddenRow(ui.hidden, actions::onRestoreHidden)
     SectionHeading(stringResource(R.string.settings_section_playback))
-    SettingRow(stringResource(R.string.settings_skip_back), stacked = true) {
-        Segmented(skips, ui.skipBack.toString(), { actions.onSkipBack(it.toInt()) }, fill = true)
+    val sec = stringResource(R.string.unit_sec)
+    SettingRow(stringResource(R.string.settings_skip_back)) {
+        Cycler(String.format(sec, ui.skipBack), { actions.onSkipBack(nextSkip(ui.skipBack)) })
     }
-    SettingRow(stringResource(R.string.settings_skip_forward), stacked = true) {
-        Segmented(skips, ui.skipForward.toString(), { actions.onSkipForward(it.toInt()) }, fill = true)
+    SettingRow(stringResource(R.string.settings_skip_forward)) {
+        Cycler(String.format(sec, ui.skipForward), { actions.onSkipForward(nextSkip(ui.skipForward)) })
     }
-    SettingRow(stringResource(R.string.settings_energy), stacked = true) {
-        Segmented(onOff, if (ui.offload) "on" else "off", { actions.onOffload(it == "on") }, fill = true)
-        AText(stringResource(R.string.energy_hint), 12f, c.muted)
-    }
+    SwitchRow(stringResource(R.string.settings_energy), ui.offload, actions::onOffload, stringResource(R.string.energy_hint))
     SectionHeading(stringResource(R.string.settings_section_interface))
-    SettingRow(stringResource(R.string.settings_theme)) {
-        Segmented(themes, ui.theme, actions::onTheme)
-    }
+    SwitchRow(stringResource(R.string.settings_dark), ui.theme == "dark", { actions.onTheme(if (it) "dark" else "light") })
     SettingRow(stringResource(R.string.settings_language), stacked = true) {
         Segmented(langs, ui.language, actions::onLanguage, fill = true)
     }
