@@ -253,4 +253,7 @@
     <string name="stats_week">Week</string>
     <string name="stats_year">Year</string>
     <string name="about_trial">Planned: 14 days of full access to everything, then a one-time purchase. Donations will always be welcome. For now every feature is free.</string>
+    <string name="filter_any">Any status</string>
+    <string name="filter_kind">Type filter: tap to change</string>
+    <string name="filter_state">Status filter: tap to change</string>
 </resources>

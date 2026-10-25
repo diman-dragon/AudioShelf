@@ -1,7 +1,6 @@
 package com.audioshelf.app.ui.library
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,15 +16,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.audioshelf.app.R
-import com.audioshelf.app.data.KindFilter
-import com.audioshelf.app.data.ProgressFilter
+import com.audioshelf.app.data.LibView
 import com.audioshelf.app.data.SortMode
 import com.audioshelf.app.library.LibraryActions
 import com.audioshelf.app.library.LibraryUi
 import com.audioshelf.app.ui.components.IconBtn
 import com.audioshelf.app.ui.components.LocalOverlay
-import com.audioshelf.app.ui.components.SegItem
-import com.audioshelf.app.ui.components.Segmented
 import com.audioshelf.app.ui.components.SheetAction
 import com.audioshelf.app.ui.components.TextInput
 import com.audioshelf.app.ui.components.sheet
@@ -40,22 +36,12 @@ private fun sortLabel(sort: SortMode) = when (sort) {
     SortMode.Played -> R.string.sort_played
 }
 
+/** Top row: search, sort (list) and view mode (tap to switch). */
 @Composable
 fun LibFilter(ui: LibraryUi, actions: LibraryActions) {
     val overlay = LocalOverlay.current
     val sortTitle = stringResource(R.string.lib_sort)
     val sortLabels = SortMode.entries.map { it to stringResource(sortLabel(it)) }
-    val kinds = listOf(
-        SegItem(KindFilter.All.id, stringResource(R.string.filter_all)),
-        SegItem(KindFilter.Book.id, stringResource(R.string.filter_books)),
-        SegItem(KindFilter.Album.id, stringResource(R.string.filter_albums)),
-    )
-    val states = listOf(
-        SegItem(ProgressFilter.All.id, stringResource(R.string.filter_all)),
-        SegItem(ProgressFilter.New.id, stringResource(R.string.filter_new)),
-        SegItem(ProgressFilter.Started.id, stringResource(R.string.filter_started)),
-        SegItem(ProgressFilter.Done.id, stringResource(R.string.filter_done)),
-    )
     var text by remember { mutableStateOf(ui.query) }
     LaunchedEffect(text) {
         if (text != ui.query) {
@@ -63,28 +49,30 @@ fun LibFilter(ui: LibraryUi, actions: LibraryActions) {
             actions.onQuery(text)
         }
     }
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Segmented(kinds, ui.kind.id, { actions.onKind(KindFilter.of(it)) }, fill = true)
-        Segmented(states, ui.progressFilter.id, { actions.onProgress(ProgressFilter.of(it)) }, fill = true)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextInput(
-                value = text,
-                onChange = { text = it },
-                modifier = Modifier.weight(1f),
-                placeholder = stringResource(R.string.lib_search),
-                shape = RoundedCornerShape(percent = 50),
-                background = AppTheme.colors.surface,
-                horizontal = 14,
-                imeAction = ImeAction.Search,
+    val toCards = ui.view == LibView.Rows
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        TextInput(
+            value = text,
+            onChange = { text = it },
+            modifier = Modifier.weight(1f),
+            placeholder = stringResource(R.string.lib_search),
+            shape = RoundedCornerShape(percent = 50),
+            background = AppTheme.colors.surface,
+            horizontal = 14,
+            imeAction = ImeAction.Search,
+        )
+        IconBtn(LibIcons.Sort, sortTitle, {
+            overlay.sheet(
+                sortTitle,
+                sortLabels.map { (mode, label) ->
+                    SheetAction("${if (mode == ui.sort) "✓" else " "} $label") { actions.onSort(mode) }
+                },
             )
-            IconBtn(LibIcons.Sort, sortTitle, {
-                overlay.sheet(
-                    sortTitle,
-                    sortLabels.map { (mode, label) ->
-                        SheetAction("${if (mode == ui.sort) "✓" else " "} $label") { actions.onSort(mode) }
-                    },
-                )
-            })
-        }
+        })
+        IconBtn(
+            icon = if (toCards) LibIcons.Cards else LibIcons.Rows,
+            description = stringResource(if (toCards) R.string.lib_cards else R.string.lib_list),
+            onClick = { actions.onView(if (toCards) LibView.Cards else LibView.Rows) },
+        )
     }
 }

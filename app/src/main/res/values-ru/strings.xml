@@ -187,7 +187,7 @@
     <string name="backup_restored">Копия восстановлена. Закройте приложение и откройте снова.</string>
     <string name="backup_save">Сохранить</string>
     <string name="backup_saved">Копия сохранена</string>
-    <string name="filter_done">Прочитанные</string>
+    <string name="filter_done">Прочитано</string>
     <string name="filter_new">Новые</string>
     <string name="filter_started">Начатые</string>
     <string name="fx_gain">Усиление громкости, дБ</string>
@@ -251,4 +251,7 @@
     <string name="stats_week">Неделя</string>
     <string name="stats_year">Год</string>
     <string name="about_trial">В планах: 14 дней полного доступа ко всему, затем покупка. Донаты будут всегда. Пока все функции бесплатны.</string>
+    <string name="filter_any">Любые</string>
+    <string name="filter_kind">Фильтр по типу: нажмите, чтобы сменить</string>
+    <string name="filter_state">Фильтр по статусу: нажмите, чтобы сменить</string>
 </resources>

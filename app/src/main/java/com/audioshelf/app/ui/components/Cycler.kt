@@ -12,11 +12,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.audioshelf.app.ui.theme.AppTheme
 
 @Composable
-fun Cycler(text: String, onNext: () -> Unit, description: String? = null, modifier: Modifier = Modifier) {
+fun Cycler(
+    text: String,
+    onNext: () -> Unit,
+    description: String? = null,
+    modifier: Modifier = Modifier,
+    active: Boolean = false,
+    horizontal: Dp = 16.dp,
+) {
     val c = AppTheme.colors
     val shape = RoundedCornerShape(percent = 50)
     Box(
@@ -24,12 +32,12 @@ fun Cycler(text: String, onNext: () -> Unit, description: String? = null, modifi
             .widthIn(min = 84.dp)
             .heightIn(min = 38.dp)
             .clip(shape)
-            .background(c.accentSoft)
+            .background(if (active) c.accent else c.accentSoft)
             .border(1.dp, c.accent, shape)
             .tap(description = description ?: text, onClick = onNext)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = horizontal),
         contentAlignment = Alignment.Center,
     ) {
-        AText(text, 15f, c.text, weight = FontWeight.SemiBold, maxLines = 1)
+        AText(text, 15f, if (active) c.onAccent else c.text, weight = FontWeight.SemiBold, maxLines = 1)
     }
 }

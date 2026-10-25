@@ -33,12 +33,12 @@ import com.audioshelf.app.ui.theme.Dimens
 @Composable
 fun LibraryScreen(ui: LibraryUi, actions: LibraryActions, covers: CoverSource, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxSize().padding(Dimens.screenPadding)) {
-        if (ui.barVisible) {
-            LibBar(ui, actions)
-            Spacer(Modifier.height(12.dp))
-        }
         if (ui.hasBooks) {
             LibFilter(ui, actions)
+            Spacer(Modifier.height(8.dp))
+        }
+        if (ui.barVisible) {
+            LibBar(ui, actions)
             Spacer(Modifier.height(12.dp))
         }
         if (ui.scanning) {
