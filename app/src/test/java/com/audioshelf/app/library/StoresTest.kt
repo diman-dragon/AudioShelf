@@ -109,4 +109,31 @@ class StoresTest {
         cache.save("tree", files.take(1))
         assertEquals(files.take(1), cache.load("tree"))
     }
+
+    @Test
+    fun queueKeepsOrderAndPops() {
+        val q = QueueStore(testKv())
+        assertEquals(true, q.add("a"))
+        assertEquals(true, q.add("b"))
+        assertEquals(false, q.add("a"))
+        assertEquals(listOf("a", "b"), q.list())
+        assertEquals("a", q.pop())
+        q.remove("b")
+        assertEquals(null, q.pop())
+    }
+
+    @Test
+    fun notesAndPeople() {
+        val n = NoteStore(testKv())
+        n.setNote("x", "hello")
+        assertEquals("hello", n.note("x"))
+        assertEquals(true, n.addPerson("x", " Anna ", "sister"))
+        assertEquals(false, n.addPerson("x", "  ", ""))
+        assertEquals("Anna", n.people("x").single().name)
+        n.move("x", "y")
+        assertEquals("hello", n.note("y"))
+        assertEquals("", n.note("x"))
+        n.removePerson("y", 0)
+        assertEquals(0, n.people("y").size)
+    }
 }

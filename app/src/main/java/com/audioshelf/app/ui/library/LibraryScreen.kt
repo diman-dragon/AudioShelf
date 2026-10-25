@@ -80,9 +80,11 @@ private fun Items(ui: LibraryUi, actions: LibraryActions, covers: CoverSource) {
     val edit = stringResource(R.string.lib_edit)
     val open = stringResource(R.string.lib_open)
     val delete = stringResource(R.string.lib_delete)
+    val queue = stringResource(R.string.queue_add)
     val menu: (BookRow) -> Unit = { row ->
         val entries = mutableListOf(
             SheetAction(play) { actions.onPlay(row.book) },
+            SheetAction(queue) { actions.onQueue(row.book) },
             SheetAction(edit) { overlay.show { EditDialog(row, actions) { overlay.close() } } },
         )
         if (!row.book.folder) entries.add(SheetAction(open) { actions.onOpenExternal(row.book) })

@@ -21,13 +21,26 @@ object Id3Chapters {
         var p = 0
         if ((h[5].toInt() and 0x40) != 0 && d.size >= 4) p = if (version == 4) syncsafe(d, 0) else 4 + beInt(d, 0)
         val out = ArrayList<Chapter>()
+        var markers: List<Chapter> = emptyList()
         while (p >= 0 && p + 10 <= d.size && d[p].toInt() != 0) {
             val len = if (version == 4) syncsafe(d, p + 4) else beInt(d, p + 4)
             if (len < 0 || p + 10 + len > d.size) break
             if (id(d, p) == "CHAP") chapter(d, p + 10, p + 10 + len, version, out)
+            if (id(d, p) == "TXXX" && len > 1) markers = markers.ifEmpty { overdrive(d, p + 10, p + 10 + len) }
             p += 10 + len
         }
-        return Chapter.tidy(out)
+        val chapters = Chapter.tidy(out)
+        return if (chapters.isNotEmpty()) chapters else markers
+    }
+
+    private fun overdrive(d: ByteArray, from: Int, to: Int): List<Chapter> {
+        val cs = CHARSETS[minOf(3, d[from].toInt() and 0xff)]
+        val body = String(d, from + 1, to - from - 1, cs).replace("\uFEFF", "")
+        val split = body.indexOf('\u0000')
+        if (split < 0) return emptyList()
+        val description = body.substring(0, split)
+        if (!description.contains("OverDrive MediaMarkers", ignoreCase = true)) return emptyList()
+        return OverdriveMarkers.parse(body.substring(split + 1).replace("\u0000", ""))
     }
 
     private fun id(d: ByteArray, at: Int) = String(d, at, 4, Charsets.ISO_8859_1)

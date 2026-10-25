@@ -19,5 +19,6 @@ fun SoundScreen(ui: SoundUi, actions: SoundActions, modifier: Modifier = Modifie
         verticalArrangement = Arrangement.spacedBy(28.dp),
     ) {
         EqPanel(ui, actions)
+        FxPanel(ui, actions)
     }
 }

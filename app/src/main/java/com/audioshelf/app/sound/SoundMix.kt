@@ -10,11 +10,17 @@ class SoundMix(
     private val scope: CoroutineScope,
     private val track: StateFlow<PlayBook?>,
     private val eq: EqStore,
+    private val fxStore: FxStore,
     private val output: SoundOutput,
+    private val onPlayer: (pitch: Float, skipSilence: Boolean) -> Unit = { _, _ -> },
 ) {
     fun start() {
         scope.launch {
-            combine(track, eq.version) { book, _ -> output.apply(eq.effective(book?.id).bands) }.collect { }
+            combine(track, eq.version, fxStore.version) { book, _, _ ->
+                val fx = fxStore.effective(book?.id)
+                output.apply(eq.effective(book?.id).bands, fx)
+                onPlayer(fx.pitchFactor, fx.skipSilence)
+            }.collect { }
         }
     }
 }

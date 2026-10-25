@@ -18,6 +18,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.audioshelf.app.R
 import com.audioshelf.app.data.KindFilter
+import com.audioshelf.app.data.ProgressFilter
 import com.audioshelf.app.data.SortMode
 import com.audioshelf.app.library.LibraryActions
 import com.audioshelf.app.library.LibraryUi
@@ -49,6 +50,12 @@ fun LibFilter(ui: LibraryUi, actions: LibraryActions) {
         SegItem(KindFilter.Book.id, stringResource(R.string.filter_books)),
         SegItem(KindFilter.Album.id, stringResource(R.string.filter_albums)),
     )
+    val states = listOf(
+        SegItem(ProgressFilter.All.id, stringResource(R.string.filter_all)),
+        SegItem(ProgressFilter.New.id, stringResource(R.string.filter_new)),
+        SegItem(ProgressFilter.Started.id, stringResource(R.string.filter_started)),
+        SegItem(ProgressFilter.Done.id, stringResource(R.string.filter_done)),
+    )
     var text by remember { mutableStateOf(ui.query) }
     LaunchedEffect(text) {
         if (text != ui.query) {
@@ -58,6 +65,7 @@ fun LibFilter(ui: LibraryUi, actions: LibraryActions) {
     }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Segmented(kinds, ui.kind.id, { actions.onKind(KindFilter.of(it)) }, fill = true)
+        Segmented(states, ui.progressFilter.id, { actions.onProgress(ProgressFilter.of(it)) }, fill = true)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             TextInput(
                 value = text,

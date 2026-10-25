@@ -11,7 +11,11 @@ import com.audioshelf.app.library.LibraryController
 import com.audioshelf.app.library.LibraryEvent
 import com.audioshelf.app.library.MetaStore
 import com.audioshelf.app.library.ProgressState
+import com.audioshelf.app.library.NoteStore
 import com.audioshelf.app.library.ProgressStore
+import com.audioshelf.app.library.QueueStore
+import com.audioshelf.app.stats.StatsRecorder
+import com.audioshelf.app.stats.StatsStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,6 +44,10 @@ class PlayerSession(
     private val marks: MarkStore,
     private val covers: CoverBytes,
     private val durationReader: DurationReader,
+    private val stats: StatsStore,
+    private val recorder: StatsRecorder,
+    private val queue: QueueStore,
+    private val notes: NoteStore,
 ) : PlayerActions {
     private val uiFlow = MutableStateFlow(PlayerUi())
     private val trackFlow = MutableStateFlow<PlayBook?>(null)
@@ -69,13 +77,31 @@ class PlayerSession(
 
     private fun onEngine(s: PlayState) {
         val t = trackFlow.value
+        recorder.onState(if (t != null && isLoaded(t, s)) t.id else null, s.playing, s.positionMs, s.speed, System.currentTimeMillis())
         if (t != null && isLoaded(t, s)) {
             if (s.durationMs > 0) durations.note(t.id, s.index, s.durationMs)
-            if (s.ended && !wasEnded) remember(ended = true)
+            if (s.ended && !wasEnded) {
+                remember(ended = true)
+                advance(t)
+            }
         }
         wasEnded = s.ended
         syncSleep(s)
         publish()
+    }
+
+    private fun advance(t: PlayBook) {
+        var next: Book? = null
+        while (next == null) {
+            val id = queue.pop() ?: break
+            next = library.bookById(id)
+        }
+        if (next == null && prefs.autoNext.value && kindOf(t) == Kind.Book) {
+            val rows = library.ui.value.rows
+            val at = rows.indexOfFirst { it.book.id == t.id }
+            if (at >= 0) next = rows.drop(at + 1).firstOrNull { it.state != ProgressState.Done && it.kind == Kind.Book }?.book
+        }
+        if (next != null && next.id != t.id) open(next)
     }
 
     private fun syncSleep(s: PlayState) {
@@ -127,6 +153,7 @@ class PlayerSession(
     private fun retarget(t: PlayBook, event: LibraryEvent.Moved) {
         val next = t.base.copy(id = event.to, files = listOf(event.file))
         marks.move(event.from, event.to)
+        notes.move(event.from, event.to)
         playPrefs.setLast(BookJson.encode(next))
         trackFlow.value = expand(next)
         publish()
@@ -229,7 +256,9 @@ class PlayerSession(
         val done = ended || (last && s.durationMs > 0 && s.positionMs >= s.durationMs - END_GAP_MS)
         val info = bookProgress(durations.get(t.id), count, s.index, s.positionMs)
         val percent = if (done) 100 else info?.percent ?: 0
+        val before = progress.state(t.id)
         progress.save(t.id, s.index, if (ended) 0 else s.positionMs, done, percent, t.expanded)
+        if (done && before != ProgressState.Done) stats.finished(t.id, System.currentTimeMillis())
     }
 
     private fun current(): PlayBook? = trackFlow.value

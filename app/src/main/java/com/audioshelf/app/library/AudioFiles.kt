@@ -4,7 +4,7 @@ import java.util.Locale
 
 private val EXT = setOf(
     "mp3", "mp2", "mpga", "m4a", "m4b", "m4r", "aac", "adts", "ogg", "oga", "opus", "flac", "wav", "wave",
-    "mka", "weba", "amr", "awb", "3ga", "ac3", "eac3", "ec3",
+    "mka", "weba", "amr", "awb", "3ga", "ac3", "eac3", "ec3", "mp4", "webm", "3gp", "3gpp", "3g2",
 )
 
 private val UNPLAYABLE = setOf(

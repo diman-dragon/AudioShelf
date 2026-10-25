@@ -1,5 +1,22 @@
 package com.audioshelf.app.ui
 
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import com.audioshelf.app.ui.theme.AppTheme
+import com.audioshelf.app.ui.components.Btn
+import com.audioshelf.app.ui.components.Actions
+import com.audioshelf.app.ui.components.AText
+import com.audioshelf.app.ui.components.ModalView
+import com.audioshelf.app.ui.stats.StatsScreen
+import com.audioshelf.app.ui.library.HistoryDialog
+import com.audioshelf.app.data.ProgressFilter
+import com.audioshelf.app.data.Backup
+import com.audioshelf.app.R
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.activity.result.contract.ActivityResultContracts
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -68,6 +85,35 @@ fun AudioShelfApp(container: AppContainer, player: PlayerViewModel) {
         AudioShelfTheme(dark) {
             CompositionLocalProvider(LocalOverlay provides overlays) {
                 val pickTree = rememberLauncherForActivityResult(PickTree()) { uri: Uri? -> if (uri != null) library.chooseFolder(uri) }
+                val context = LocalContext.current
+                val scope = rememberCoroutineScope()
+                val saveBackup = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri: Uri? ->
+                    if (uri != null) {
+                        scope.launch {
+                            val text = Backup.encode(Backup.rows(container.kv))
+                            val ok = withContext(Dispatchers.IO) {
+                                runCatching { context.contentResolver.openOutputStream(uri, "wt")!!.use { it.write(text.toByteArray(Charsets.UTF_8)) } }.isSuccess
+                            }
+                            overlays.message(if (ok) R.string.backup_saved else R.string.backup_failed)
+                        }
+                    }
+                }
+                val loadBackup = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+                    if (uri != null) {
+                        scope.launch {
+                            val rows = withContext(Dispatchers.IO) {
+                                runCatching { context.contentResolver.openInputStream(uri)!!.use { String(it.readBytes(), Charsets.UTF_8) } }
+                                    .getOrNull()?.let(Backup::decode)
+                            }
+                            if (rows == null) {
+                                overlays.message(R.string.backup_bad)
+                            } else {
+                                Backup.apply(container.kv, rows)
+                                overlays.show { RestartDialog(context) }
+                            }
+                        }
+                    }
+                }
                 val playerActions = remember(player) {
                     object : PlayerActions by player {
                         override fun onToLibrary() = goTo(Screen.Library)
@@ -97,6 +143,19 @@ fun AudioShelfApp(container: AppContainer, player: PlayerViewModel) {
                         override fun onRescan() = library.rescan()
                         override fun onStop() = library.cancelScan()
                         override fun onKind(kind: KindFilter) = prefs.setLibKind(kind)
+                        override fun onProgress(filter: ProgressFilter) = prefs.setLibProgress(filter)
+                        override fun onQueue(book: Book) {
+                            overlays.message(if (container.queue.add(book.id)) R.string.queue_added else R.string.queue_exists)
+                        }
+
+                        override fun onOpenHistory() {
+                            overlays.show {
+                                HistoryDialog(library.allRows(), container.queue, { b ->
+                                    player.open(b)
+                                    goTo(Screen.Player)
+                                }) { overlays.close() }
+                            }
+                        }
                         override fun onSort(sort: SortMode) = prefs.setLibSort(sort)
                         override fun onView(view: LibView) = prefs.setLibView(view)
                         override fun onQuery(query: String) = library.setQuery(query)
@@ -115,6 +174,16 @@ fun AudioShelfApp(container: AppContainer, player: PlayerViewModel) {
                         override fun onSkipBack(seconds: Int) = prefs.setSkipBack(seconds)
                         override fun onSkipForward(seconds: Int) = prefs.setSkipForward(seconds)
                         override fun onOffload(on: Boolean) = prefs.setOffload(on)
+                        override fun onAutoNext(on: Boolean) = prefs.setAutoNext(on)
+
+                        override fun onOpenStats() {
+                            overlays.show {
+                                StatsScreen(container.stats, { id -> titleOfBook(container, id) }) { overlays.close() }
+                            }
+                        }
+
+                        override fun onBackup() = saveBackup.launch("audioshelf-backup.json")
+                        override fun onRestore() = loadBackup.launch(arrayOf("application/json", "text/plain", "application/octet-stream"))
                         override fun onTheme(id: String) = prefs.setTheme(id)
                         override fun onLanguage(id: String) = prefs.setLanguage(id)
                     }
@@ -180,4 +249,22 @@ private fun rememberSettingsUi(container: AppContainer, dark: Boolean): Settings
         language = language,
         version = BuildConfig.VERSION_NAME,
     )
+}
+
+@Composable
+private fun RestartDialog(context: android.content.Context) {
+    ModalView(stringResource(R.string.msg_title), {}) {
+        AText(stringResource(R.string.backup_restored), 16f, AppTheme.colors.text, weight = FontWeight.SemiBold)
+        Actions {
+            Btn(stringResource(R.string.backup_close_app), {
+                (context as? android.app.Activity)?.finishAffinity()
+                android.os.Process.killProcess(android.os.Process.myPid())
+            })
+        }
+    }
+}
+
+private fun titleOfBook(container: AppContainer, id: String): String {
+    val book = container.library.bookById(id) ?: return id.substringAfterLast('/').substringAfterLast("%2F")
+    return container.library.metaOf(book).title.ifEmpty { book.name }
 }

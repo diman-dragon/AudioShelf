@@ -14,6 +14,8 @@ private const val OFFLOAD = "audioshelf.offload"
 private const val LIB_KIND = "audioshelf.libkind"
 private const val LIB_SORT = "audioshelf.libsort"
 private const val LIB_VIEW = "audioshelf.libview"
+private const val LIB_PROGRESS = "audioshelf.libprogress"
+private const val AUTO_NEXT = "audioshelf.autonext"
 
 class Prefs(private val kv: Kv) {
     private fun read(key: String) = kv.get(KV_STORE, key)
@@ -28,6 +30,8 @@ class Prefs(private val kv: Kv) {
     private val kindFlow = MutableStateFlow(KindFilter.of(read(LIB_KIND)))
     private val sortFlow = MutableStateFlow(SortMode.of(read(LIB_SORT)))
     private val viewFlow = MutableStateFlow(LibView.of(read(LIB_VIEW)))
+    private val progressFlow = MutableStateFlow(ProgressFilter.of(read(LIB_PROGRESS)))
+    private val autoNextFlow = MutableStateFlow(read(AUTO_NEXT) == "1")
 
     val theme: StateFlow<String?> = themeFlow.asStateFlow()
     val language: StateFlow<String> = langFlow.asStateFlow()
@@ -37,6 +41,8 @@ class Prefs(private val kv: Kv) {
     val libKind: StateFlow<KindFilter> = kindFlow.asStateFlow()
     val libSort: StateFlow<SortMode> = sortFlow.asStateFlow()
     val libView: StateFlow<LibView> = viewFlow.asStateFlow()
+    val libProgress: StateFlow<ProgressFilter> = progressFlow.asStateFlow()
+    val autoNext: StateFlow<Boolean> = autoNextFlow.asStateFlow()
 
     fun setTheme(id: String) {
         kv.put(KV_STORE, THEME, id)
@@ -76,5 +82,15 @@ class Prefs(private val kv: Kv) {
     fun setLibView(view: LibView) {
         kv.put(KV_STORE, LIB_VIEW, view.id)
         viewFlow.value = view
+    }
+
+    fun setLibProgress(filter: ProgressFilter) {
+        kv.put(KV_STORE, LIB_PROGRESS, filter.id)
+        progressFlow.value = filter
+    }
+
+    fun setAutoNext(on: Boolean) {
+        kv.put(KV_STORE, AUTO_NEXT, if (on) "1" else "0")
+        autoNextFlow.value = on
     }
 }

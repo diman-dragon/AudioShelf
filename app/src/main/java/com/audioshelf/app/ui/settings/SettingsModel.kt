@@ -14,6 +14,7 @@ data class SettingsUi(
     val skipBack: Int = 15,
     val skipForward: Int = 30,
     val offload: Boolean = false,
+    val autoNext: Boolean = false,
     val theme: String = "dark",
     val language: String = "auto",
     val version: String = "",
@@ -26,6 +27,10 @@ interface SettingsActions {
     fun onSkipBack(seconds: Int)
     fun onSkipForward(seconds: Int)
     fun onOffload(on: Boolean)
+    fun onAutoNext(on: Boolean)
+    fun onOpenStats()
+    fun onBackup()
+    fun onRestore()
     fun onTheme(id: String)
     fun onLanguage(id: String)
 
@@ -37,6 +42,10 @@ interface SettingsActions {
             override fun onSkipBack(seconds: Int) {}
             override fun onSkipForward(seconds: Int) {}
             override fun onOffload(on: Boolean) {}
+            override fun onAutoNext(on: Boolean) {}
+            override fun onOpenStats() {}
+            override fun onBackup() {}
+            override fun onRestore() {}
             override fun onTheme(id: String) {}
             override fun onLanguage(id: String) {}
         }

@@ -45,6 +45,7 @@ fun TextInput(
     keyboardType: KeyboardType = KeyboardType.Text,
     imeAction: ImeAction = ImeAction.Done,
     maxLength: Int = Int.MAX_VALUE,
+    singleLine: Boolean = true,
 ) {
     val c = AppTheme.colors
     val focus = LocalFocusManager.current
@@ -52,11 +53,11 @@ fun TextInput(
     BasicTextField(
         value = value,
         onValueChange = { onChange(it.take(maxLength)) },
-        singleLine = true,
+        singleLine = singleLine,
         textStyle = TextStyle(color = c.text, fontSize = 16.sp),
         cursorBrush = SolidColor(c.accent),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
-        keyboardActions = KeyboardActions(onAny = { focus.clearFocus() }),
+        keyboardActions = KeyboardActions(onAny = { if (singleLine) focus.clearFocus() }),
         modifier = modifier
             .fillMaxWidth()
             .clip(shape)

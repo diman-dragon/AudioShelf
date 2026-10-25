@@ -102,6 +102,7 @@ fun AboutCard(version: String, modifier: Modifier = Modifier) {
         Box(Modifier.fillMaxWidth().height(1.dp).background(c.line))
         AText(stringResource(R.string.about_lead), 12f, c.muted, lineHeight = 18f)
         AText(stringResource(R.string.about_maker), 12f, c.muted, lineHeight = 18f)
+        AText(stringResource(R.string.about_trial), 12f, c.muted, lineHeight = 18f)
         AText("© ${Calendar.getInstance().get(Calendar.YEAR)} DataLaw", 12f, c.muted)
     }
 }

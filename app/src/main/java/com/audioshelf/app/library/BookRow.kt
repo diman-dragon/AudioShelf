@@ -1,6 +1,7 @@
 package com.audioshelf.app.library
 
 import com.audioshelf.app.data.KindFilter
+import com.audioshelf.app.data.ProgressFilter
 import com.audioshelf.app.data.SortMode
 import com.audioshelf.app.player.Kind
 
@@ -27,7 +28,13 @@ private val BY_PLAYED = Comparator<BookRow> { a, b ->
     if (played != 0) played else b.book.modified.compareTo(a.book.modified)
 }
 
-fun filterRows(rows: List<BookRow>, kind: KindFilter, sort: SortMode, query: String): List<BookRow> {
+fun filterRows(
+    rows: List<BookRow>,
+    kind: KindFilter,
+    sort: SortMode,
+    query: String,
+    progress: ProgressFilter = ProgressFilter.All,
+): List<BookRow> {
     val q = query.trim().lowercase()
     val comparator = when (sort) {
         SortMode.Date -> BY_DATE
@@ -37,7 +44,13 @@ fun filterRows(rows: List<BookRow>, kind: KindFilter, sort: SortMode, query: Str
     return rows
         .filter { row ->
             val kindOk = kind == KindFilter.All || (kind == KindFilter.Book) == (row.kind == Kind.Book)
-            kindOk && (q.isEmpty() || haystack(row).contains(q))
+            val stateOk = when (progress) {
+                ProgressFilter.All -> true
+                ProgressFilter.New -> row.state == ProgressState.New
+                ProgressFilter.Started -> row.state == ProgressState.Started
+                ProgressFilter.Done -> row.state == ProgressState.Done
+            }
+            kindOk && stateOk && (q.isEmpty() || haystack(row).contains(q))
         }
         .sortedWith(comparator)
 }

@@ -9,6 +9,7 @@ import com.audioshelf.app.data.FolderStore
 import com.audioshelf.app.data.HiddenStore
 import com.audioshelf.app.data.KindFilter
 import com.audioshelf.app.data.LibView
+import com.audioshelf.app.data.ProgressFilter
 import com.audioshelf.app.data.Prefs
 import com.audioshelf.app.data.SortMode
 import com.audioshelf.app.player.Kind
@@ -27,7 +28,7 @@ import kotlinx.coroutines.launch
 
 private class Core(val books: List<Book>, val status: LibStatus, val scanning: Boolean, val progress: ScanProgress)
 
-private class Shown(val kind: KindFilter, val sort: SortMode, val view: LibView, val query: String)
+private class Shown(val kind: KindFilter, val sort: SortMode, val view: LibView, val query: String, val state: ProgressFilter)
 
 class LibraryController(
     private val scope: CoroutineScope,
@@ -50,7 +51,7 @@ class LibraryController(
 
     val ui: StateFlow<LibraryUi> = combine(
         combine(repo.books, repo.status, repo.scanning, repo.progress) { b, s, sc, p -> Core(b, s, sc, p) },
-        combine(prefs.libKind, prefs.libSort, prefs.libView, queryFlow) { k, s, v, q -> Shown(k, s, v, q) },
+        combine(prefs.libKind, prefs.libSort, prefs.libView, queryFlow, prefs.libProgress) { k, s, v, q, p -> Shown(k, s, v, q, p) },
         combine(meta.version, progress.version) { a, b -> a + b },
     ) { core, shown, _ -> build(core, shown) }
         .stateIn(scope, SharingStarted.Eagerly, LibraryUi())
@@ -68,11 +69,11 @@ class LibraryController(
 
     private fun build(core: Core, shown: Shown): LibraryUi {
         val rows = if (core.status == LibStatus.Ok) {
-            filterRows(core.books.map { buildRow(it, meta.get(it.id), progress, durations) }, shown.kind, shown.sort, shown.query)
+            filterRows(core.books.map { buildRow(it, meta.get(it.id), progress, durations) }, shown.kind, shown.sort, shown.query, shown.state)
         } else {
             emptyList()
         }
-        return LibraryUi(core.status, core.scanning, core.progress, core.books.size, rows, shown.kind, shown.sort, shown.view, shown.query)
+        return LibraryUi(core.status, core.scanning, core.progress, core.books.size, rows, shown.kind, shown.sort, shown.view, shown.query, shown.state)
     }
 
     fun setQuery(query: String) {
@@ -190,4 +191,8 @@ class LibraryController(
     fun kindOfBook(book: Book): Kind = kindOf(book, meta.get(book.id), durations.get(book.id)[0] ?: 0L)
 
     fun metaOf(book: Book): Meta = meta.get(book.id)
+
+    fun allRows(): List<BookRow> = repo.books.value.map { buildRow(it, meta.get(it.id), progress, durations) }
+
+    fun bookById(id: String): Book? = repo.books.value.firstOrNull { it.id == id }
 }

@@ -13,7 +13,21 @@ Version lives in `version.txt` (`1.0.0`); bump the last digit for every build yo
 4. Player on Media3: foreground service with notification, chapters from m4b / mka / mp3 (ID3 CHAP), bookmarks, sleep timer with fade, speed, play modes, resume with rewind, position saved in the background.
 5. Sound: 10-band equalizer (global or per book), presets.
 
-Premium / billing is not ported: every feature is available.
+6. Statistics (Settings → Statistics): listening time per day / week / month / year, streaks, calendar, time of day, speeds, top books.
+7. Library: New / Started / Finished filter, history and queue, auto-play next book.
+8. Sound processing: volume boost, pitch, skip silence, noise reduction (Kotlin spectral filter), per book or global.
+9. Chapters also from ogg / opus / flac (Vorbis comments), `.cue`, Libby `openbook.json` and OverDrive mp3 markers. Formats `mp4`, `webm`, `3gp` are listed.
+10. Notes, characters and `info.txt` description per book; headset multi-click (1 play/pause, 2 forward, 3 back, 4+ next); backup and restore of all data to a file.
+
+Premium / billing is not built: every feature is available. Planned model: 14 days of full access, then a one-time purchase, plus donations (text note only in About, no logic yet).
+
+## Premium (planned, not built)
+
+These are reserved for a future paid tier and are intentionally not implemented (see `Premium.kt`):
+
+- Neural noise reduction (RNNoise-class, native code). The free build has the Kotlin filter only.
+- Tasker / automation intents.
+- Android Auto.
 
 ## Build
 

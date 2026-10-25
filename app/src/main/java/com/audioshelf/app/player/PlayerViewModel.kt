@@ -28,4 +28,10 @@ class PlayerViewModel(private val container: AppContainer) : ViewModel(), Player
     fun isMulti() = container.session.isMulti()
 
     fun kind() = container.session.currentKind()
+
+    val notes get() = container.notes
+
+    fun bookId(): String? = container.session.track.value?.id
+
+    suspend fun description(): String? = container.session.track.value?.base?.let { container.descriptions.of(it) }
 }

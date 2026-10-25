@@ -25,6 +25,11 @@ fun LibBar(ui: LibraryUi, actions: LibraryActions) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
         Segmented(items, ui.view.id, { actions.onView(LibView.of(it)) }, Modifier.weight(1f), fill = true)
         IconBtn(
+            icon = LibIcons.History,
+            description = stringResource(R.string.history_title),
+            onClick = actions::onOpenHistory,
+        )
+        IconBtn(
             icon = LibIcons.Refresh,
             description = stringResource(R.string.lib_rescan),
             onClick = actions::onRescan,

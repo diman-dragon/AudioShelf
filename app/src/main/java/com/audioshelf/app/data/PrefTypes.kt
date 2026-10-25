@@ -8,6 +8,14 @@ enum class KindFilter(val id: String) {
     }
 }
 
+enum class ProgressFilter(val id: String) {
+    All("all"), New("new"), Started("started"), Done("done");
+
+    companion object {
+        fun of(id: String?) = entries.firstOrNull { it.id == id } ?: All
+    }
+}
+
 enum class SortMode(val id: String) {
     Date("date"), Name("name"), Played("played");
 

@@ -47,6 +47,8 @@ class PlaybackEngine(
     private var saver: PositionSaver? = null
     private var ticker: Job? = null
     private var speech = false
+    private var pitch = 1f
+    private var skipSilence = false
 
     val state: StateFlow<PlayState> = flow.asStateFlow()
 
@@ -79,6 +81,8 @@ class PlaybackEngine(
             .setSeekForwardIncrementMs(skipForwardMs())
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
+        p.setSkipSilenceEnabled(skipSilence)
+        if (pitch != 1f) p.playbackParameters = p.playbackParameters.withPitch(pitch)
         val volume = { refreshVolume() }
         fader = EdgeFader(p, volume)
         chapterStop = ChapterStop(p)
@@ -197,6 +201,14 @@ class PlaybackEngine(
 
     fun setSpeed(speed: Float) {
         exo?.setPlaybackSpeed(speed)
+    }
+
+    fun setFx(newPitch: Float, newSkipSilence: Boolean) {
+        pitch = newPitch
+        skipSilence = newSkipSilence
+        val p = exo ?: return
+        p.setSkipSilenceEnabled(newSkipSilence)
+        if (p.playbackParameters.pitch != newPitch) p.playbackParameters = p.playbackParameters.withPitch(newPitch)
     }
 
     fun setSleep(minutes: Long, chapter: Boolean) {

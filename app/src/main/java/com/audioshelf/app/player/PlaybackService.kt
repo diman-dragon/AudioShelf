@@ -25,7 +25,7 @@ class PlaybackService : MediaSessionService() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val built = MediaSession.Builder(this, shelf.engine.player)
-            .setCallback(SessionCallback(this, { resumeOf(shelf.session.resumeItems()) }, ::close))
+            .setCallback(SessionCallback(this, { resumeOf(shelf.session.resumeItems()) }, ::close, ::onClicks))
             .setSessionActivity(tap)
             .build()
         session = built
@@ -37,6 +37,16 @@ class PlaybackService : MediaSessionService() {
 
     private fun resumeOf(plan: ResumePlan) =
         MediaSession.MediaItemsWithStartPosition(plan.items, plan.index, plan.positionMs)
+
+    private fun onClicks(count: Int) {
+        val actions = container.session
+        when (count) {
+            1 -> actions.onToggle()
+            2 -> actions.onForward()
+            3 -> actions.onBack()
+            else -> actions.onNext()
+        }
+    }
 
     private fun close() {
         container.engine.close()

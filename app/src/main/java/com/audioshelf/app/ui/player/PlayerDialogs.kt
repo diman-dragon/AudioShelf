@@ -33,6 +33,7 @@ import com.audioshelf.app.ui.components.AText
 import com.audioshelf.app.ui.components.Actions
 import com.audioshelf.app.ui.components.Btn
 import com.audioshelf.app.ui.components.BtnKind
+import com.audioshelf.app.ui.components.LocalOverlay
 import com.audioshelf.app.ui.components.ModalView
 import com.audioshelf.app.ui.components.tap
 import com.audioshelf.app.ui.theme.AppTheme
@@ -74,6 +75,7 @@ fun MarksDialog(player: PlayerViewModel, kind: Kind, onJump: (Mark) -> Unit, onC
     var marks by remember { mutableStateOf(player.markList()) }
     val multi = player.isMulti()
     val locale = LocalConfiguration.current.locales[0]
+    val overlay = LocalOverlay.current
     ModalView(stringResource(R.string.marks_title), onClose) {
         Btn(stringResource(R.string.marks_add), {
             player.addMark()
@@ -109,6 +111,10 @@ fun MarksDialog(player: PlayerViewModel, kind: Kind, onJump: (Mark) -> Unit, onC
                     }
                 }
             }
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Btn(stringResource(R.string.notes_title), { overlay.show { NotesDialog(player) { overlay.close() } } }, Modifier.weight(1f), BtnKind.Ghost)
+            Btn(stringResource(R.string.people_title), { overlay.show { PeopleDialog(player) { overlay.close() } } }, Modifier.weight(1f), BtnKind.Ghost)
         }
         Actions { Btn(stringResource(R.string.marks_close), onClose, kind = BtnKind.Ghost) }
     }

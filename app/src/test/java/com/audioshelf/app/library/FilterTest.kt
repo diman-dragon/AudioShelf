@@ -61,4 +61,18 @@ class FilterTest {
         assertEquals(Kind.Book, kindOf(long, Meta(), 31L * 60000))
         assertEquals(Kind.Album, kindOf(m4b, Meta(kind = Kind.Album), 0))
     }
+
+    @Test
+    fun progressFilterKeepsMatchingStates() {
+        fun withState(name: String, state: ProgressState) = row(name, Kind.Book, 1).let {
+            BookRow(it.book, it.meta, it.kind, it.title, it.author, it.narrator, it.year, it.percent, state, it.lastPlayed)
+        }
+        val all = listOf(withState("n", ProgressState.New), withState("s", ProgressState.Started), withState("d", ProgressState.Done))
+        fun pick(f: com.audioshelf.app.data.ProgressFilter) =
+            filterRows(all, KindFilter.All, SortMode.Name, "", f).map { it.title }
+        assertEquals(listOf("d", "n", "s"), pick(com.audioshelf.app.data.ProgressFilter.All))
+        assertEquals(listOf("n"), pick(com.audioshelf.app.data.ProgressFilter.New))
+        assertEquals(listOf("s"), pick(com.audioshelf.app.data.ProgressFilter.Started))
+        assertEquals(listOf("d"), pick(com.audioshelf.app.data.ProgressFilter.Done))
+    }
 }

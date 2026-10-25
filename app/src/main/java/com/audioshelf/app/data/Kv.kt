@@ -28,6 +28,8 @@ class Kv(
 
     fun get(store: String, key: String): String? = bucket(store)[key]
 
+    fun stores(): List<String> = buckets.keys.toList()
+
     fun size(store: String): Int = bucket(store).size
 
     fun all(store: String): Map<String, String> = LinkedHashMap(bucket(store))
