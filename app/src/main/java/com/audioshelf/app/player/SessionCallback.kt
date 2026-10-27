@@ -19,12 +19,9 @@ import com.audioshelf.app.R
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
-import com.google.common.util.concurrent.MoreExecutors
-import java.util.concurrent.Executors
 
 private const val CLICK_WINDOW_MS = 400L
 private val CLOSE = SessionCommand("audioshelf.close", Bundle.EMPTY)
-private val IO = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor())
 
 class SessionCallback(
     private val context: Context,
@@ -69,7 +66,14 @@ class SessionCallback(
     override fun onPlaybackResumption(
         mediaSession: MediaSession,
         controller: MediaSession.ControllerInfo,
-    ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> = IO.submit<MediaSession.MediaItemsWithStartPosition> { resume() }
+    ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> =
+        // Runs on the player's thread: building the items is a few map lookups now (the cover is a
+        // pointer, not bytes) and the sound profile has to be in place before playback starts.
+        try {
+            Futures.immediateFuture(resume())
+        } catch (e: Exception) {
+            Futures.immediateFailedFuture(e)
+        }
 
     override fun onCustomCommand(
         session: MediaSession,

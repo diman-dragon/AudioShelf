@@ -25,6 +25,7 @@ class PlaybackService : MediaSessionService() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val built = MediaSession.Builder(this, shelf.engine.player)
+            .setBitmapLoader(ShelfBitmapLoader(shelf.scope, shelf.covers, shelf.session::fileOf))
             .setCallback(SessionCallback(this, { resumeOf(shelf.session.resumeItems()) }, ::close, ::onClicks))
             .setSessionActivity(tap)
             .build()
@@ -58,12 +59,14 @@ class PlaybackService : MediaSessionService() {
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         container.engine.flush()
+        container.kv.flushNow()
         pauseAllPlayersAndStopSelf()
     }
 
     override fun onDestroy() {
         session?.release()
         session = null
+        container.kv.flushNow()
         container.engine.release()
         super.onDestroy()
     }

@@ -3,12 +3,10 @@ package com.audioshelf.app.library
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.net.Uri
 import android.util.LruCache
 import java.io.File
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -28,7 +26,14 @@ object NoCovers : CoverSource {
     override suspend fun load(file: LibFile, track: Boolean): Bitmap? = null
 }
 
-class CoverLoader(private val context: Context, private val art: CoverBytes) : CoverSource {
+/** A cover read back from the disk cache; [bitmap] is null for a remembered "no cover". */
+private class Cached(val bitmap: Bitmap?)
+
+class CoverLoader(
+    private val context: Context,
+    private val art: CoverBytes,
+    private val background: Background = Background(),
+) : CoverSource {
     private val memory = object : LruCache<String, Bitmap>(MEMORY_KB) {
         override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount / 1024
     }
@@ -44,32 +49,40 @@ class CoverLoader(private val context: Context, private val art: CoverBytes) : C
         memory.get(key)?.let { return it }
         if (key in missing) return null
         return gate.withLock {
-            memory.get(key) ?: withContext(Dispatchers.IO) { read(file, key, track) }.also { bitmap ->
+            memory.get(key) ?: fetch(file, key, track).also { bitmap ->
                 if (bitmap != null) memory.put(key, bitmap) else missing.add(key)
             }
         }
     }
 
-    private fun dir(): File = File(context.cacheDir, "covers").apply { mkdirs() }
-
-    private fun read(file: LibFile, key: String, track: Boolean): Bitmap? {
+    private suspend fun fetch(file: LibFile, key: String, track: Boolean): Bitmap? {
         val name = sha1("$key|$WIDTH")
-        val jpg = File(dir(), "$name.jpg")
-        val none = File(dir(), "$name.none")
-        if (jpg.isFile) return BitmapFactory.decodeFile(jpg.path)
-        if (none.isFile) return null
-        return try {
-            val bytes = extract(file, track)
-            jpg.writeBytes(bytes)
-            prune()
-            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-        } catch (e: Exception) {
-            runCatching { none.writeBytes(ByteArray(0)) }
-            null
-        }
+        val cached = withContext(background.dispatcher) { fromDisk(name) }
+        if (cached != null) return cached.bitmap
+        // Extracting a cover opens the audio file and lists its folder through the storage
+        // provider, the same one the player reads from, so it waits until playback is steady.
+        background.calm()
+        return withContext(background.dispatcher) { extract(file, name, track) }
     }
 
-    private fun extract(file: LibFile, track: Boolean): ByteArray = art.jpeg(file, WIDTH, track) ?: throw IllegalStateException("no cover")
+    private fun dir(): File = File(context.cacheDir, "covers").apply { mkdirs() }
+
+    private fun fromDisk(name: String): Cached? {
+        val jpg = File(dir(), "$name.jpg")
+        if (jpg.isFile) return Cached(BitmapFactory.decodeFile(jpg.path))
+        if (File(dir(), "$name.none").isFile) return Cached(null)
+        return null
+    }
+
+    private fun extract(file: LibFile, name: String, track: Boolean): Bitmap? = try {
+        val bytes = art.jpeg(file, WIDTH, track) ?: throw IllegalStateException("no cover")
+        File(dir(), "$name.jpg").writeBytes(bytes)
+        prune()
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+    } catch (e: Exception) {
+        runCatching { File(dir(), "$name.none").writeBytes(ByteArray(0)) }
+        null
+    }
 
     private fun prune() {
         val all = dir().listFiles() ?: return

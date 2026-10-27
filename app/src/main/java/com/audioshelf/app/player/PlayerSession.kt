@@ -2,11 +2,13 @@ package com.audioshelf.app.player
 
 import android.content.Context
 import android.net.Uri
+import com.audioshelf.app.ScreenWatch
 import com.audioshelf.app.data.Prefs
 import com.audioshelf.app.library.Book
-import com.audioshelf.app.library.CoverBytes
+import com.audioshelf.app.library.Background
 import com.audioshelf.app.library.DurationReader
 import com.audioshelf.app.library.DurationStore
+import com.audioshelf.app.library.LibFile
 import com.audioshelf.app.library.LibraryController
 import com.audioshelf.app.library.LibraryEvent
 import com.audioshelf.app.library.MetaStore
@@ -17,17 +19,16 @@ import com.audioshelf.app.library.QueueStore
 import com.audioshelf.app.stats.StatsRecorder
 import com.audioshelf.app.stats.StatsStore
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-private const val ART_WIDTH = 512
 private const val END_GAP_MS = 3000L
 private const val SLEEP_GRACE_MS = 1500L
+private const val OPEN_HOLD_MS = 5000L
 
 class PlayerSession(
     private val scope: CoroutineScope,
@@ -42,7 +43,8 @@ class PlayerSession(
     private val chapters: ChapterStore,
     private val scanner: ChapterScanner,
     private val marks: MarkStore,
-    private val covers: CoverBytes,
+    private val background: Background,
+    private val screen: ScreenWatch,
     private val durationReader: DurationReader,
     private val stats: StatsStore,
     private val recorder: StatsRecorder,
@@ -97,7 +99,7 @@ class PlayerSession(
             next = library.bookById(id)
         }
         if (next == null && prefs.autoNext.value && kindOf(t) == Kind.Book) {
-            val rows = library.ui.value.rows
+            val rows = library.snapshot().rows
             val at = rows.indexOfFirst { it.book.id == t.id }
             if (at >= 0) next = rows.drop(at + 1).firstOrNull { it.state != ProgressState.Done && it.kind == Kind.Book }?.book
         }
@@ -109,7 +111,13 @@ class PlayerSession(
         if (sleepChoice != SleepChoice.Off && armed && !(s.sleepLeftMs > 0 || s.sleepAtChapterEnd)) sleepChoice = SleepChoice.Off
     }
 
+    /** Nothing is redrawn behind a dark screen; the first thing on wake-up is a fresh state. */
+    fun onScreen(on: Boolean) {
+        if (on) publish()
+    }
+
     private fun publish() {
+        if (!screen.on.value) return
         val t = trackFlow.value
         if (t == null) {
             uiFlow.value = PlayerUi()
@@ -167,6 +175,7 @@ class PlayerSession(
     }
 
     fun open(book: Book) {
+        background.hold(OPEN_HOLD_MS)
         scope.launch {
             val current = trackFlow.value
             if (current != null && current.id == book.id && isLoaded(current, engine.state.value)) {
@@ -205,6 +214,8 @@ class PlayerSession(
         scope.launch {
             t.items.forEachIndexed { index, item ->
                 if (durations.get(t.id)[index] != null) return@forEachIndexed
+                background.calm()
+                screen.on.first { it }
                 val total = durationReader.read(item.uri) ?: return@forEachIndexed
                 val ms = if (item.clipped) total - item.startMs else total
                 if (ms <= 0) return@forEachIndexed
@@ -214,39 +225,36 @@ class PlayerSession(
         }
     }
 
-    private suspend fun plan(t: PlayBook, index: Int, positionMs: Long): ResumePlan {
+    /** The cover is a pointer resolved later off the playback path, so building the items never waits on storage. */
+    private fun plan(t: PlayBook, index: Int, positionMs: Long): ResumePlan {
         val m = library.metaOf(t.base)
-        val art = withContext(Dispatchers.IO) { runCatching { covers.jpeg(t.items[0].file, ART_WIDTH) }.getOrNull() }
+        val art = artUriOf(t.items[0].file.uri)
         val album = m.title.ifEmpty { t.base.name }
         val items = t.items.map { mediaItemOf(it, album, m.author, art) }
         return ResumePlan(items, index.coerceIn(0, items.lastIndex), positionMs)
     }
 
-    private suspend fun load(index: Int, positionMs: Long, autoplay: Boolean) {
+    private fun load(index: Int, positionMs: Long, autoplay: Boolean) {
         val t = trackFlow.value ?: return
         val plan = plan(t, index, positionMs)
         val kind = kindOf(t)
-        engine.load(plan.items, plan.index, plan.positionMs, autoplay, playPrefs.speed())
-        engine.setProfile(profileFor(kind, playPrefs.mode(kind)))
+        engine.load(plan.items, plan.index, plan.positionMs, autoplay, playPrefs.speed(), profileFor(kind, playPrefs.mode(kind)))
         publish()
     }
 
+    /** Called on the player's thread when the system resumes playback; sets speed and profile before the items are handed over. */
     fun resumeItems(): ResumePlan {
         val t = trackFlow.value ?: throw IllegalStateException("nothing to resume")
         val (index, position) = progress.resume(t.id)
-        val m = library.metaOf(t.base)
-        val art = runCatching { covers.jpeg(t.items[0].file, ART_WIDTH) }.getOrNull()
-        val album = m.title.ifEmpty { t.base.name }
-        val items = t.items.map { mediaItemOf(it, album, m.author, art) }
-        scope.launch {
-            val kind = kindOf(t)
-            engine.setProfile(profileFor(kind, playPrefs.mode(kind)))
-            engine.setSpeed(playPrefs.speed())
-        }
-        return ResumePlan(items, index.coerceIn(0, items.lastIndex), position)
+        val kind = kindOf(t)
+        engine.setProfile(profileFor(kind, playPrefs.mode(kind)))
+        engine.setSpeed(playPrefs.speed())
+        return plan(t, index, position)
     }
 
-    fun remember(ended: Boolean = false) {
+    fun fileOf(uri: String): LibFile? = trackFlow.value?.items?.firstOrNull { it.file.uri == uri }?.file
+
+    fun remember(ended: Boolean = false, periodic: Boolean = false) {
         val t = trackFlow.value ?: return
         val s = engine.now()
         if (!isLoaded(t, s)) return
@@ -257,7 +265,7 @@ class PlayerSession(
         val info = bookProgress(durations.get(t.id), count, s.index, s.positionMs)
         val percent = if (done) 100 else info?.percent ?: 0
         val before = progress.state(t.id)
-        progress.save(t.id, s.index, if (ended) 0 else s.positionMs, done, percent, t.expanded)
+        progress.save(t.id, s.index, if (ended) 0 else s.positionMs, done, percent, t.expanded, notify = !periodic)
         if (done && before != ProgressState.Done) stats.finished(t.id, System.currentTimeMillis())
     }
 
@@ -298,7 +306,7 @@ class PlayerSession(
         if (!engine.now().playing) engine.play()
     }
 
-    private suspend fun playChapterAt(t: PlayBook, index: Int) {
+    private fun playChapterAt(t: PlayBook, index: Int) {
         if (loadedNow(t)) {
             engine.skipTo(index)
             if (!engine.now().playing) engine.play()

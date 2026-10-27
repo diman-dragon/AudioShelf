@@ -17,7 +17,7 @@ class SoundModel(
     private val library: LibraryController,
 ) : SoundActions {
     val ui: StateFlow<SoundUi> = combine(prefs.scope, track, eq.version, fxStore.version) { pick, book, _, _ -> build(pick, book) }
-        .stateIn(scope, SharingStarted.Eagerly, SoundUi())
+        .stateIn(scope, SharingStarted.WhileSubscribed(3000), SoundUi())
 
     private fun build(pick: EqScope, book: PlayBook?): SoundUi {
         val editing = if (pick == EqScope.Track && book != null) book.id else null
@@ -67,12 +67,6 @@ class SoundModel(
         val id = editingId()
         if (id != null) fxStore.setTrack(id, next) else fxStore.setGlobal(next)
     }
-
-    override fun onGain(db: Int) = writeFx(shownFx().withGain(db))
-
-    override fun onPitch(semitones: Int) = writeFx(shownFx().withPitch(semitones))
-
-    override fun onNoise(level: Int) = writeFx(shownFx().withNoise(level))
 
     override fun onSkipSilence(on: Boolean) = writeFx(shownFx().withSkipSilence(on))
 

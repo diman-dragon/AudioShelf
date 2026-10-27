@@ -11,6 +11,8 @@ private const val LANG = "audioshelf.lang"
 private const val SKIP_BACK = "audioshelf.skipBack"
 private const val SKIP_FORWARD = "audioshelf.skipForward"
 private const val OFFLOAD = "audioshelf.offload"
+private const val GAIN = "audioshelf.gain"
+private const val LEGACY_FX = "audioshelf.fx.global"
 private const val LIB_KIND = "audioshelf.libkind"
 private const val LIB_SORT = "audioshelf.libsort"
 private const val LIB_VIEW = "audioshelf.libview"
@@ -22,11 +24,19 @@ class Prefs(private val kv: Kv) {
 
     private fun skip(key: String, default: Int) = read(key)?.toIntOrNull()?.takeIf { it in SKIP_OPTIONS } ?: default
 
+    /** Volume boost in dB. Falls back to the gain of the old global effects record. */
+    private fun gain(): Int {
+        read(GAIN)?.toIntOrNull()?.takeIf { it in GAIN_OPTIONS }?.let { return it }
+        val legacy = Json.parse(read(LEGACY_FX)).asMap()?.get("gain").asNumber()?.toInt()
+        return legacy?.takeIf { it in GAIN_OPTIONS } ?: 0
+    }
+
     private val themeFlow = MutableStateFlow(read(THEME)?.takeIf { it in THEME_IDS })
     private val langFlow = MutableStateFlow(read(LANG)?.takeIf { it in LANG_IDS } ?: LANG_AUTO)
     private val skipBackFlow = MutableStateFlow(skip(SKIP_BACK, SKIP_BACK_DEFAULT))
     private val skipForwardFlow = MutableStateFlow(skip(SKIP_FORWARD, SKIP_FORWARD_DEFAULT))
     private val offloadFlow = MutableStateFlow(read(OFFLOAD) == "1")
+    private val gainFlow = MutableStateFlow(gain())
     private val kindFlow = MutableStateFlow(KindFilter.of(read(LIB_KIND)))
     private val sortFlow = MutableStateFlow(SortMode.of(read(LIB_SORT)))
     private val viewFlow = MutableStateFlow(LibView.of(read(LIB_VIEW)))
@@ -38,6 +48,7 @@ class Prefs(private val kv: Kv) {
     val skipBack: StateFlow<Int> = skipBackFlow.asStateFlow()
     val skipForward: StateFlow<Int> = skipForwardFlow.asStateFlow()
     val offload: StateFlow<Boolean> = offloadFlow.asStateFlow()
+    val gain: StateFlow<Int> = gainFlow.asStateFlow()
     val libKind: StateFlow<KindFilter> = kindFlow.asStateFlow()
     val libSort: StateFlow<SortMode> = sortFlow.asStateFlow()
     val libView: StateFlow<LibView> = viewFlow.asStateFlow()
@@ -67,6 +78,12 @@ class Prefs(private val kv: Kv) {
     fun setOffload(on: Boolean) {
         kv.put(KV_STORE, OFFLOAD, if (on) "1" else "0")
         offloadFlow.value = on
+    }
+
+    fun setGain(db: Int) {
+        val value = db.takeIf { it in GAIN_OPTIONS } ?: 0
+        kv.put(KV_STORE, GAIN, value.toString())
+        gainFlow.value = value
     }
 
     fun setLibKind(kind: KindFilter) {

@@ -16,9 +16,6 @@ interface SoundActions {
     fun onPreset(id: String)
     fun onReset()
     fun onUseGlobal()
-    fun onGain(db: Int)
-    fun onPitch(semitones: Int)
-    fun onNoise(level: Int)
     fun onSkipSilence(on: Boolean)
     fun onFxUseGlobal()
 
@@ -29,9 +26,6 @@ interface SoundActions {
             override fun onPreset(id: String) {}
             override fun onReset() {}
             override fun onUseGlobal() {}
-            override fun onGain(db: Int) {}
-            override fun onPitch(semitones: Int) {}
-            override fun onNoise(level: Int) {}
             override fun onSkipSilence(on: Boolean) {}
             override fun onFxUseGlobal() {}
         }

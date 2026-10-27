@@ -49,10 +49,11 @@ class ProgressStore(kv: Kv) {
         percent: Int,
         expanded: Boolean = false,
         now: Long = System.currentTimeMillis(),
+        notify: Boolean = true,
     ) {
         spots.set(id, linkedMapOf("i" to index, "p" to positionMs, "t" to now))
         infos.set(id, linkedMapOf("done" to done, "x" to if (expanded) 1 else 0, "pc" to percent))
-        counter.value++
+        if (notify) counter.value++
     }
 
     fun remap(id: String, map: (Int, Long) -> Pair<Int, Long>) {

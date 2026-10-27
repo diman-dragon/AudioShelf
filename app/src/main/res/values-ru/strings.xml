@@ -127,9 +127,11 @@
     <string name="settings_scanning">Сканирование… найдено: %1$d</string>
     <string name="settings_skip_back">Перемотка назад</string>
     <string name="settings_skip_forward">Перемотка вперёд</string>
+    <string name="settings_gain">Усиление громкости</string>
     <string name="settings_energy">Энергосбережение</string>
     <string name="settings_dark">Тёмная тема</string>
     <string name="unit_sec">%d с</string>
+    <string name="unit_db">+%d дБ</string>
     <string name="settings_theme">Тема</string>
     <string name="settings_language">Язык</string>
     <string name="settings_version">Версия %1$s</string>
@@ -146,7 +148,7 @@
     <string name="lang_auto">Авто</string>
     <string name="energy_on">Вкл</string>
     <string name="energy_off">Выкл</string>
-    <string name="energy_hint">Звук воспроизводит аудиочип телефона, процессор спит, батарея держится дольше. Работает, пока эквалайзер выключен. На некоторых телефонах может не поддерживаться.</string>
+    <string name="energy_hint">Звук воспроизводит аудиочип телефона, процессор спит, батарея держится дольше. Работает, пока эквалайзер и усиление громкости выключены. На некоторых телефонах может не поддерживаться.</string>
     <string name="notif_close">Закрыть</string>
     <string name="sound_eq">Эквалайзер</string>
     <string name="sound_global">Для всех</string>
@@ -190,16 +192,7 @@
     <string name="filter_done">Прочитано</string>
     <string name="filter_new">Новые</string>
     <string name="filter_started">Начатые</string>
-    <string name="fx_gain">Усиление громкости, дБ</string>
-    <string name="fx_noise">Шумоподавление</string>
-    <string name="fx_noise_hint">Программный фильтр стабильного шипения и гула. Не для музыки; отключает энергосберегающее воспроизведение.</string>
-    <string name="fx_noise_light">Слабое</string>
-    <string name="fx_noise_medium">Среднее</string>
-    <string name="fx_noise_off">Выкл</string>
-    <string name="fx_noise_strong">Сильное</string>
     <string name="fx_off">Выкл</string>
-    <string name="fx_pitch">Высота тона, полутоны</string>
-    <string name="fx_pitch_limit">Предел достигнут</string>
     <string name="fx_skip_silence">Пропуск тишины</string>
     <string name="fx_skip_silence_hint">Сокращает долгие паузы между словами</string>
     <string name="fx_title">Обработка</string>

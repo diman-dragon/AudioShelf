@@ -10,6 +10,7 @@ import kotlinx.coroutines.withContext
 
 private const val FLUSH_MS = 250L
 private const val RETRY_MS = 1000L
+private const val MAX_PILED = 512
 
 class Kv(
     private val backend: KvBackend,
@@ -19,6 +20,7 @@ class Kv(
     private val buckets = HashMap<String, MutableMap<String, String>>()
     private val pending = ArrayList<KvOp>()
     private var timer: Job? = null
+    @Volatile private var deferred = false
 
     init {
         backend.loadAll().forEach { bucket(it.store)[it.key] = it.value }
@@ -26,27 +28,30 @@ class Kv(
 
     private fun bucket(store: String) = buckets.getOrPut(store) { LinkedHashMap() }
 
-    fun get(store: String, key: String): String? = bucket(store)[key]
+    fun get(store: String, key: String): String? = synchronized(buckets) { bucket(store)[key] }
 
-    fun stores(): List<String> = buckets.keys.toList()
+    fun stores(): List<String> = synchronized(buckets) { buckets.keys.toList() }
 
-    fun size(store: String): Int = bucket(store).size
+    fun size(store: String): Int = synchronized(buckets) { bucket(store).size }
 
-    fun all(store: String): Map<String, String> = LinkedHashMap(bucket(store))
+    fun all(store: String): Map<String, String> = synchronized(buckets) { LinkedHashMap(bucket(store)) }
 
     fun put(store: String, key: String, value: String) {
-        if (bucket(store)[key] == value) return
-        bucket(store)[key] = value
+        synchronized(buckets) {
+            val rows = bucket(store)
+            if (rows[key] == value) return
+            rows[key] = value
+        }
         queue(KvOp.Put(store, key, value))
     }
 
     fun del(store: String, key: String) {
-        if (bucket(store).remove(key) == null) return
+        if (synchronized(buckets) { bucket(store).remove(key) } == null) return
         queue(KvOp.Del(store, key))
     }
 
     fun clear(store: String) {
-        bucket(store).clear()
+        synchronized(buckets) { bucket(store).clear() }
         queue(KvOp.Clear(store))
     }
 
@@ -65,12 +70,33 @@ class Kv(
 
     private fun requeue(ops: List<KvOp>) = synchronized(pending) { pending.addAll(0, ops) }
 
+    /**
+     * While deferred (screen off) changes stay in memory and nothing touches the database;
+     * [flushNow] still writes everything, and leaving the deferred state writes what piled up.
+     */
+    fun setDeferred(on: Boolean) {
+        if (deferred == on) return
+        deferred = on
+        if (!on && synchronized(pending) { pending.isNotEmpty() }) kick()
+    }
+
     private fun queue(op: KvOp) {
-        synchronized(pending) { pending.add(op) }
+        synchronized(pending) {
+            pending.add(op)
+            if (deferred && pending.size > MAX_PILED) {
+                val merged = coalesce(pending)
+                pending.clear()
+                pending.addAll(merged)
+            }
+        }
+        if (!deferred) kick()
+    }
+
+    private fun kick() {
         if (timer?.isActive == true) return
         timer = scope.launch {
             delay(FLUSH_MS)
-            while (true) {
+            while (!deferred) {
                 val ops = take()
                 if (ops.isEmpty()) break
                 val ok = withContext(io) { runCatching { backend.write(ops) }.isSuccess }

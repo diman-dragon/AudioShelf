@@ -8,13 +8,10 @@ package com.audioshelf.app
  * purchase; voluntary donations stay available at any time. Gate every check through [Premium.isAvailable]
  * so the trial / purchase logic can be added in one place.
  *
- * - [NeuralNoiseReduction]: RNNoise-class denoising in native code (NDK, JNI).
- *   The free build ships the Kotlin spectral filter in `sound/Denoiser.kt`.
  * - [AutomationIntents]: Tasker / MacroDroid broadcast intents (play, pause, rewind, sleep timer, ...).
  * - [AndroidAuto]: Android Auto browsing and playback (MediaLibraryService, automotive_app_desc).
  */
 enum class PremiumFeature {
-    NeuralNoiseReduction,
     AutomationIntents,
     AndroidAuto,
 }

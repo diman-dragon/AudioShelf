@@ -38,5 +38,9 @@ val THEME_IDS = listOf("light", "dark")
 val SKIP_OPTIONS = listOf(5, 10, 15, 30, 60)
 
 fun nextSkip(current: Int): Int = SKIP_OPTIONS[(SKIP_OPTIONS.indexOf(current) + 1) % SKIP_OPTIONS.size]
+
+val GAIN_OPTIONS = listOf(0, 3, 6, 9, 12)
+
+fun nextGain(current: Int): Int = GAIN_OPTIONS[(GAIN_OPTIONS.indexOf(current) + 1) % GAIN_OPTIONS.size]
 const val SKIP_BACK_DEFAULT = 15
 const val SKIP_FORWARD_DEFAULT = 30

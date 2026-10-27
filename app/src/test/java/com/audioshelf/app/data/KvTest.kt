@@ -63,4 +63,17 @@ class KvTest {
         assertEquals(true, ops[0] is KvOp.Clear)
         assertEquals("3", (ops[1] as KvOp.Put).value)
     }
+
+    @Test
+    fun deferredChangesStayInMemoryUntilFlushed() {
+        val backend = MemoryBackend()
+        val kv = testKv(backend)
+        kv.setDeferred(true)
+        repeat(2000) { kv.put("s", "k", it.toString()) }
+        assertEquals("1999", kv.get("s", "k"))
+        assertEquals(0, backend.writes)
+        kv.flushNow()
+        assertEquals("1999", backend.table["s" to "k"])
+        assertEquals(1, backend.writes)
+    }
 }

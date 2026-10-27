@@ -129,9 +129,11 @@
     <string name="settings_scanning">Scanning… found: %1$d</string>
     <string name="settings_skip_back">Skip back</string>
     <string name="settings_skip_forward">Skip forward</string>
+    <string name="settings_gain">Volume boost</string>
     <string name="settings_energy">Power saving</string>
     <string name="settings_dark">Dark theme</string>
     <string name="unit_sec">%d s</string>
+    <string name="unit_db">+%d dB</string>
     <string name="settings_theme">Theme</string>
     <string name="settings_language">Language</string>
     <string name="settings_version">Version %1$s</string>
@@ -148,7 +150,7 @@
     <string name="lang_auto">Auto</string>
     <string name="energy_on">On</string>
     <string name="energy_off">Off</string>
-    <string name="energy_hint">The phone’s audio chip plays the sound and the processor sleeps, so the battery lasts longer. Works while the equalizer is flat. Some phones may not support it.</string>
+    <string name="energy_hint">The phone’s audio chip plays the sound and the processor sleeps, so the battery lasts longer. Works while the equalizer is flat and the volume boost is off. Some phones may not support it.</string>
     <string name="notif_close">Close</string>
     <string name="sound_eq">Equalizer</string>
     <string name="sound_global">For all</string>
@@ -192,16 +194,7 @@
     <string name="filter_done">Finished</string>
     <string name="filter_new">New</string>
     <string name="filter_started">Started</string>
-    <string name="fx_gain">Volume boost, dB</string>
-    <string name="fx_noise">Noise reduction</string>
-    <string name="fx_noise_hint">Software filter for steady hiss and hum. Not for music, and it turns off power-saving playback.</string>
-    <string name="fx_noise_light">Light</string>
-    <string name="fx_noise_medium">Medium</string>
-    <string name="fx_noise_off">Off</string>
-    <string name="fx_noise_strong">Strong</string>
     <string name="fx_off">Off</string>
-    <string name="fx_pitch">Pitch, semitones</string>
-    <string name="fx_pitch_limit">Limit reached</string>
     <string name="fx_skip_silence">Skip silence</string>
     <string name="fx_skip_silence_hint">Shortens long pauses between words</string>
     <string name="fx_title">Processing</string>

@@ -12,12 +12,16 @@ import androidx.media3.common.Player
 import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultRenderersFactory
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.audio.DefaultAudioSink
+import androidx.media3.exoplayer.audio.DefaultAudioTrackBufferSizeProvider
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.extractor.DefaultExtractorsFactory
+import com.audioshelf.app.ScreenWatch
+import com.audioshelf.app.library.Background
 import com.audioshelf.app.sound.SoundOutput
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -30,14 +34,34 @@ import kotlinx.coroutines.launch
 
 private const val TICK_MS = 250L
 
+// Dark screen: nobody watches the position, a slow tick is enough for listening stats (gap limit 5 s).
+private const val DARK_TICK_MS = 4_000L
+
+// Read-ahead: plenty of audio is cheap (about 1 MB a minute), and a full buffer rides out a slow
+// storage provider while covers, notifications or the system are busy.
+private const val MIN_BUFFER_MS = 30_000
+private const val MAX_BUFFER_MS = 60_000
+private const val START_BUFFER_MS = 1_000
+private const val REBUFFER_MS = 3_000
+
+// Audio track buffer: roomier than the default 250-750 ms, so a late CPU slice is not an underrun.
+private const val TRACK_MIN_US = 600_000
+private const val TRACK_MAX_US = 1_500_000
+
+// Background work (covers, durations) stands aside while playback starts, seeks or re-buffers.
+private const val START_HOLD_MS = 5_000L
+private const val SEEK_HOLD_MS = 2_000L
+
 class PlaybackEngine(
     private val app: Application,
     private val scope: CoroutineScope,
     private val sound: SoundOutput,
     private val offload: OffloadControl,
+    private val background: Background,
+    private val screen: ScreenWatch,
     private val skipBackMs: () -> Long,
     private val skipForwardMs: () -> Long,
-    private val onSave: () -> Unit,
+    private val onSave: (periodic: Boolean) -> Unit,
 ) {
     private val flow = MutableStateFlow(PlayState())
     private var exo: ExoPlayer? = null
@@ -47,7 +71,6 @@ class PlaybackEngine(
     private var saver: PositionSaver? = null
     private var ticker: Job? = null
     private var speech = false
-    private var pitch = 1f
     private var skipSilence = false
 
     val state: StateFlow<PlayState> = flow.asStateFlow()
@@ -62,6 +85,12 @@ class PlaybackEngine(
             DefaultAudioSink.Builder(context)
                 .setEnableFloatOutput(enableFloatOutput)
                 .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
+                .setAudioTrackBufferSizeProvider(
+                    DefaultAudioTrackBufferSizeProvider.Builder()
+                        .setMinPcmBufferDurationUs(TRACK_MIN_US)
+                        .setMaxPcmBufferDurationUs(TRACK_MAX_US)
+                        .build(),
+                )
                 .setAudioProcessors(arrayOf<AudioProcessor>(sound.processor))
                 .build()
     }
@@ -73,8 +102,12 @@ class PlaybackEngine(
 
     private fun build(): ExoPlayer {
         val extractors = DefaultExtractorsFactory().setConstantBitrateSeekingEnabled(true)
+        val loadControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(MIN_BUFFER_MS, MAX_BUFFER_MS, START_BUFFER_MS, REBUFFER_MS)
+            .build()
         val p = ExoPlayer.Builder(app, renderers(), DefaultMediaSourceFactory(app, extractors))
-            .setAudioAttributes(attributes(false), true)
+            .setLoadControl(loadControl)
+            .setAudioAttributes(attributes(speech), true)
             .setHandleAudioBecomingNoisy(true)
             .setSeekParameters(SeekParameters.EXACT)
             .setSeekBackIncrementMs(skipBackMs())
@@ -82,7 +115,6 @@ class PlaybackEngine(
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
         p.setSkipSilenceEnabled(skipSilence)
-        if (pitch != 1f) p.playbackParameters = p.playbackParameters.withPitch(pitch)
         val volume = { refreshVolume() }
         fader = EdgeFader(p, volume)
         chapterStop = ChapterStop(p)
@@ -100,13 +132,19 @@ class PlaybackEngine(
             if (isPlaying) startTicker() else ticker?.cancel()
         }
 
-        override fun onPlaybackStateChanged(playbackState: Int) = publish()
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            if (playbackState == Player.STATE_BUFFERING) background.hold(SEEK_HOLD_MS)
+            publish()
+        }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             publish()
         }
 
-        override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) = publish()
+        override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
+            background.hold(SEEK_HOLD_MS)
+            publish()
+        }
 
         override fun onPlaybackParametersChanged(playbackParameters: androidx.media3.common.PlaybackParameters) = publish()
     }
@@ -115,7 +153,7 @@ class PlaybackEngine(
         ticker?.cancel()
         ticker = scope.launch {
             while (isActive) {
-                delay(TICK_MS)
+                delay(if (screen.on.value) TICK_MS else DARK_TICK_MS)
                 publish()
             }
         }
@@ -151,11 +189,17 @@ class PlaybackEngine(
         )
     }
 
-    fun load(items: List<MediaItem>, index: Int, positionMs: Long, autoplay: Boolean, speed: Float) {
+    /**
+     * Speed and the sound profile (audio attributes) are set before the items go in: changing the
+     * attributes of a playing player rebuilds the audio track, which was the stutter at every start.
+     */
+    fun load(items: List<MediaItem>, index: Int, positionMs: Long, autoplay: Boolean, speed: Float, profile: PlayProfile) {
+        background.hold(START_HOLD_MS)
         val p = player
+        applyProfile(p, profile)
+        p.setPlaybackSpeed(speed)
         p.setMediaItems(items, index, positionMs)
         p.prepare()
-        p.setPlaybackSpeed(speed)
         p.playWhenReady = autoplay
         if (autoplay) startService()
         publish()
@@ -203,12 +247,9 @@ class PlaybackEngine(
         exo?.setPlaybackSpeed(speed)
     }
 
-    fun setFx(newPitch: Float, newSkipSilence: Boolean) {
-        pitch = newPitch
-        skipSilence = newSkipSilence
-        val p = exo ?: return
-        p.setSkipSilenceEnabled(newSkipSilence)
-        if (p.playbackParameters.pitch != newPitch) p.playbackParameters = p.playbackParameters.withPitch(newPitch)
+    fun setSkipSilence(on: Boolean) {
+        skipSilence = on
+        exo?.setSkipSilenceEnabled(on)
     }
 
     fun setSleep(minutes: Long, chapter: Boolean) {
@@ -216,8 +257,9 @@ class PlaybackEngine(
         if (ready.mediaItemCount >= 0) sleep?.set(minutes, chapter)
     }
 
-    fun setProfile(profile: PlayProfile) {
-        val p = player
+    fun setProfile(profile: PlayProfile) = applyProfile(player, profile)
+
+    private fun applyProfile(p: ExoPlayer, profile: PlayProfile) {
         p.repeatMode = profile.repeat
         p.shuffleModeEnabled = profile.shuffle
         chapterStop?.set(profile.pauseAfter)

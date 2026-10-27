@@ -9,33 +9,30 @@ private const val HEADROOM = 32767f - KNEE
 
 class SoundChain {
     @Volatile private var bandsDb = FloatArray(BAND_COUNT)
-    @Volatile private var fx = Fx.Off
+    @Volatile private var boostDb = 0
 
     private val eq = EqChain()
     private var rate = 44100
     private var channels = 2
     private var builtFor: FloatArray? = null
-    private var builtFx: Fx? = null
+    private var builtBoost = Int.MIN_VALUE
     private var gain = 1f
     private var boost = 1f
-    private var noise = 0
-    private var denoisers: Array<Denoiser> = emptyArray()
 
     fun setBands(db: FloatArray) {
         bandsDb = db
     }
 
-    fun setFx(next: Fx) {
-        fx = next
+    fun setBoost(db: Int) {
+        boostDb = db
     }
 
     fun configure(sampleRate: Int, channelCount: Int) {
         rate = sampleRate
         channels = channelCount
         eq.reset(channelCount)
-        denoisers = Array(channelCount) { Denoiser() }
         builtFor = null
-        builtFx = null
+        builtBoost = Int.MIN_VALUE
     }
 
     fun refresh() {
@@ -45,23 +42,18 @@ class SoundChain {
             gain = 10.0.pow((-peak / 20).toDouble()).toFloat()
             builtFor = db
         }
-        val current = fx
-        if (current !== builtFx) {
-            boost = current.gain
-            noise = current.noise
-            denoisers.forEach { it.level = noise }
-            builtFx = current
+        val wanted = boostDb
+        if (wanted != builtBoost) {
+            boost = 10.0.pow(wanted / 20.0).toFloat()
+            builtBoost = wanted
         }
     }
 
-    val passthrough: Boolean get() = gain == 1f && boost == 1f && noise == 0 && eq.flat()
+    val passthrough: Boolean get() = gain == 1f && boost == 1f && eq.flat()
 
     fun channelCount(): Int = channels
 
-    fun process(sample: Float, channel: Int): Float {
-        val clean = if (noise != 0 && channel < denoisers.size) denoisers[channel].process(sample) else sample
-        return limit(eq.process(clean, channel) * gain * boost)
-    }
+    fun process(sample: Float, channel: Int): Float = limit(eq.process(sample, channel) * gain * boost)
 
     private fun limit(x: Float): Float {
         val a = abs(x)

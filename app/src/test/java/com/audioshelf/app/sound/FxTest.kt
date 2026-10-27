@@ -1,10 +1,10 @@
 package com.audioshelf.app.sound
 
+import com.audioshelf.app.data.GAIN_OPTIONS
+import com.audioshelf.app.data.KV_STORE
+import com.audioshelf.app.data.Prefs
+import com.audioshelf.app.data.nextGain
 import com.audioshelf.app.data.testKv
-import java.util.Random
-import kotlin.math.PI
-import kotlin.math.sin
-import kotlin.math.sqrt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -13,92 +13,72 @@ import org.junit.Test
 
 class FxTest {
     @Test
-    fun codecRoundTripsAndClamps() {
-        val fx = Fx(6, -3, 2, true)
+    fun codecRoundTripsAndIgnoresOldKeys() {
+        val fx = Fx(true)
         assertEquals(fx, Fx.decode(Fx.encode(fx)))
-        val wild = Fx.decode("{\"gain\":99,\"pitch\":-99,\"noise\":9,\"skip\":false}")!!
-        assertEquals(12, wild.gainDb)
-        assertEquals(PITCH_MIN, wild.pitch)
-        assertEquals(NOISE_MAX, wild.noise)
+        val old = Fx.decode("{\"gain\":6,\"pitch\":-3,\"noise\":2,\"skip\":true}")!!
+        assertTrue(old.skipSilence)
+        assertFalse(Fx.decode("{\"gain\":12,\"pitch\":4,\"noise\":3}")!!.skipSilence)
         assertNull(Fx.decode("nope"))
     }
 
     @Test
     fun neutralMeansNothingToDo() {
         assertTrue(Fx.Off.neutral)
-        assertFalse(Fx.Off.withGain(3).neutral)
         assertFalse(Fx.Off.withSkipSilence(true).neutral)
-        assertEquals(1f, Fx.Off.pitchFactor, 1e-6f)
-        assertEquals(2f, Fx.Off.withPitch(6).pitchFactor * Fx.Off.withPitch(6).pitchFactor, 0.01f)
     }
 
     @Test
     fun trackOverridesGlobal() {
         val store = FxStore(testKv())
         assertEquals(Fx.Off, store.effective("a"))
-        store.setGlobal(Fx.Off.withGain(6))
-        assertEquals(6, store.effective("a").gainDb)
-        store.setTrack("a", Fx.Off.withNoise(2))
-        assertEquals(2, store.effective("a").noise)
-        assertEquals(6, store.effective("b").gainDb)
+        store.setGlobal(Fx(true))
+        assertTrue(store.effective("a").skipSilence)
+        store.setTrack("a", Fx.Off)
+        assertFalse(store.effective("a").skipSilence)
+        assertTrue(store.effective("b").skipSilence)
         store.clearTrack("a")
-        assertEquals(6, store.effective("a").gainDb)
-    }
-
-    private fun rms(a: FloatArray, from: Int, to: Int): Double {
-        var sum = 0.0
-        for (i in from until to) sum += a[i] * a[i]
-        return sqrt(sum / (to - from))
-    }
-
-    private fun run(input: FloatArray, level: Int): FloatArray {
-        val d = Denoiser()
-        d.level = level
-        return FloatArray(input.size) { d.process(input[it]) }
+        assertTrue(store.effective("a").skipSilence)
     }
 
     @Test
-    fun denoiserCutsSteadyNoise() {
-        val rate = 44100
-        val rnd = Random(1)
-        val x = FloatArray(3 * rate) { (rnd.nextGaussian() * 500).toFloat() }
-        val y = run(x, 2)
-        val ratio = rms(y, 2 * rate, 3 * rate) / rms(x, 2 * rate, 3 * rate)
-        assertTrue("ratio $ratio", ratio < 0.6)
-    }
-
-    @Test
-    fun denoiserKeepsSpeechLikeBursts() {
-        val rate = 44100
-        val rnd = Random(2)
-        val x = FloatArray(4 * rate) { (rnd.nextGaussian() * 300).toFloat() }
-        for (range in listOf(1.5 to 2.0, 2.5 to 3.0)) {
-            for (i in (range.first * rate).toInt() until (range.second * rate).toInt()) {
-                x[i] += (6000 * sin(2 * PI * 1000 * i / rate)).toFloat()
-            }
+    fun gainCyclesThroughTheStepsAndWraps() {
+        var db = GAIN_OPTIONS.first()
+        val seen = ArrayList<Int>()
+        repeat(GAIN_OPTIONS.size) {
+            seen.add(db)
+            db = nextGain(db)
         }
-        val y = run(x, 2)
-        val ratio = rms(y, (2.6 * rate).toInt(), (2.9 * rate).toInt()) / (6000 / sqrt(2.0))
-        assertTrue("ratio $ratio", ratio > 0.85)
+        assertEquals(GAIN_OPTIONS, seen)
+        assertEquals(GAIN_OPTIONS.first(), db)
     }
 
     @Test
-    fun levelZeroIsTransparentAfterLatency() {
-        val x = FloatArray(4096) { (it % 200 - 100).toFloat() }
-        val y = run(x, 0)
-        val lag = Denoiser.LATENCY
-        for (i in lag + 600 until 4000) assertEquals(x[i - lag], y[i], 1.0f)
+    fun gainIsStoredAndMigratesFromTheOldEffectsRecord() {
+        val kv = testKv()
+        assertEquals(0, Prefs(kv).gain.value)
+        kv.put(KV_STORE, "audioshelf.fx.global", "{\"gain\":6,\"pitch\":2,\"noise\":1,\"skip\":false}")
+        assertEquals(6, Prefs(kv).gain.value)
+        val prefs = Prefs(kv)
+        prefs.setGain(9)
+        assertEquals(9, prefs.gain.value)
+        assertEquals(9, Prefs(kv).gain.value)
+        prefs.setGain(7)
+        assertEquals(0, prefs.gain.value)
     }
 
     @Test
     fun chainBoostsAndLimits() {
         val chain = SoundChain()
         chain.configure(44100, 1)
-        chain.setFx(Fx.Off.withGain(12))
+        chain.setBoost(12)
         chain.refresh()
         assertFalse(chain.passthrough)
         val y = chain.process(1000f, 0)
         assertEquals(3981f, y, 40f)
         assertTrue(chain.process(30000f, 0) <= 32767f)
+        chain.setBoost(0)
+        chain.refresh()
+        assertTrue(chain.passthrough)
     }
 }

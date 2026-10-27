@@ -26,6 +26,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+private const val UI_IDLE_MS = 3000L
+
 private class Core(val books: List<Book>, val status: LibStatus, val scanning: Boolean, val progress: ScanProgress)
 
 private class Shown(val kind: KindFilter, val sort: SortMode, val view: LibView, val query: String, val state: ProgressFilter)
@@ -54,7 +56,7 @@ class LibraryController(
         combine(prefs.libKind, prefs.libSort, prefs.libView, queryFlow, prefs.libProgress) { k, s, v, q, p -> Shown(k, s, v, q, p) },
         combine(meta.version, progress.version) { a, b -> a + b },
     ) { core, shown, _ -> build(core, shown) }
-        .stateIn(scope, SharingStarted.Eagerly, LibraryUi())
+        .stateIn(scope, SharingStarted.WhileSubscribed(UI_IDLE_MS), snapshot())
 
     val files: StateFlow<List<LibFile>> get() = repo.files
 
@@ -66,6 +68,12 @@ class LibraryController(
 
     val hiddenCount: StateFlow<Int> = hidden.version.map { hidden.count() }
         .stateIn(scope, SharingStarted.Eagerly, hidden.count())
+
+    /** The list as it would be shown right now, computed on demand. [ui] only runs while a screen shows it. */
+    fun snapshot(): LibraryUi = build(
+        Core(repo.books.value, repo.status.value, repo.scanning.value, repo.progress.value),
+        Shown(prefs.libKind.value, prefs.libSort.value, prefs.libView.value, queryFlow.value, prefs.libProgress.value),
+    )
 
     private fun build(core: Core, shown: Shown): LibraryUi {
         val rows = if (core.status == LibStatus.Ok) {

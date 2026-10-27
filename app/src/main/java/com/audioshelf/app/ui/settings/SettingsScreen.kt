@@ -17,6 +17,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.audioshelf.app.R
 import com.audioshelf.app.data.LANG_AUTO
+import com.audioshelf.app.data.GAIN_OPTIONS
+import com.audioshelf.app.data.nextGain
 import com.audioshelf.app.data.nextSkip
 import com.audioshelf.app.ui.components.AText
 import com.audioshelf.app.ui.components.Cycler
@@ -44,11 +46,20 @@ private fun AppPage(ui: SettingsUi, actions: SettingsActions) {
     if (ui.hidden > 0) HiddenRow(ui.hidden, actions::onRestoreHidden)
     SectionHeading(stringResource(R.string.settings_section_playback))
     val sec = stringResource(R.string.unit_sec)
+    val db = stringResource(R.string.unit_db)
+    val off = stringResource(R.string.fx_off)
     SettingRow(stringResource(R.string.settings_skip_back)) {
         Cycler(String.format(sec, ui.skipBack), { actions.onSkipBack(nextSkip(ui.skipBack)) })
     }
     SettingRow(stringResource(R.string.settings_skip_forward)) {
         Cycler(String.format(sec, ui.skipForward), { actions.onSkipForward(nextSkip(ui.skipForward)) })
+    }
+    SettingRow(stringResource(R.string.settings_gain)) {
+        Cycler(
+            gainLabel(ui.gain),
+            { actions.onGain(nextGain(ui.gain)) },
+            description = if (ui.gain == 0) off else String.format(db, ui.gain),
+        )
     }
     SwitchRow(stringResource(R.string.settings_auto_next), ui.autoNext, actions::onAutoNext, stringResource(R.string.auto_next_hint))
     SwitchRow(stringResource(R.string.settings_energy), ui.offload, actions::onOffload, stringResource(R.string.energy_hint))
@@ -68,4 +79,15 @@ private fun AppPage(ui: SettingsUi, actions: SettingsActions) {
     SettingRow(stringResource(R.string.settings_language), stacked = true) {
         Segmented(langs, ui.language, actions::onLanguage, fill = true)
     }
+}
+
+/** A speaker with one more bracket for every step of boost: 🔈  🔈)  🔉))  🔊)))  🔊)))) */
+private fun gainLabel(db: Int): String {
+    val level = GAIN_OPTIONS.indexOf(db).coerceAtLeast(0)
+    val speaker = when (level) {
+        0, 1 -> "\uD83D\uDD08"
+        2 -> "\uD83D\uDD09"
+        else -> "\uD83D\uDD0A"
+    }
+    return speaker + ")".repeat(level)
 }

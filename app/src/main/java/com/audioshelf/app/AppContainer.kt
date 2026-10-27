@@ -7,6 +7,7 @@ import com.audioshelf.app.data.HiddenStore
 import com.audioshelf.app.data.Kv
 import com.audioshelf.app.data.Prefs
 import com.audioshelf.app.data.SqliteKv
+import com.audioshelf.app.library.Background
 import com.audioshelf.app.library.BookDescription
 import com.audioshelf.app.library.CoverBytes
 import com.audioshelf.app.library.CoverLoader
@@ -52,9 +53,11 @@ class AppContainer(app: Application) {
     val hidden = HiddenStore(kv)
     val progress = ProgressStore(kv)
     val durations = DurationStore(kv)
+    val background = Background()
+    val screen = ScreenWatch(app)
     val coverBytes = CoverBytes(app)
-    val covers = CoverLoader(app, coverBytes)
-    val durationReader = DurationReader(app)
+    val covers = CoverLoader(app, coverBytes, background)
+    val durationReader = DurationReader(app, background.dispatcher)
     private val fileOps = FileOps(app)
     private val repo = LibraryRepo(scope, app.contentResolver, folders, LibraryCache(kv), hidden)
     val library = LibraryController(scope, app, repo, prefs, folders, meta, progress, durations, hidden, fileOps)
@@ -76,23 +79,38 @@ class AppContainer(app: Application) {
         private set
 
     val engine: PlaybackEngine = PlaybackEngine(
-        app, scope, output, offload,
+        app, scope, output, offload, background, screen,
         { prefs.skipBack.value * 1000L },
         { prefs.skipForward.value * 1000L },
-        { session.remember() },
+        { periodic -> if (!periodic || screen.on.value) session.remember(periodic = periodic) },
     )
     init {
         session = PlayerSession(
             scope, app, engine, library, meta, progress, durations, prefs, playPrefs,
-            chapters, ChapterScanner(app, chapters), marks, coverBytes, durationReader, stats, statsRecorder, queue, notes,
+            chapters, ChapterScanner(app, chapters), marks, background, screen, durationReader, stats, statsRecorder, queue, notes,
         )
     }
     val sound: SoundModel = SoundModel(scope, session.track, eqStore, fxStore, soundPrefs, library)
 
     init {
+        // Dark screen: save once, then keep every change in memory. Screen on: write what piled up and redraw.
+        scope.launch {
+            screen.on.collect { on ->
+                if (on) {
+                    kv.setDeferred(false)
+                    session.remember()
+                    engine.publish()
+                    session.onScreen(true)
+                } else {
+                    session.remember()
+                    kv.flushNow()
+                    kv.setDeferred(true)
+                }
+            }
+        }
         offload.setAllowed(prefs.offload.value)
         scope.launch { prefs.offload.collect { offload.setAllowed(it) } }
-        SoundMix(scope, session.track, eqStore, fxStore, output, engine::setFx).start()
+        SoundMix(scope, session.track, eqStore, fxStore, prefs.gain, output, engine::setSkipSilence).start()
     }
 }
 

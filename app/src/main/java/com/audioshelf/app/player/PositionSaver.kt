@@ -7,33 +7,34 @@ import androidx.media3.common.Player
 
 private const val EVERY_MS = 10_000L
 
-class PositionSaver(private val player: Player, private val save: () -> Unit) : Player.Listener, Runnable {
+/** [save] gets true for the periodic tick while playing: that one must not wake the library list. */
+class PositionSaver(private val player: Player, private val save: (periodic: Boolean) -> Unit) : Player.Listener, Runnable {
     private val handler = Handler(Looper.getMainLooper())
 
     init {
         player.addListener(this)
     }
 
-    fun flush() = save()
+    fun flush() = save(false)
 
     fun stop() {
         handler.removeCallbacks(this)
-        save()
+        save(false)
     }
 
     override fun onIsPlayingChanged(isPlaying: Boolean) {
         handler.removeCallbacks(this)
-        if (isPlaying) handler.postDelayed(this, EVERY_MS) else save()
+        if (isPlaying) handler.postDelayed(this, EVERY_MS) else save(false)
     }
 
-    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = save()
+    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = save(false)
 
     override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
-        if (reason == Player.DISCONTINUITY_REASON_SEEK) save()
+        if (reason == Player.DISCONTINUITY_REASON_SEEK) save(false)
     }
 
     override fun run() {
-        save()
+        save(true)
         handler.postDelayed(this, EVERY_MS)
     }
 }

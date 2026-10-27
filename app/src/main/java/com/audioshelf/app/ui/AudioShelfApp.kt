@@ -174,6 +174,7 @@ fun AudioShelfApp(container: AppContainer, player: PlayerViewModel) {
                         override fun onRestoreHidden() = library.restoreHidden()
                         override fun onSkipBack(seconds: Int) = prefs.setSkipBack(seconds)
                         override fun onSkipForward(seconds: Int) = prefs.setSkipForward(seconds)
+                        override fun onGain(db: Int) = prefs.setGain(db)
                         override fun onOffload(on: Boolean) = prefs.setOffload(on)
                         override fun onAutoNext(on: Boolean) = prefs.setAutoNext(on)
 
@@ -233,6 +234,7 @@ private fun rememberSettingsUi(container: AppContainer, dark: Boolean): Settings
     val files by container.library.fileCount.collectAsState()
     val skipBack by prefs.skipBack.collectAsState()
     val skipForward by prefs.skipForward.collectAsState()
+    val gain by prefs.gain.collectAsState()
     val offload by prefs.offload.collectAsState()
     val language by prefs.language.collectAsState()
     return SettingsUi(
@@ -245,6 +247,7 @@ private fun rememberSettingsUi(container: AppContainer, dark: Boolean): Settings
         hidden = hidden,
         skipBack = skipBack,
         skipForward = skipForward,
+        gain = gain,
         offload = offload,
         theme = if (dark) "dark" else "light",
         language = language,
