@@ -17,13 +17,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.audioshelf.app.R
 import com.audioshelf.app.data.LANG_AUTO
-import com.audioshelf.app.data.GAIN_OPTIONS
-import com.audioshelf.app.data.nextGain
 import com.audioshelf.app.data.nextSkip
 import com.audioshelf.app.ui.components.AText
 import com.audioshelf.app.ui.components.Cycler
-import com.audioshelf.app.ui.components.SegItem
-import com.audioshelf.app.ui.components.Segmented
 import com.audioshelf.app.ui.theme.AppTheme
 
 @Composable
@@ -40,26 +36,19 @@ fun SettingsScreen(ui: SettingsUi, actions: SettingsActions, modifier: Modifier 
 @Composable
 private fun AppPage(ui: SettingsUi, actions: SettingsActions) {
     val c = AppTheme.colors
-    val langs = listOf(SegItem(LANG_AUTO, stringResource(R.string.lang_auto)), SegItem("ru", "Русский"), SegItem("en", "English"))
+    val langs = listOf(LANG_AUTO, "ru", "en")
+    val langNames = mapOf(LANG_AUTO to stringResource(R.string.lang_auto), "ru" to "Русский", "en" to "English")
     SectionHeading(stringResource(R.string.settings_section_library), first = true)
     FolderRow(ui, actions)
     if (ui.hidden > 0) HiddenRow(ui.hidden, actions::onRestoreHidden)
     SectionHeading(stringResource(R.string.settings_section_playback))
     val sec = stringResource(R.string.unit_sec)
-    val db = stringResource(R.string.unit_db)
     val off = stringResource(R.string.fx_off)
     SettingRow(stringResource(R.string.settings_skip_back)) {
         Cycler(String.format(sec, ui.skipBack), { actions.onSkipBack(nextSkip(ui.skipBack)) })
     }
     SettingRow(stringResource(R.string.settings_skip_forward)) {
         Cycler(String.format(sec, ui.skipForward), { actions.onSkipForward(nextSkip(ui.skipForward)) })
-    }
-    SettingRow(stringResource(R.string.settings_gain)) {
-        Cycler(
-            gainLabel(ui.gain),
-            { actions.onGain(nextGain(ui.gain)) },
-            description = if (ui.gain == 0) off else String.format(db, ui.gain),
-        )
     }
     SwitchRow(stringResource(R.string.settings_auto_next), ui.autoNext, actions::onAutoNext, stringResource(R.string.auto_next_hint))
     SwitchRow(stringResource(R.string.settings_energy), ui.offload, actions::onOffload, stringResource(R.string.energy_hint))
@@ -76,18 +65,10 @@ private fun AppPage(ui: SettingsUi, actions: SettingsActions) {
     }
     SectionHeading(stringResource(R.string.settings_section_interface))
     SwitchRow(stringResource(R.string.settings_dark), ui.theme == "dark", { actions.onTheme(if (it) "dark" else "light") })
-    SettingRow(stringResource(R.string.settings_language), stacked = true) {
-        Segmented(langs, ui.language, actions::onLanguage, fill = true)
+    SettingRow(stringResource(R.string.settings_language)) {
+        Cycler(
+            langNames.getValue(ui.language),
+            { actions.onLanguage(langs[(langs.indexOf(ui.language) + 1) % langs.size]) },
+        )
     }
-}
-
-/** A speaker with one more bracket for every step of boost: 🔈  🔈)  🔉))  🔊)))  🔊)))) */
-private fun gainLabel(db: Int): String {
-    val level = GAIN_OPTIONS.indexOf(db).coerceAtLeast(0)
-    val speaker = when (level) {
-        0, 1 -> "\uD83D\uDD08"
-        2 -> "\uD83D\uDD09"
-        else -> "\uD83D\uDD0A"
-    }
-    return speaker + ")".repeat(level)
 }

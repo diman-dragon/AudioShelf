@@ -173,3 +173,21 @@ fun CardBookItem(row: BookRow, covers: CoverSource, onOpen: () -> Unit, onMenu: 
         )
     }
 }
+
+/** The library row without the menu: cover, title, byline, progress, and any trailing control. Used by history and queue. */
+@Composable
+fun CompactBookItem(row: BookRow, covers: CoverSource, onOpen: () -> Unit, trailing: (@Composable () -> Unit)? = null) {
+    val c = AppTheme.colors
+    Column(Modifier.fillMaxWidth()) {
+        Row(
+            Modifier.fillMaxWidth().tap(onClick = onOpen).padding(vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Thumb(row, covers, Modifier.size(56.dp))
+            Meta(row, Modifier.weight(1f))
+            trailing?.invoke()
+        }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(c.line))
+    }
+}

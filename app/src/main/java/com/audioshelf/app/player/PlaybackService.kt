@@ -24,7 +24,7 @@ class PlaybackService : MediaSessionService() {
             Intent(this, MainActivity::class.java),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        val built = MediaSession.Builder(this, shelf.engine.player)
+        val built = MediaSession.Builder(this, OwnMetadataPlayer(shelf.engine.player))
             .setBitmapLoader(ShelfBitmapLoader(shelf.scope, shelf.covers, shelf.session::fileOf))
             .setCallback(SessionCallback(this, { resumeOf(shelf.session.resumeItems()) }, ::close, ::onClicks))
             .setSessionActivity(tap)

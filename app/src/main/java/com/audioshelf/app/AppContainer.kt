@@ -46,14 +46,14 @@ import kotlinx.coroutines.launch
 
 class AppContainer(app: Application) {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    val kv = Kv(SqliteKv(app), scope)
+    val background = Background()
+    val kv = Kv(SqliteKv(app), scope, background.writer, background::calm)
     val prefs = Prefs(kv)
     val folders = FolderStore(kv)
     val meta = MetaStore(kv)
     val hidden = HiddenStore(kv)
     val progress = ProgressStore(kv)
     val durations = DurationStore(kv)
-    val background = Background()
     val screen = ScreenWatch(app)
     val coverBytes = CoverBytes(app)
     val covers = CoverLoader(app, coverBytes, background)
@@ -82,7 +82,7 @@ class AppContainer(app: Application) {
         app, scope, output, offload, background, screen,
         { prefs.skipBack.value * 1000L },
         { prefs.skipForward.value * 1000L },
-        { periodic -> if (!periodic || screen.on.value) session.remember(periodic = periodic) },
+        { periodic -> session.remember(periodic = periodic) },
     )
     init {
         session = PlayerSession(
@@ -93,24 +93,21 @@ class AppContainer(app: Application) {
     val sound: SoundModel = SoundModel(scope, session.track, eqStore, fxStore, soundPrefs, library)
 
     init {
-        // Dark screen: save once, then keep every change in memory. Screen on: write what piled up and redraw.
+        // Screen off: one safe save. Screen on: redraw the player from the current state.
         scope.launch {
             screen.on.collect { on ->
                 if (on) {
-                    kv.setDeferred(false)
-                    session.remember()
                     engine.publish()
                     session.onScreen(true)
                 } else {
                     session.remember()
                     kv.flushNow()
-                    kv.setDeferred(true)
                 }
             }
         }
         offload.setAllowed(prefs.offload.value)
         scope.launch { prefs.offload.collect { offload.setAllowed(it) } }
-        SoundMix(scope, session.track, eqStore, fxStore, prefs.gain, output, engine::setSkipSilence).start()
+        SoundMix(scope, session.track, eqStore, fxStore, output, engine::setSkipSilence).start()
     }
 }
 

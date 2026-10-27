@@ -22,6 +22,14 @@ class Background(private val clock: () -> Long = { SystemClock.elapsedRealtime()
         }, "audioshelf-background").apply { isDaemon = true }
     }.asCoroutineDispatcher()
 
+    /** The database writer: its own low-priority thread, so a slow cover never delays a save and a save never runs on the UI thread. */
+    val writer: CoroutineDispatcher = Executors.newSingleThreadExecutor { task ->
+        Thread({
+            Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND - 1)
+            task.run()
+        }, "audioshelf-db").apply { isDaemon = true }
+    }.asCoroutineDispatcher()
+
     @Volatile private var until = 0L
 
     /** Keeps background work waiting for at least [ms] from now. */

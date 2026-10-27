@@ -15,6 +15,7 @@ import com.audioshelf.app.data.SortMode
 import com.audioshelf.app.player.Kind
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -56,6 +58,7 @@ class LibraryController(
         combine(prefs.libKind, prefs.libSort, prefs.libView, queryFlow, prefs.libProgress) { k, s, v, q, p -> Shown(k, s, v, q, p) },
         combine(meta.version, progress.version) { a, b -> a + b },
     ) { core, shown, _ -> build(core, shown) }
+        .flowOn(Dispatchers.Default)
         .stateIn(scope, SharingStarted.WhileSubscribed(UI_IDLE_MS), snapshot())
 
     val files: StateFlow<List<LibFile>> get() = repo.files

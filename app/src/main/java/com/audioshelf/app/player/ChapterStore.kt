@@ -6,7 +6,8 @@ import com.audioshelf.app.data.asList
 import com.audioshelf.app.data.asMap
 import com.audioshelf.app.library.LibFile
 
-private const val STORE = "audioshelf.chapters"
+// v2: titles cached before the windows-1251 fix were garbled, so they are read again.
+private const val STORE = "audioshelf.chapters.v2"
 
 class ChapterRec(val title: String, val start: Long, val end: Long)
 

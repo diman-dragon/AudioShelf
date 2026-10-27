@@ -18,6 +18,7 @@ import com.audioshelf.app.library.ProgressStore
 import com.audioshelf.app.library.QueueStore
 import com.audioshelf.app.stats.StatsRecorder
 import com.audioshelf.app.stats.StatsStore
+import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +30,7 @@ import kotlinx.coroutines.launch
 private const val END_GAP_MS = 3000L
 private const val SLEEP_GRACE_MS = 1500L
 private const val OPEN_HOLD_MS = 5000L
+private const val POSITION_STEP_MS = 200L
 
 class PlayerSession(
     private val scope: CoroutineScope,
@@ -56,6 +58,7 @@ class PlayerSession(
     private var sleepChoice = SleepChoice.Off
     private var sleepArmedAt = 0L
     private var wasEnded = false
+    private var shown: PlayState? = null
 
     val ui: StateFlow<PlayerUi> = uiFlow.asStateFlow()
     val track: StateFlow<PlayBook?> = trackFlow.asStateFlow()
@@ -89,7 +92,10 @@ class PlayerSession(
         }
         wasEnded = s.ended
         syncSleep(s)
-        publish()
+        // Fader, sleep timer and listeners all poke the engine; redraw only for a real change or a
+        // position step, not for every poke.
+        val last = shown
+        if (last == null || s.copy(positionMs = last.positionMs) != last || abs(s.positionMs - last.positionMs) >= POSITION_STEP_MS) publish()
     }
 
     private fun advance(t: PlayBook) {
@@ -118,6 +124,7 @@ class PlayerSession(
 
     private fun publish() {
         if (!screen.on.value) return
+        shown = engine.state.value
         val t = trackFlow.value
         if (t == null) {
             uiFlow.value = PlayerUi()

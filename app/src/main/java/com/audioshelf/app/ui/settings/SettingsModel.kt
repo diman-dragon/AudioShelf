@@ -13,7 +13,6 @@ data class SettingsUi(
     val hidden: Int = 0,
     val skipBack: Int = 15,
     val skipForward: Int = 30,
-    val gain: Int = 0,
     val offload: Boolean = false,
     val autoNext: Boolean = false,
     val theme: String = "dark",
@@ -27,7 +26,6 @@ interface SettingsActions {
     fun onRestoreHidden()
     fun onSkipBack(seconds: Int)
     fun onSkipForward(seconds: Int)
-    fun onGain(db: Int)
     fun onOffload(on: Boolean)
     fun onAutoNext(on: Boolean)
     fun onOpenStats()
@@ -43,7 +41,6 @@ interface SettingsActions {
             override fun onRestoreHidden() {}
             override fun onSkipBack(seconds: Int) {}
             override fun onSkipForward(seconds: Int) {}
-            override fun onGain(db: Int) {}
             override fun onOffload(on: Boolean) {}
             override fun onAutoNext(on: Boolean) {}
             override fun onOpenStats() {}

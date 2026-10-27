@@ -1,15 +1,21 @@
 # Changelog
 
-## 1.3.2
+## 1.3.3
 Playback stutter, cold start and covers.
 - The sound profile (speech or music audio attributes) and speed are set before the first item is loaded. Changing them after the start rebuilt the audio track and caused a hiccup at every start.
 - Covers never block or compete with playback. The notification cover is a small pointer resolved later by a custom bitmap loader instead of image bytes inside every playlist item. Cover extraction and duration probing run on one low-priority thread and wait while playback starts, seeks or re-buffers.
 - Resuming from the notification or a headset button builds the items on the player thread in a few lookups (no cover work, no cross-thread reads of the storage maps).
 - The 10-second position autosave no longer rebuilds the whole library list on the main thread; the list refreshes on pause, seek, chapter change and when the app goes to the background.
-- Dark screen: nothing is written to the database and nothing is redrawn. Changes stay in memory, the position is saved and flushed once when the screen goes off, and everything that piled up is written when it comes on. The playback tick slows down and duration probing waits for the screen. The library and Sound lists are computed only while their screen is shown, so switching to the library pulls fresh data.
+- Position is saved every 5 seconds (the resume rewind), screen on or off, so a kill never loses more than the rewind covers. Saves go through one low-priority database thread that waits while playback starts, seeks or re-buffers; nothing is written on the UI thread.
+- Dark screen: the player is not redrawn, the playback tick slows to 4 s (listening stats still count), duration probing waits for the screen, and one safe save is made when it goes off.
+- The library list is built off the main thread and only while the library or settings screen is shown, so switching to the library pulls fresh data. Stores are thread-safe for that.
+- The player state is rebuilt only for a real change or a 200 ms position step, and the bookmark count is cached instead of parsed on every tick.
+- Language in Settings is a tap-to-cycle button like the other settings.
+- History and queue use the library rows (cover, title, author, progress).
+- Garbled text in the notification: ID3 chapter titles in windows-1251 are decoded correctly (cached titles are read again), and the notification shows only the metadata the app set, not the raw file tags.
 - Larger read-ahead (30-60 s) and a roomier audio track buffer (0.6-1.5 s).
 - Removed noise reduction and pitch everywhere (code, settings, strings, premium plan).
-- Volume boost is a tap-to-cycle setting next to skip back and forward shown as a speaker with brackets (none, 1 to 4). An old global boost is carried over; per-book boost is gone.
+- Volume boost stays on the Sound screen (per book or global), as before; only noise reduction and pitch are gone.
 
 ## 1.2.4
 Fix: switching the language crashed the app (the localized context hid the activity from back handling and the folder picker).

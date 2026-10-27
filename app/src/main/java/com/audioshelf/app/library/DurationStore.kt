@@ -8,6 +8,7 @@ private const val SEP = '\u0001'
 class DurationStore(private val kv: Kv) {
     private var byBook: HashMap<String, MutableMap<Int, Long>>? = null
 
+    @Synchronized
     private fun load(): HashMap<String, MutableMap<Int, Long>> {
         byBook?.let { return it }
         val loaded = HashMap<String, MutableMap<Int, Long>>()
@@ -21,8 +22,10 @@ class DurationStore(private val kv: Kv) {
         return loaded
     }
 
+    @Synchronized
     fun get(id: String): Map<Int, Long> = load()[id] ?: emptyMap()
 
+    @Synchronized
     fun note(id: String, index: Int, ms: Long) {
         val book = load().getOrPut(id) { HashMap() }
         if (book[index] == ms) return
@@ -30,11 +33,13 @@ class DurationStore(private val kv: Kv) {
         kv.put(STORE, "$id$SEP$index", ms.toString())
     }
 
+    @Synchronized
     fun forget(id: String) {
         get(id).keys.forEach { kv.del(STORE, "$id$SEP$it") }
         load().remove(id)
     }
 
+    @Synchronized
     fun move(from: String, to: String) {
         if (from == to) return
         val known = HashMap(get(from))

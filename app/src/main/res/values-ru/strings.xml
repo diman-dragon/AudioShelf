@@ -127,11 +127,9 @@
     <string name="settings_scanning">Сканирование… найдено: %1$d</string>
     <string name="settings_skip_back">Перемотка назад</string>
     <string name="settings_skip_forward">Перемотка вперёд</string>
-    <string name="settings_gain">Усиление громкости</string>
     <string name="settings_energy">Энергосбережение</string>
     <string name="settings_dark">Тёмная тема</string>
     <string name="unit_sec">%d с</string>
-    <string name="unit_db">+%d дБ</string>
     <string name="settings_theme">Тема</string>
     <string name="settings_language">Язык</string>
     <string name="settings_version">Версия %1$s</string>
@@ -192,6 +190,7 @@
     <string name="filter_done">Прочитано</string>
     <string name="filter_new">Новые</string>
     <string name="filter_started">Начатые</string>
+    <string name="fx_gain">Усиление громкости, дБ</string>
     <string name="fx_off">Выкл</string>
     <string name="fx_skip_silence">Пропуск тишины</string>
     <string name="fx_skip_silence_hint">Сокращает долгие паузы между словами</string>

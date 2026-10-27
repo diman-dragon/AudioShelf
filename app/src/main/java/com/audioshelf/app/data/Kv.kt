@@ -10,17 +10,16 @@ import kotlinx.coroutines.withContext
 
 private const val FLUSH_MS = 250L
 private const val RETRY_MS = 1000L
-private const val MAX_PILED = 512
 
 class Kv(
     private val backend: KvBackend,
     private val scope: CoroutineScope,
     private val io: CoroutineDispatcher = Dispatchers.IO,
+    private val before: suspend () -> Unit = {},
 ) {
     private val buckets = HashMap<String, MutableMap<String, String>>()
     private val pending = ArrayList<KvOp>()
     private var timer: Job? = null
-    @Volatile private var deferred = false
 
     init {
         backend.loadAll().forEach { bucket(it.store)[it.key] = it.value }
@@ -70,35 +69,19 @@ class Kv(
 
     private fun requeue(ops: List<KvOp>) = synchronized(pending) { pending.addAll(0, ops) }
 
-    /**
-     * While deferred (screen off) changes stay in memory and nothing touches the database;
-     * [flushNow] still writes everything, and leaving the deferred state writes what piled up.
-     */
-    fun setDeferred(on: Boolean) {
-        if (deferred == on) return
-        deferred = on
-        if (!on && synchronized(pending) { pending.isNotEmpty() }) kick()
-    }
-
     private fun queue(op: KvOp) {
-        synchronized(pending) {
-            pending.add(op)
-            if (deferred && pending.size > MAX_PILED) {
-                val merged = coalesce(pending)
-                pending.clear()
-                pending.addAll(merged)
-            }
-        }
-        if (!deferred) kick()
+        synchronized(pending) { pending.add(op) }
+        kick()
     }
 
     private fun kick() {
         if (timer?.isActive == true) return
         timer = scope.launch {
             delay(FLUSH_MS)
-            while (!deferred) {
+            while (true) {
                 val ops = take()
                 if (ops.isEmpty()) break
+                before()
                 val ok = withContext(io) { runCatching { backend.write(ops) }.isSuccess }
                 if (!ok) {
                     requeue(ops)

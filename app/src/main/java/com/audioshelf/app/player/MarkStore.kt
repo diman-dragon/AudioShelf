@@ -18,8 +18,12 @@ class MarkStore(private val kv: Kv) {
 
     val version: StateFlow<Int> = counter.asStateFlow()
 
-    fun list(id: String): List<Mark> =
+    // The player asks for the bookmark count on every state change; parse once per change.
+    private val cache = HashMap<String, List<Mark>>()
+
+    fun list(id: String): List<Mark> = cache.getOrPut(id) {
         Json.parse(kv.get(STORE, id)).asList()?.mapNotNull { row(it.asMap()) } ?: emptyList()
+    }
 
     fun count(id: String): Int = list(id).size
 
@@ -46,12 +50,15 @@ class MarkStore(private val kv: Kv) {
     fun move(from: String, to: String) {
         if (from == to) return
         val value = kv.get(STORE, from) ?: return
+        cache.remove(from)
+        cache.remove(to)
         kv.del(STORE, from)
         kv.put(STORE, to, value)
         counter.value++
     }
 
     fun forget(id: String) {
+        cache.remove(id)
         kv.del(STORE, id)
         counter.value++
     }
@@ -59,6 +66,7 @@ class MarkStore(private val kv: Kv) {
     private fun write(id: String, marks: List<Mark>) {
         val sorted = marks.sortedWith(compareBy<Mark>({ it.index }, { it.positionMs }))
         val rows = sorted.map { linkedMapOf("i" to it.index, "p" to it.positionMs, "t" to it.created, "x" to if (it.expanded) 1 else 0) }
+        cache.remove(id)
         kv.put(STORE, id, Json.write(rows))
         counter.value++
     }

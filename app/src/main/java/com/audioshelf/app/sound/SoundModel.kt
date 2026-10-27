@@ -68,6 +68,8 @@ class SoundModel(
         if (id != null) fxStore.setTrack(id, next) else fxStore.setGlobal(next)
     }
 
+    override fun onGain(db: Int) = writeFx(shownFx().withGain(db))
+
     override fun onSkipSilence(on: Boolean) = writeFx(shownFx().withSkipSilence(on))
 
     override fun onFxUseGlobal() {

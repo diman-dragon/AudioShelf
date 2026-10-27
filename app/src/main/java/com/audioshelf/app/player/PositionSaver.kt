@@ -4,8 +4,10 @@ import android.os.Handler
 import android.os.Looper
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import com.audioshelf.app.library.REWIND_MS
 
-private const val EVERY_MS = 10_000L
+// Resuming rewinds by REWIND_MS anyway, so a position saved this often never loses anything you would notice.
+private const val EVERY_MS = REWIND_MS
 
 /** [save] gets true for the periodic tick while playing: that one must not wake the library list. */
 class PositionSaver(private val player: Player, private val save: (periodic: Boolean) -> Unit) : Player.Listener, Runnable {
