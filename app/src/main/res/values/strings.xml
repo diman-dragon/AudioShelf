@@ -192,10 +192,8 @@
     <string name="filter_done">Finished</string>
     <string name="filter_new">New</string>
     <string name="filter_started">Started</string>
-    <string name="fx_gain">Volume boost, dB</string>
+    <string name="fx_gain">Volume boost</string>
     <string name="fx_off">Off</string>
-    <string name="fx_skip_silence">Skip silence</string>
-    <string name="fx_skip_silence_hint">Shortens long pauses between words</string>
     <string name="fx_title">Processing</string>
     <string name="history_empty">Nothing played yet</string>
     <string name="history_recent">Recently played</string>

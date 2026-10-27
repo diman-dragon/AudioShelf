@@ -10,11 +10,10 @@ import org.junit.Test
 class FxTest {
     @Test
     fun codecRoundTripsClampsAndIgnoresOldKeys() {
-        val fx = Fx(6, true)
+        val fx = Fx(6)
         assertEquals(fx, Fx.decode(Fx.encode(fx)))
         val wild = Fx.decode("{\"gain\":99,\"pitch\":-99,\"noise\":9,\"skip\":false}")!!
         assertEquals(12, wild.gainDb)
-        assertFalse(wild.skipSilence)
         assertNull(Fx.decode("nope"))
     }
 
@@ -22,7 +21,8 @@ class FxTest {
     fun neutralMeansNothingToDo() {
         assertTrue(Fx.Off.neutral)
         assertFalse(Fx.Off.withGain(3).neutral)
-        assertFalse(Fx.Off.withSkipSilence(true).neutral)
+        assertEquals(3, Fx.Off.nextGain().gainDb)
+        assertEquals(0, Fx(12).nextGain().gainDb)
     }
 
     @Test
@@ -31,8 +31,8 @@ class FxTest {
         assertEquals(Fx.Off, store.effective("a"))
         store.setGlobal(Fx.Off.withGain(6))
         assertEquals(6, store.effective("a").gainDb)
-        store.setTrack("a", Fx.Off.withSkipSilence(true))
-        assertTrue(store.effective("a").skipSilence)
+        store.setTrack("a", Fx.Off.withGain(9))
+        assertEquals(9, store.effective("a").gainDb)
         assertEquals(6, store.effective("b").gainDb)
         store.clearTrack("a")
         assertEquals(6, store.effective("a").gainDb)

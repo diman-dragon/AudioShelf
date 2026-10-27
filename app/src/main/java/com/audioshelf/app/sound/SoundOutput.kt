@@ -10,16 +10,14 @@ class SoundOutput(private val onNeutral: (Boolean) -> Unit = {}) {
 
     private var lastBands: List<Int>? = null
     private var lastBoost = Int.MIN_VALUE
-    private var lastSkip: Boolean? = null
 
     /** Applies the sound settings; repeated identical calls do nothing. */
-    fun apply(bands: List<Int>, boostDb: Int, skipSilence: Boolean) {
-        if (bands == lastBands && boostDb == lastBoost && skipSilence == lastSkip) return
+    fun apply(bands: List<Int>, boostDb: Int) {
+        if (bands == lastBands && boostDb == lastBoost) return
         lastBands = bands
         lastBoost = boostDb
-        lastSkip = skipSilence
         chain.setBands(FloatArray(BAND_COUNT) { bands.getOrElse(it) { 0 }.toFloat() })
         chain.setBoost(boostDb)
-        onNeutral(bands.all { it == 0 } && boostDb == 0 && !skipSilence)
+        onNeutral(bands.all { it == 0 } && boostDb == 0)
     }
 }

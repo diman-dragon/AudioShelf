@@ -190,10 +190,8 @@
     <string name="filter_done">Прочитано</string>
     <string name="filter_new">Новые</string>
     <string name="filter_started">Начатые</string>
-    <string name="fx_gain">Усиление громкости, дБ</string>
+    <string name="fx_gain">Усиление громкости</string>
     <string name="fx_off">Выкл</string>
-    <string name="fx_skip_silence">Пропуск тишины</string>
-    <string name="fx_skip_silence_hint">Сокращает долгие паузы между словами</string>
     <string name="fx_title">Обработка</string>
     <string name="history_empty">Пока ничего не слушали</string>
     <string name="history_recent">Недавно слушали</string>

@@ -12,14 +12,12 @@ class SoundMix(
     private val eq: EqStore,
     private val fxStore: FxStore,
     private val output: SoundOutput,
-    private val onPlayer: (skipSilence: Boolean) -> Unit = {},
 ) {
     fun start() {
         scope.launch {
             combine(track, eq.version, fxStore.version) { book, _, _ ->
                 val fx = fxStore.effective(book?.id)
-                output.apply(eq.effective(book?.id).bands, fx.gainDb, fx.skipSilence)
-                onPlayer(fx.skipSilence)
+                output.apply(eq.effective(book?.id).bands, fx.gainDb)
             }.collect { }
         }
     }

@@ -8,12 +8,17 @@ import androidx.media3.common.TrackSelectionParameters.AudioOffloadPreferences
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 
+/**
+ * Switches audio offload on and off. Every switch rebuilds the AudioTrack, so it must never happen in a burst:
+ * the flags are set at once, and the one real change is applied after they stop moving.
+ */
 class OffloadControl {
     private val main = Handler(Looper.getMainLooper())
     private var player: ExoPlayer? = null
     @Volatile private var allowed = false
     @Volatile private var neutral = true
     private var applied = false
+    private val settle = Runnable { update() }
 
     fun attach(p: ExoPlayer) {
         player = p
@@ -22,21 +27,23 @@ class OffloadControl {
     }
 
     fun detach() {
+        main.removeCallbacks(settle)
         player = null
     }
 
     fun setAllowed(allow: Boolean) {
-        main.post {
-            allowed = allow
-            update()
-        }
+        allowed = allow
+        schedule()
     }
 
     fun setNeutral(flat: Boolean) {
-        main.post {
-            neutral = flat
-            update()
-        }
+        neutral = flat
+        schedule()
+    }
+
+    private fun schedule() {
+        main.removeCallbacks(settle)
+        main.postDelayed(settle, SETTLE_MS)
     }
 
     private fun update() {
@@ -51,5 +58,9 @@ class OffloadControl {
             .setIsSpeedChangeSupportRequired(true)
             .build()
         p.trackSelectionParameters = p.trackSelectionParameters.buildUpon().setAudioOffloadPreferences(prefs).build()
+    }
+
+    private companion object {
+        const val SETTLE_MS = 600L
     }
 }

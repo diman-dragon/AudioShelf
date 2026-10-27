@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 private const val END_GAP_MS = 3000L
@@ -181,9 +182,14 @@ class PlayerSession(
         publish()
     }
 
+    private var opening: Job? = null
+    private var filling: Job? = null
+
+    /** A second tap while the first book is still being prepared replaces it, so two loads never race each other. */
     fun open(book: Book) {
         background.hold(OPEN_HOLD_MS)
-        scope.launch {
+        opening?.cancel()
+        opening = scope.launch {
             val current = trackFlow.value
             if (current != null && current.id == book.id && isLoaded(current, engine.state.value)) {
                 if (!engine.state.value.playing) engine.play()
@@ -218,7 +224,8 @@ class PlayerSession(
     }
 
     private fun fillDurations(t: PlayBook) {
-        scope.launch {
+        filling?.cancel()
+        filling = scope.launch {
             t.items.forEachIndexed { index, item ->
                 if (durations.get(t.id)[index] != null) return@forEachIndexed
                 background.calm()

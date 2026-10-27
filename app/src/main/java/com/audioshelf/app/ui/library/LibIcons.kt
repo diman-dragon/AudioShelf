@@ -26,4 +26,6 @@ object LibIcons {
     val Sort = SvgSpec(true, listOf(SPath("M7 5v14M3.5 15.5 7 19l3.5-3.5"), SPath("M17 19V5M13.5 8.5 17 5l3.5 3.5")))
 
     val History = SvgSpec(true, listOf(SCircle(12f, 12f, 8f), SPath("M12 7.5V12l3 2")))
+
+    val Close = SvgSpec(true, listOf(SPath("M6 6l12 12M18 6L6 18")))
 }

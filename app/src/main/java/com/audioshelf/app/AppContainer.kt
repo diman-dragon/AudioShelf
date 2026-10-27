@@ -107,7 +107,7 @@ class AppContainer(app: Application) {
         }
         offload.setAllowed(prefs.offload.value)
         scope.launch { prefs.offload.collect { offload.setAllowed(it) } }
-        SoundMix(scope, session.track, eqStore, fxStore, output, engine::setSkipSilence).start()
+        SoundMix(scope, session.track, eqStore, fxStore, output).start()
     }
 }
 

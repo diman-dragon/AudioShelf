@@ -45,8 +45,8 @@ fun IconBtn(
             .size(40.dp)
             .alpha(if (enabled) 1f else 0.5f)
             .clip(CircleShape)
-            .background(c.surface)
-            .border(1.dp, c.line, CircleShape)
+            .background(c.accentSoft)
+            .border(1.dp, c.accent, CircleShape)
             .tap(enabled = enabled, description = description, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {

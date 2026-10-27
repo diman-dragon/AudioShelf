@@ -27,7 +27,11 @@ import com.audioshelf.app.ui.components.Btn
 import com.audioshelf.app.ui.components.BtnKind
 import com.audioshelf.app.ui.components.ModalView
 import com.audioshelf.app.ui.components.tap
+import com.audioshelf.app.ui.player.Icons
+import com.audioshelf.app.ui.player.SvgIcon
+import com.audioshelf.app.ui.player.SvgSpec
 import com.audioshelf.app.ui.theme.AppTheme
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.Alignment
 
@@ -41,7 +45,7 @@ fun HistoryDialog(rows: List<BookRow>, queue: QueueStore, covers: CoverSource, o
     val byId = remember(rows) { rows.associateBy { it.book.id } }
     val history = remember(rows) { rows.filter { it.lastPlayed > 0 }.sortedByDescending { it.lastPlayed }.take(HISTORY_LIMIT) }
     ModalView(stringResource(R.string.history_title), onClose) {
-        AText(stringResource(R.string.queue_title), 13f, c.muted, weight = FontWeight.SemiBold)
+        Header(Icons.List, stringResource(R.string.queue_title))
         val queuedRows = queued.mapNotNull { byId[it] }
         if (queuedRows.isEmpty()) {
             AText(stringResource(R.string.queue_empty), 14f, c.muted)
@@ -63,14 +67,14 @@ fun HistoryDialog(rows: List<BookRow>, queue: QueueStore, covers: CoverSource, o
                                 },
                                 contentAlignment = Alignment.Center,
                             ) {
-                                AText("✕", 18f, c.muted)
+                                SvgIcon(LibIcons.Close, c.muted, 18.dp)
                             }
                         },
                     )
                 }
             }
         }
-        AText(stringResource(R.string.history_recent), 13f, c.muted, weight = FontWeight.SemiBold)
+        Header(LibIcons.History, stringResource(R.string.history_recent))
         if (history.isEmpty()) {
             AText(stringResource(R.string.history_empty), 14f, c.muted)
         } else {
@@ -92,5 +96,14 @@ fun HistoryDialog(rows: List<BookRow>, queue: QueueStore, covers: CoverSource, o
             }
             Btn(stringResource(R.string.marks_close), onClose, kind = BtnKind.Ghost)
         }
+    }
+}
+
+@Composable
+private fun Header(icon: SvgSpec, text: String) {
+    val c = AppTheme.colors
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        SvgIcon(icon, c.muted, 18.dp)
+        AText(text, 13f, c.muted, weight = FontWeight.SemiBold)
     }
 }

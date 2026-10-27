@@ -70,8 +70,6 @@ class SoundModel(
 
     override fun onGain(db: Int) = writeFx(shownFx().withGain(db))
 
-    override fun onSkipSilence(on: Boolean) = writeFx(shownFx().withSkipSilence(on))
-
     override fun onFxUseGlobal() {
         editingId()?.let { fxStore.clearTrack(it) }
     }

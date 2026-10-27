@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.4
+Sound screen, library buttons and playback races.
+- Volume boost stays on the Sound screen (per book or global). It is one tap-to-cycle speaker button: the brackets show the level (crossed out = off, 1-4 brackets = +3/+6/+9/+12 dB).
+- Skip silence is removed (code, setting, strings); old saved records still load.
+- Library buttons (history, refresh, sort, view) use the same pill style as the filters; queue and history headers in the dialog carry matching icons.
+- Race fixes: audio offload is switched once after the settings stop changing (it used to flip twice at start and rebuilt the audio track); a second tap on a book cancels the unfinished first open; only one duration probe runs at a time.
+
 ## 1.3.3
 Playback stutter, cold start and covers.
 - The sound profile (speech or music audio attributes) and speed are set before the first item is loaded. Changing them after the start rebuilt the audio track and caused a hiccup at every start.
@@ -16,7 +23,6 @@ Playback stutter, cold start and covers.
 - Statistics rebuilt around numbers and charts: all-time / month / week totals, streak and best streak; books finished and in progress with percent; habits (favorite time of day, average and longest session, best weekday, hours and weekday charts); calendar; period summary with top 3 books and authors. Speed statistics are gone.
 - Larger read-ahead (30-60 s) and a roomier audio track buffer (0.6-1.5 s).
 - Removed noise reduction and pitch everywhere (code, settings, strings, premium plan).
-- Volume boost stays on the Sound screen (per book or global), as before; only noise reduction and pitch are gone.
 
 ## 1.2.4
 Fix: switching the language crashed the app (the localized context hid the activity from back handling and the folder picker).

@@ -17,7 +17,6 @@ interface SoundActions {
     fun onReset()
     fun onUseGlobal()
     fun onGain(db: Int)
-    fun onSkipSilence(on: Boolean)
     fun onFxUseGlobal()
 
     companion object {
@@ -28,7 +27,6 @@ interface SoundActions {
             override fun onReset() {}
             override fun onUseGlobal() {}
             override fun onGain(db: Int) {}
-            override fun onSkipSilence(on: Boolean) {}
             override fun onFxUseGlobal() {}
         }
     }
