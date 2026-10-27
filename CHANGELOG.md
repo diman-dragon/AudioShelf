@@ -13,6 +13,7 @@ Playback stutter, cold start and covers.
 - Language in Settings is a tap-to-cycle button like the other settings.
 - History and queue use the library rows (cover, title, author, progress).
 - Garbled text in the notification: ID3 chapter titles in windows-1251 are decoded correctly (cached titles are read again), and the notification shows only the metadata the app set, not the raw file tags.
+- Statistics rebuilt around numbers and charts: all-time / month / week totals, streak and best streak; books finished and in progress with percent; habits (favorite time of day, average and longest session, best weekday, hours and weekday charts); calendar; period summary with top 3 books and authors. Speed statistics are gone.
 - Larger read-ahead (30-60 s) and a roomier audio track buffer (0.6-1.5 s).
 - Removed noise reduction and pitch everywhere (code, settings, strings, premium plan).
 - Volume boost stays on the Sound screen (per book or global), as before; only noise reduction and pitch are gone.

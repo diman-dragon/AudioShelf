@@ -30,7 +30,7 @@ class StatsTest {
         assertEquals(20_000L, day.listenedMs)
         assertEquals(30_000L, day.contentMs)
         assertEquals(1, day.sessions)
-        assertEquals(20_000L, day.speeds[150])
+        assertEquals(20_000L, day.longestSessionMs)
         assertEquals(20_000L, day.hours.sum())
         assertEquals(20_000L, store.book("a")!!.listenedMs)
     }

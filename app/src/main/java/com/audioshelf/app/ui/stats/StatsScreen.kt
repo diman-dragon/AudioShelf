@@ -34,6 +34,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.audioshelf.app.R
+import com.audioshelf.app.library.BookRow
+import com.audioshelf.app.library.ProgressState
 import com.audioshelf.app.stats.BarPoint
 import com.audioshelf.app.stats.StatsRange
 import com.audioshelf.app.stats.StatsReport
@@ -44,11 +46,12 @@ import com.audioshelf.app.ui.components.Segmented
 import com.audioshelf.app.ui.components.tap
 import com.audioshelf.app.ui.theme.AppTheme
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
 @Composable
-fun StatsScreen(store: StatsStore, titleOf: (String) -> String, onClose: () -> Unit) {
+fun StatsScreen(store: StatsStore, rows: List<BookRow>, titleOf: (String) -> String, onClose: () -> Unit) {
     val c = AppTheme.colors
     val version by store.version.collectAsState()
     var range by remember { mutableStateOf(StatsRange.Week) }
@@ -67,26 +70,26 @@ fun StatsScreen(store: StatsStore, titleOf: (String) -> String, onClose: () -> U
             Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            Segmented(
-                listOf(
-                    SegItem(StatsRange.Week.id, stringResource(R.string.stats_week)),
-                    SegItem(StatsRange.Month.id, stringResource(R.string.stats_month)),
-                    SegItem(StatsRange.Year.id, stringResource(R.string.stats_year)),
-                    SegItem(StatsRange.All.id, stringResource(R.string.stats_all)),
-                ),
-                range.id,
-                { range = StatsRange.of(it) },
-                fill = true,
-            )
             if (report.empty) {
                 AText(stringResource(R.string.stats_empty), 15f, c.muted, Modifier.fillMaxWidth().padding(top = 24.dp), align = TextAlign.Center)
             } else {
-                Summary(report)
+                Core(report)
+                Books(rows)
+                Segmented(
+                    listOf(
+                        SegItem(StatsRange.Week.id, stringResource(R.string.stats_week)),
+                        SegItem(StatsRange.Month.id, stringResource(R.string.stats_month)),
+                        SegItem(StatsRange.Year.id, stringResource(R.string.stats_year)),
+                        SegItem(StatsRange.All.id, stringResource(R.string.stats_all)),
+                    ),
+                    range.id,
+                    { range = StatsRange.of(it) },
+                    fill = true,
+                )
                 Section(stringResource(R.string.stats_by_time)) { BarChart(report) }
+                Section(stringResource(R.string.stats_habits)) { Habits(report) }
                 Section(stringResource(R.string.stats_calendar)) { Heatmap(report) }
-                Section(stringResource(R.string.stats_hours)) { Hours(report.hours) }
-                if (report.speeds.isNotEmpty()) Section(stringResource(R.string.stats_speeds)) { Speeds(report) }
-                if (report.top.isNotEmpty()) Section(stringResource(R.string.stats_top)) { Top(report, titleOf) }
+                Section(stringResource(R.string.stats_wrapped)) { Wrapped(report, rows, titleOf) }
             }
         }
     }
@@ -95,7 +98,7 @@ fun StatsScreen(store: StatsStore, titleOf: (String) -> String, onClose: () -> U
 @Composable
 private fun Section(title: String, content: @Composable () -> Unit) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        AText(title, 15f, AppTheme.colors.text, weight = FontWeight.Bold)
+        AText(title, 17f, AppTheme.colors.text, weight = FontWeight.Bold)
         content()
     }
 }
@@ -108,31 +111,61 @@ fun duration(ms: Long): String {
     return if (h > 0) stringResource(R.string.stats_hm, h, m) else stringResource(R.string.stats_m, m)
 }
 
+/** The numbers worth showing off: totals and the streak. Always for all time / month / week, whatever range is picked below. */
 @Composable
-private fun Summary(r: StatsReport) {
+private fun Core(r: StatsReport) {
+    val c = AppTheme.colors
+    val shape = RoundedCornerShape(14.dp)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(
+            Modifier.fillMaxWidth().clip(shape).background(c.surface).border(1.dp, c.line, shape).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            AText(stringResource(R.string.stats_all_time), 13f, c.muted)
+            AText(duration(r.allTimeMs), 30f, c.text, weight = FontWeight.Bold, maxLines = 1, tabular = true)
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Card(stringResource(R.string.stats_listened), duration(r.listenedMs), Modifier.weight(1f))
-            Card(stringResource(R.string.stats_avg_day), duration(r.avgPerDayMs), Modifier.weight(1f))
+            Card(stringResource(R.string.stats_core_month), duration(r.monthMs), Modifier.weight(1f))
+            Card(stringResource(R.string.stats_core_week), duration(r.weekMs), Modifier.weight(1f))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Card(stringResource(R.string.stats_streak), stringResource(R.string.stats_days, r.streak), Modifier.weight(1f))
             Card(stringResource(R.string.stats_best_streak), stringResource(R.string.stats_days, r.bestStreak), Modifier.weight(1f))
         }
+    }
+}
+
+/** Finished books and the ones in progress with their percent. */
+@Composable
+private fun Books(rows: List<BookRow>) {
+    val c = AppTheme.colors
+    val done = rows.count { it.state == ProgressState.Done }
+    val going = rows.filter { it.state == ProgressState.Started }.sortedByDescending { it.lastPlayed }
+    Section(stringResource(R.string.stats_books)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Card(stringResource(R.string.stats_finished), r.finishedBooks.toString(), Modifier.weight(1f))
-            Card(stringResource(R.string.stats_started), r.startedBooks.toString(), Modifier.weight(1f))
+            Card(stringResource(R.string.stats_done), done.toString(), Modifier.weight(1f))
+            Card(stringResource(R.string.stats_progress), going.size.toString(), Modifier.weight(1f))
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Card(stringResource(R.string.stats_sessions), r.sessions.toString(), Modifier.weight(1f))
-            Card(stringResource(R.string.stats_avg_active), duration(r.avgActiveMs), Modifier.weight(1f))
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Card(stringResource(R.string.stats_saved), duration(r.savedMs), Modifier.weight(1f))
-            Card(stringResource(R.string.stats_all_time), duration(r.allTimeMs), Modifier.weight(1f))
+        if (going.isEmpty()) {
+            AText(stringResource(R.string.stats_progress_none), 14f, c.muted)
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                going.take(PROGRESS_ROWS).forEach { row ->
+                    val pc = row.percent ?: 0
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            AText(row.title, 14f, c.text, Modifier.weight(1f), maxLines = 1)
+                            AText("$pc%", 13f, c.muted, tabular = true)
+                        }
+                        Bar(pc / 100f)
+                    }
+                }
+            }
         }
     }
 }
+
+private const val PROGRESS_ROWS = 6
 
 @Composable
 private fun Card(label: String, value: String, modifier: Modifier = Modifier) {
@@ -163,7 +196,10 @@ private fun BarChart(r: StatsReport) {
     val max = (r.bars.maxOfOrNull { it.ms } ?: 0L).coerceAtLeast(1L)
     val weekly = r.range == StatsRange.Week
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        AText(duration(max), 12f, c.muted)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            AText(duration(r.listenedMs), 15f, c.text, weight = FontWeight.SemiBold)
+            AText(stringResource(R.string.stats_avg_day) + ": " + duration(r.avgPerDayMs), 12f, c.muted)
+        }
         Canvas(Modifier.fillMaxWidth().height(130.dp)) {
             val n = r.bars.size.coerceAtLeast(1)
             val slot = size.width / n
@@ -189,6 +225,85 @@ private fun BarChart(r: StatsReport) {
                 AText(SimpleDateFormat("d MMM", locale).format(Date(r.bars.first().start)), 11f, c.muted)
                 AText(SimpleDateFormat("d MMM", locale).format(Date(r.bars.last().start)), 11f, c.muted)
             }
+        }
+    }
+}
+
+private enum class DayPart(val label: Int, val hours: IntRange) {
+    Morning(R.string.stats_part_morning, 5..10),
+    Day(R.string.stats_part_day, 11..16),
+    Evening(R.string.stats_part_evening, 17..22),
+    Night(R.string.stats_part_night, 0..0),
+}
+
+private fun partOf(hour: Int): DayPart = when (hour) {
+    in 5..10 -> DayPart.Morning
+    in 11..16 -> DayPart.Day
+    in 17..22 -> DayPart.Evening
+    else -> DayPart.Night
+}
+
+/** When you listen, how long a sitting lasts, and which weekday is yours. */
+@Composable
+private fun Habits(r: StatsReport) {
+    val c = AppTheme.colors
+    val locale = LocalConfiguration.current.locales[0]
+    val byPart = DayPart.entries.associateWith { part -> (0 until 24).filter { partOf(it) == part }.sumOf { r.hours[it] } }
+    val total = byPart.values.sum().coerceAtLeast(1L)
+    val favorite = byPart.maxByOrNull { it.value }
+    val bestDay = r.weekdays.indices.maxByOrNull { r.weekdays[it] }?.takeIf { r.weekdays[it] > 0 }
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Card(
+                stringResource(R.string.stats_fav_time),
+                if (favorite != null && favorite.value > 0) "${stringResource(favorite.key.label)} · ${100 * favorite.value / total}%" else "—",
+                Modifier.weight(1f),
+            )
+            Card(
+                stringResource(R.string.stats_best_weekday),
+                bestDay?.let { weekdayName(it, locale, long = true) } ?: "—",
+                Modifier.weight(1f),
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Card(stringResource(R.string.stats_avg_session), duration(r.avgSessionMs), Modifier.weight(1f))
+            Card(stringResource(R.string.stats_longest_session), duration(r.longestSessionMs), Modifier.weight(1f))
+        }
+        AText(stringResource(R.string.stats_hours), 13f, c.muted, weight = FontWeight.SemiBold)
+        Hours(r.hours)
+        AText(stringResource(R.string.stats_weekdays), 13f, c.muted, weight = FontWeight.SemiBold)
+        Weekdays(r.weekdays, locale)
+    }
+}
+
+private fun weekdayName(index: Int, locale: Locale, long: Boolean): String {
+    val c = Calendar.getInstance()
+    val days = intArrayOf(Calendar.MONDAY, Calendar.TUESDAY, Calendar.WEDNESDAY, Calendar.THURSDAY, Calendar.FRIDAY, Calendar.SATURDAY, Calendar.SUNDAY)
+    c.set(Calendar.DAY_OF_WEEK, days[index])
+    return SimpleDateFormat(if (long) "EEEE" else "EE", locale).format(c.time).replaceFirstChar { it.uppercase() }
+}
+
+@Composable
+private fun Weekdays(values: LongArray, locale: Locale) {
+    val c = AppTheme.colors
+    val max = (values.maxOrNull() ?: 0L).coerceAtLeast(1L)
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Canvas(Modifier.fillMaxWidth().height(80.dp)) {
+            val slot = size.width / 7f
+            val bar = slot * 0.6f
+            for (d in 0 until 7) {
+                val v = values[d]
+                val height = if (v <= 0) 2f else (size.height * v / max).coerceAtLeast(3f)
+                drawRoundRect(
+                    color = if (v > 0) c.accent else c.line,
+                    topLeft = Offset(d * slot + (slot - bar) / 2f, size.height - height),
+                    size = Size(bar, height),
+                    cornerRadius = CornerRadius(3f, 3f),
+                )
+            }
+        }
+        Row(Modifier.fillMaxWidth()) {
+            for (d in 0 until 7) AText(weekdayName(d, locale, long = false), 11f, c.muted, Modifier.weight(1f), align = TextAlign.Center, maxLines = 1)
         }
     }
 }
@@ -250,35 +365,51 @@ private fun Bar(fraction: Float) {
     }
 }
 
+/** The period summary: time, best weekday, top three books and authors. */
 @Composable
-private fun Speeds(r: StatsReport) {
+private fun Wrapped(r: StatsReport, rows: List<BookRow>, titleOf: (String) -> String) {
     val c = AppTheme.colors
-    val total = r.speeds.sumOf { it.ms }.coerceAtLeast(1L)
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        r.speeds.forEach { s ->
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AText(String.format(Locale.ROOT, "%.2f×", s.speedKey / 100f), 14f, c.text, Modifier.weight(1f), tabular = true)
-                    AText("${(100 * s.ms / total)}% · ${duration(s.ms)}", 13f, c.muted, tabular = true)
-                }
-                Bar(s.ms.toFloat() / total)
-            }
+    val locale = LocalConfiguration.current.locales[0]
+    val authors = HashMap<String, Long>()
+    for ((id, ms) in r.perBook) {
+        val author = rows.firstOrNull { it.book.id == id }?.author.orEmpty()
+        if (author.isNotEmpty()) authors[author] = (authors[author] ?: 0L) + ms
+    }
+    val topAuthors = authors.entries.sortedByDescending { it.value }.take(3)
+    val bestDay = r.weekdays.indices.maxByOrNull { r.weekdays[it] }?.takeIf { r.weekdays[it] > 0 }
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Card(stringResource(R.string.stats_total_time), duration(r.listenedMs), Modifier.weight(1f))
+            Card(
+                stringResource(R.string.stats_best_weekday),
+                bestDay?.let { weekdayName(it, locale, long = true) } ?: "—",
+                Modifier.weight(1f),
+            )
+        }
+        if (r.top.isNotEmpty()) {
+            AText(stringResource(R.string.stats_top), 13f, c.muted, weight = FontWeight.SemiBold)
+            Ranking(r.top.take(3).map { titleOf(it.id) to it.ms })
+        }
+        if (topAuthors.isNotEmpty()) {
+            AText(stringResource(R.string.stats_top_authors), 13f, c.muted, weight = FontWeight.SemiBold)
+            Ranking(topAuthors.map { it.key to it.value })
         }
     }
 }
 
 @Composable
-private fun Top(r: StatsReport, titleOf: (String) -> String) {
+private fun Ranking(items: List<Pair<String, Long>>) {
     val c = AppTheme.colors
-    val max = (r.top.firstOrNull()?.ms ?: 1L).coerceAtLeast(1L)
+    val max = (items.firstOrNull()?.second ?: 1L).coerceAtLeast(1L)
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        r.top.forEach { b ->
+        items.forEachIndexed { i, (name, ms) ->
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AText(titleOf(b.id), 14f, c.text, Modifier.weight(1f), maxLines = 1)
-                    AText(duration(b.ms), 13f, c.muted, tabular = true)
+                    AText("${i + 1}", 14f, c.accent, weight = FontWeight.Bold, tabular = true)
+                    AText(name, 14f, c.text, Modifier.weight(1f), maxLines = 1)
+                    AText(duration(ms), 13f, c.muted, tabular = true)
                 }
-                Bar(b.ms.toFloat() / max)
+                Bar(ms.toFloat() / max)
             }
         }
     }

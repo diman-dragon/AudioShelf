@@ -22,12 +22,9 @@ class HeatCell(val start: Long, val ms: Long)
 
 class TopBook(val id: String, val ms: Long)
 
-class SpeedShare(val speedKey: Int, val ms: Long)
-
 class StatsReport(
     val range: StatsRange,
     val listenedMs: Long,
-    val contentMs: Long,
     val sessions: Int,
     val activeDays: Int,
     val periodDays: Int,
@@ -38,16 +35,18 @@ class StatsReport(
     val bars: List<BarPoint>,
     val monthly: Boolean,
     val hours: LongArray,
-    val speeds: List<SpeedShare>,
     val top: List<TopBook>,
     val heat: List<HeatCell>,
     val allTimeMs: Long,
+    val weekMs: Long,
+    val monthMs: Long,
+    val weekdays: LongArray,
+    val longestSessionMs: Long,
+    val perBook: Map<String, Long>,
 ) {
-    val savedMs: Long get() = (contentMs - listenedMs).coerceAtLeast(0)
+    val avgSessionMs: Long get() = if (sessions > 0) listenedMs / sessions else 0
 
     val avgPerDayMs: Long get() = if (periodDays > 0) listenedMs / periodDays else 0
-
-    val avgActiveMs: Long get() = if (activeDays > 0) listenedMs / activeDays else 0
 
     val empty: Boolean get() = allTimeMs <= 0L
 
@@ -71,19 +70,24 @@ class StatsReport(
             fun inRange(key: String) = key >= fromKey && key <= todayKey
 
             var listened = 0L
-            var content = 0L
             var sessions = 0
             var active = 0
             val hours = LongArray(24)
-            val speedMap = HashMap<Int, Long>()
+            val weekdays = LongArray(7)
+            var longest = 0L
             for ((key, d) in days) {
                 if (!inRange(key)) continue
                 listened += d.listenedMs
-                content += d.contentMs
                 sessions += d.sessions
                 if (d.listenedMs >= ACTIVE_DAY_MS) active++
                 for (h in 0 until 24) hours[h] += d.hours[h]
-                for ((s, ms) in d.speeds) speedMap[s] = (speedMap[s] ?: 0L) + ms
+                if (d.longestSessionMs > longest) longest = d.longestSessionMs
+                val at = parseDayKey(key, tz)
+                if (at != null) {
+                    val c = Calendar.getInstance(tz)
+                    c.timeInMillis = at
+                    weekdays[(c.get(Calendar.DAY_OF_WEEK) + 5) % 7] += d.listenedMs
+                }
             }
             val spanDays = daysBetween(from, today, tz) + 1
 
@@ -92,6 +96,7 @@ class StatsReport(
                 if (!inRange(key)) continue
                 for ((id, ms) in per) topMap[id] = (topMap[id] ?: 0L) + ms
             }
+            val perBook = HashMap(topMap)
             val top = topMap.entries.sortedByDescending { it.value }.take(TOP_COUNT).map { TopBook(it.key, it.value) }
 
             var finished = 0
@@ -105,11 +110,16 @@ class StatsReport(
             val bars = if (monthly) monthBars(days, from, today, range, tz) else dayBars(days, from, today, tz)
             val (streak, best) = streaks(days, today, todayKey, tz)
 
+            fun lastDays(n: Int): Long {
+                val a = dayKey(addDays(today, -(n - 1), tz), tz)
+                return days.filter { it.key >= a && it.key <= todayKey }.values.sumOf { it.listenedMs }
+            }
+
             return StatsReport(
-                range, listened, content, sessions, active, spanDays.toInt(), finished, started, streak, best,
+                range, listened, sessions, active, spanDays.toInt(), finished, started, streak, best,
                 bars, monthly, hours,
-                speedMap.entries.filter { it.value > 0 }.sortedBy { it.key }.map { SpeedShare(it.key, it.value) },
                 top, heat(days, today, tz), days.values.sumOf { it.listenedMs },
+                lastDays(7), lastDays(30), weekdays, longest, perBook,
             )
         }
 

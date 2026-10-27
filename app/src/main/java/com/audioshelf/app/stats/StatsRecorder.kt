@@ -23,6 +23,7 @@ class StatsRecorder(
     private var pendingSpeed = 100
     private var pendingAt = 0L
     private var sessionOpen = false
+    private var sessionMs = 0L
 
     /** Feed with every player state change; [bookId] is null when nothing of ours is loaded. */
     fun onState(bookId: String?, isPlaying: Boolean, positionMs: Long, speed: Float, now: Long) {
@@ -46,6 +47,7 @@ class StatsRecorder(
             if (!sessionOpen || now - lastEnd > SESSION_GAP_MS) {
                 pendingSession = true
                 sessionOpen = true
+                sessionMs = 0L
             }
         }
         if (playing && !active) {
@@ -69,7 +71,7 @@ class StatsRecorder(
         val cal = Calendar.getInstance(zone)
         cal.timeInMillis = at
         store.add(
-            Slice(id, dayKey(at, zone), cal.get(Calendar.HOUR_OF_DAY), pendingSpeed, pendingListened, pendingContent, pendingSession, now),
+            Slice(id, dayKey(at, zone), cal.get(Calendar.HOUR_OF_DAY), pendingSpeed, pendingListened, pendingContent, pendingSession, now, sessionMs),
         )
         pendingListened = 0
         pendingContent = 0
@@ -89,6 +91,7 @@ class StatsRecorder(
             pendingSpeed = key
         }
         pendingListened += listened
+        sessionMs += listened
         pendingContent += content
         if (pendingListened >= FLUSH_MS) flush(now)
     }

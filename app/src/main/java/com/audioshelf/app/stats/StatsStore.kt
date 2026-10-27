@@ -20,6 +20,7 @@ class DayStat(
     val sessions: Int,
     val hours: LongArray,
     val speeds: Map<Int, Long>,
+    val longestSessionMs: Long = 0L,
 )
 
 class BookStat(val listenedMs: Long, val contentMs: Long, val sessions: Int, val first: Long, val last: Long, val finished: Long)
@@ -33,6 +34,7 @@ class Slice(
     val contentMs: Long,
     val newSession: Boolean,
     val now: Long,
+    val sessionMs: Long = 0L,
 )
 
 fun dayKey(ms: Long, tz: TimeZone = TimeZone.getDefault()): String {
@@ -70,7 +72,7 @@ class StatsStore(private val kv: Kv) {
         next.bump("c", slice.contentMs)
         if (slice.newSession) next.bump("n", 1)
         next.bump("h" + slice.hour, slice.listenedMs)
-        next.bump("v" + slice.speedKey, slice.listenedMs)
+        if (slice.sessionMs > ((next["m"] as? Number)?.toLong() ?: 0L)) next["m"] = slice.sessionMs
         kv.put(DAYS, slice.dayKey, FlatJson.write(next))
 
         val book = FlatJson.parse(kv.get(BOOKS, slice.bookId)) ?: emptyMap()
@@ -110,7 +112,7 @@ class StatsStore(private val kv: Kv) {
                     speeds[speed] = (v as? Number)?.toLong() ?: continue
                 }
             }
-            out[key] = DayStat(m.long("l") ?: 0L, m.long("c") ?: 0L, (m.long("n") ?: 0L).toInt(), hours, speeds)
+            out[key] = DayStat(m.long("l") ?: 0L, m.long("c") ?: 0L, (m.long("n") ?: 0L).toInt(), hours, speeds, m.long("m") ?: 0L)
         }
         return out
     }

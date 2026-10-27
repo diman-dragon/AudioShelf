@@ -179,7 +179,7 @@ fun AudioShelfApp(container: AppContainer, player: PlayerViewModel) {
 
                         override fun onOpenStats() {
                             overlays.show {
-                                StatsScreen(container.stats, { id -> titleOfBook(container, id) }) { overlays.close() }
+                                StatsScreen(container.stats, container.library.allRows(), { id -> titleOfBook(container, id) }) { overlays.close() }
                             }
                         }
 
