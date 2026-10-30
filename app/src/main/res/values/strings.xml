@@ -259,4 +259,17 @@
     <string name="filter_any">Any status</string>
     <string name="filter_kind">Type filter: tap to change</string>
     <string name="filter_state">Status filter: tap to change</string>
+
+    <string name="err_play_named">Can’t play “%1$s”</string>
+    <string name="err_play">Can’t play this file</string>
+    <string name="err_skipped">Skipped to the next file.</string>
+    <string name="err_file_missing">the file is missing</string>
+    <string name="err_no_access">no access to the file</string>
+    <string name="err_corrupt">the file is damaged or not supported</string>
+    <string name="err_decoder">decoder error</string>
+    <string name="err_audio_output">audio output error</string>
+    <string name="err_other">unknown error</string>
+    <string name="settings_background">Screen-off playback</string>
+    <string name="settings_background_open">Allow</string>
+    <string name="settings_background_hint">If the sound stutters while the screen is off, allow AudioShelf to run without battery limits. Some phones (Xiaomi, Huawei, Oppo, Samsung) also have their own auto-start and “sleeping apps” lists in the system settings.</string>
 </resources>

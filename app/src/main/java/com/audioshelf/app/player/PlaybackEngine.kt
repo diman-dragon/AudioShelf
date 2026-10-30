@@ -3,30 +3,21 @@
 package com.audioshelf.app.player
 
 import android.app.Application
-import android.content.Context
 import android.content.Intent
-import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.DefaultRenderersFactory
-import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.SeekParameters
-import androidx.media3.exoplayer.audio.AudioSink
-import androidx.media3.exoplayer.audio.DefaultAudioSink
-import androidx.media3.exoplayer.audio.DefaultAudioTrackBufferSizeProvider
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.extractor.DefaultExtractorsFactory
 import com.audioshelf.app.ScreenWatch
 import com.audioshelf.app.library.Background
 import com.audioshelf.app.sound.SoundOutput
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
@@ -36,17 +27,6 @@ private const val TICK_MS = 250L
 
 // Dark screen: nobody watches the position, a slow tick is enough for listening stats (gap limit 5 s).
 private const val DARK_TICK_MS = 4_000L
-
-// Read-ahead: plenty of audio is cheap (about 1 MB a minute), and a full buffer rides out a slow
-// storage provider while covers, notifications or the system are busy.
-private const val MIN_BUFFER_MS = 30_000
-private const val MAX_BUFFER_MS = 60_000
-private const val START_BUFFER_MS = 1_000
-private const val REBUFFER_MS = 3_000
-
-// Audio track buffer: roomier than the default 250-750 ms, so a late CPU slice is not an underrun.
-private const val TRACK_MIN_US = 600_000
-private const val TRACK_MAX_US = 1_500_000
 
 // Background work (covers, durations) stands aside while playback starts, seeks or re-buffers.
 private const val START_HOLD_MS = 5_000L
@@ -64,6 +44,8 @@ class PlaybackEngine(
     private val onSave: (periodic: Boolean) -> Unit,
 ) {
     private val flow = MutableStateFlow(PlayState())
+    private val failureFlow = MutableSharedFlow<PlaybackFailure>(extraBufferCapacity = 4)
+    private val factory = PlayerFactory(app, sound)
     private var exo: ExoPlayer? = null
     private var fader: EdgeFader? = null
     private var chapterStop: ChapterStop? = null
@@ -74,50 +56,22 @@ class PlaybackEngine(
 
     val state: StateFlow<PlayState> = flow.asStateFlow()
 
+    /** A file failed to play: shown to the user once, whatever the recovery did about it. */
+    val failures: SharedFlow<PlaybackFailure> = failureFlow
+
     val player: ExoPlayer
         get() = exo ?: build().also { exo = it }
 
     val created: Boolean get() = exo != null
 
-    private fun renderers() = object : DefaultRenderersFactory(app) {
-        override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean): AudioSink =
-            DefaultAudioSink.Builder(context)
-                .setEnableFloatOutput(enableFloatOutput)
-                .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
-                .setAudioTrackBufferSizeProvider(
-                    DefaultAudioTrackBufferSizeProvider.Builder()
-                        .setMinPcmBufferDurationUs(TRACK_MIN_US)
-                        .setMaxPcmBufferDurationUs(TRACK_MAX_US)
-                        .build(),
-                )
-                .setAudioProcessors(arrayOf<AudioProcessor>(sound.processor))
-                .build()
-    }
-
-    private fun attributes(speech: Boolean) = AudioAttributes.Builder()
-        .setUsage(C.USAGE_MEDIA)
-        .setContentType(if (speech) C.AUDIO_CONTENT_TYPE_SPEECH else C.AUDIO_CONTENT_TYPE_MUSIC)
-        .build()
-
     private fun build(): ExoPlayer {
-        val extractors = DefaultExtractorsFactory().setConstantBitrateSeekingEnabled(true)
-        val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(MIN_BUFFER_MS, MAX_BUFFER_MS, START_BUFFER_MS, REBUFFER_MS)
-            .build()
-        val p = ExoPlayer.Builder(app, renderers(), DefaultMediaSourceFactory(app, extractors))
-            .setLoadControl(loadControl)
-            .setAudioAttributes(attributes(speech), true)
-            .setHandleAudioBecomingNoisy(true)
-            .setSeekParameters(SeekParameters.EXACT)
-            .setSeekBackIncrementMs(skipBackMs())
-            .setSeekForwardIncrementMs(skipForwardMs())
-            .setWakeMode(C.WAKE_MODE_LOCAL)
-            .build()
+        val p = factory.create(speech, skipBackMs(), skipForwardMs())
         val volume = { refreshVolume() }
         fader = EdgeFader(p, volume)
         chapterStop = ChapterStop(p)
         sleep = SleepTimer(p, volume)
         ResumeRewind(p)
+        ErrorRecovery(p) { failureFlow.tryEmit(it) }
         saver = PositionSaver(p, onSave)
         offload.attach(p)
         p.addListener(Events())
@@ -209,7 +163,9 @@ class PlaybackEngine(
 
     fun play() {
         startService()
-        player.play()
+        val p = player
+        if (p.playbackState == Player.STATE_IDLE && p.currentMediaItem != null) p.prepare()
+        p.play()
     }
 
     fun pause() {
@@ -219,7 +175,8 @@ class PlaybackEngine(
     fun toggle() {
         val p = player
         val ended = p.playbackState == Player.STATE_ENDED
-        if (p.playWhenReady && !ended) {
+        val idle = p.playbackState == Player.STATE_IDLE
+        if (p.playWhenReady && !ended && !idle) {
             p.pause()
             return
         }
@@ -246,8 +203,8 @@ class PlaybackEngine(
     }
 
     fun setSleep(minutes: Long, chapter: Boolean) {
-        val ready = player
-        if (ready.mediaItemCount >= 0) sleep?.set(minutes, chapter)
+        player // built on demand: the timer lives and dies with the player
+        sleep?.set(minutes, chapter)
     }
 
     fun setProfile(profile: PlayProfile) = applyProfile(player, profile)
@@ -259,7 +216,7 @@ class PlaybackEngine(
         fader?.set(profile.fadeInMs, profile.fadeOutMs)
         if (profile.speech != speech) {
             speech = profile.speech
-            p.setAudioAttributes(attributes(profile.speech), true)
+            p.setAudioAttributes(factory.attributes(profile.speech), true)
         }
     }
 

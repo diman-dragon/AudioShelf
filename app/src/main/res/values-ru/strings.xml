@@ -257,4 +257,17 @@
     <string name="filter_any">Любые</string>
     <string name="filter_kind">Фильтр по типу: нажмите, чтобы сменить</string>
     <string name="filter_state">Фильтр по статусу: нажмите, чтобы сменить</string>
+
+    <string name="err_play_named">Не удаётся воспроизвести «%1$s»</string>
+    <string name="err_play">Не удаётся воспроизвести файл</string>
+    <string name="err_skipped">Перешёл к следующему файлу.</string>
+    <string name="err_file_missing">файл не найден</string>
+    <string name="err_no_access">нет доступа к файлу</string>
+    <string name="err_corrupt">файл повреждён или не поддерживается</string>
+    <string name="err_decoder">ошибка декодера</string>
+    <string name="err_audio_output">ошибка аудиовыхода</string>
+    <string name="err_other">неизвестная ошибка</string>
+    <string name="settings_background">Звук при выключенном экране</string>
+    <string name="settings_background_open">Разрешить</string>
+    <string name="settings_background_hint">Если звук заикается при выключенном экране, разрешите AudioShelf работать без ограничений батареи. На некоторых телефонах (Xiaomi, Huawei, Oppo, Samsung) есть ещё свои списки автозапуска и «спящих приложений» в настройках системы.</string>
 </resources>

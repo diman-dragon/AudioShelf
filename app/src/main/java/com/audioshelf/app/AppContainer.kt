@@ -2,113 +2,48 @@ package com.audioshelf.app
 
 import android.app.Application
 import android.content.Context
-import com.audioshelf.app.data.FolderStore
-import com.audioshelf.app.data.HiddenStore
-import com.audioshelf.app.data.Kv
-import com.audioshelf.app.data.Prefs
-import com.audioshelf.app.data.SqliteKv
 import com.audioshelf.app.library.Background
-import com.audioshelf.app.library.BookDescription
-import com.audioshelf.app.library.CoverBytes
-import com.audioshelf.app.library.CoverLoader
-import com.audioshelf.app.library.DurationReader
-import com.audioshelf.app.library.DurationStore
-import com.audioshelf.app.library.FileOps
-import com.audioshelf.app.library.LibraryCache
-import com.audioshelf.app.library.LibraryController
-import com.audioshelf.app.library.LibraryRepo
-import com.audioshelf.app.library.MetaStore
-import com.audioshelf.app.library.NoteStore
-import com.audioshelf.app.library.ProgressStore
-import com.audioshelf.app.library.QueueStore
-import com.audioshelf.app.player.ChapterScanner
-import com.audioshelf.app.player.ChapterStore
-import com.audioshelf.app.player.MarkStore
-import com.audioshelf.app.player.OffloadControl
-import com.audioshelf.app.player.PlayPrefs
-import com.audioshelf.app.player.PlaybackEngine
-import com.audioshelf.app.player.PlayerSession
-import com.audioshelf.app.sound.EqStore
-import com.audioshelf.app.sound.FxStore
-import com.audioshelf.app.sound.SoundMix
-import com.audioshelf.app.sound.SoundModel
-import com.audioshelf.app.sound.SoundOutput
-import com.audioshelf.app.sound.SoundPrefs
-import com.audioshelf.app.stats.StatsRecorder
-import com.audioshelf.app.stats.StatsStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
+/** The roots of the app, put together from three modules: storage, library, playback. */
 class AppContainer(app: Application) {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     val background = Background()
-    val kv = Kv(SqliteKv(app), scope, background.writer, background::calm)
-    val prefs = Prefs(kv)
-    val folders = FolderStore(kv)
-    val meta = MetaStore(kv)
-    val hidden = HiddenStore(kv)
-    val progress = ProgressStore(kv)
-    val durations = DurationStore(kv)
     val screen = ScreenWatch(app)
-    val coverBytes = CoverBytes(app)
-    val covers = CoverLoader(app, coverBytes, background)
-    val durationReader = DurationReader(app, background.dispatcher)
-    private val fileOps = FileOps(app)
-    private val repo = LibraryRepo(scope, app.contentResolver, folders, LibraryCache(kv), hidden)
-    val library = LibraryController(scope, app, repo, prefs, folders, meta, progress, durations, hidden, fileOps)
 
-    val playPrefs = PlayPrefs(kv)
-    val chapters = ChapterStore(kv)
-    val marks = MarkStore(kv)
-    val eqStore = EqStore(kv)
-    val fxStore = FxStore(kv)
-    val stats = StatsStore(kv)
-    val queue = QueueStore(kv)
-    val notes = NoteStore(kv)
-    val descriptions = BookDescription(app)
-    private val statsRecorder = StatsRecorder(stats)
-    val soundPrefs = SoundPrefs(kv)
-    private val offload = OffloadControl()
-    private val output = SoundOutput(offload::setNeutral)
-    lateinit var session: PlayerSession
-        private set
+    private val storage = StorageModule(app, scope, background)
+    private val libraryModule = LibraryModule(app, scope, background, storage)
+    private val playback = PlaybackModule(app, scope, background, screen, storage, libraryModule)
 
-    val engine: PlaybackEngine = PlaybackEngine(
-        app, scope, output, offload, background, screen,
-        { prefs.skipBack.value * 1000L },
-        { prefs.skipForward.value * 1000L },
-        { periodic -> session.remember(periodic = periodic) },
-    )
-    init {
-        session = PlayerSession(
-            scope, app, engine, library, meta, progress, durations, prefs, playPrefs,
-            chapters, ChapterScanner(app, chapters), marks, background, screen, durationReader, stats, statsRecorder, queue, notes,
-        )
-    }
-    val sound: SoundModel = SoundModel(scope, session.track, eqStore, fxStore, soundPrefs, library)
+    val kv = storage.kv
+    val prefs = storage.prefs
+    val folders = storage.folders
+    val meta = storage.meta
+    val hidden = storage.hidden
+    val progress = storage.progress
+    val durations = storage.durations
+    val playPrefs = storage.playPrefs
+    val chapters = storage.chapters
+    val marks = storage.marks
+    val eqStore = storage.eqStore
+    val fxStore = storage.fxStore
+    val stats = storage.stats
+    val queue = storage.queue
+    val notes = storage.notes
+    val soundPrefs = storage.soundPrefs
 
-    init {
-        // Screen off: one safe save. Screen on: redraw the player from the current state.
-        scope.launch {
-            screen.on.collect { on ->
-                if (on) {
-                    engine.publish()
-                    session.onScreen(true)
-                } else {
-                    session.remember()
-                    kv.flushNow()
-                }
-            }
-        }
-        offload.setAllowed(prefs.offload.value)
-        scope.launch { prefs.offload.collect { offload.setAllowed(it) } }
-        SoundMix(scope, session.track, eqStore, fxStore, output).start()
-    }
+    val coverBytes = libraryModule.coverBytes
+    val covers = libraryModule.covers
+    val durationReader = libraryModule.durationReader
+    val descriptions = libraryModule.descriptions
+    val library = libraryModule.library
+
+    val engine = playback.engine
+    val session = playback.session
+    val sound = playback.sound
+    val battery = playback.battery
 }
 
 class ShelfApplication : Application() {

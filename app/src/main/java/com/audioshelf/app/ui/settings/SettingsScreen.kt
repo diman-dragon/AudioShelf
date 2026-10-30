@@ -13,9 +13,11 @@ import com.audioshelf.app.ui.components.Btn
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.audioshelf.app.R
+import com.audioshelf.app.container
 import com.audioshelf.app.data.LANG_AUTO
 import com.audioshelf.app.data.nextSkip
 import com.audioshelf.app.ui.components.AText
@@ -52,6 +54,11 @@ private fun AppPage(ui: SettingsUi, actions: SettingsActions) {
     }
     SwitchRow(stringResource(R.string.settings_auto_next), ui.autoNext, actions::onAutoNext, stringResource(R.string.auto_next_hint))
     SwitchRow(stringResource(R.string.settings_energy), ui.offload, actions::onOffload, stringResource(R.string.energy_hint))
+    val context = LocalContext.current
+    SettingRow(stringResource(R.string.settings_background), stacked = true) {
+        Btn(stringResource(R.string.settings_background_open), { context.container.battery.open(context) })
+        AText(stringResource(R.string.settings_background_hint), 12f, c.muted)
+    }
     SectionHeading(stringResource(R.string.settings_section_data))
     SettingRow(stringResource(R.string.settings_stats)) {
         Btn(stringResource(R.string.settings_open), actions::onOpenStats)
