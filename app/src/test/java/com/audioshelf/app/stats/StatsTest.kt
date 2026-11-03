@@ -80,6 +80,7 @@ class StatsTest {
         r.onState("a", true, t0)
         r.onState("a", true, t0 + 250)
         r.onState("a", true, t0 + 250 + 10 * MAX_GAP_MS)
+        r.onState("a", true, t0 + 250 + 10 * MAX_GAP_MS + 250)
         r.onState("a", false, t0 + 250 + 10 * MAX_GAP_MS + 250)
         assertEquals(500L, store.days().values.single().listenedMs)
         assertTrue(logged.any { "not counted" in it })
