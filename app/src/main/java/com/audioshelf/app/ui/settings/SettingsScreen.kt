@@ -70,6 +70,13 @@ private fun AppPage(ui: SettingsUi, actions: SettingsActions) {
         }
         AText(stringResource(R.string.backup_hint), 12f, c.muted)
     }
+    SettingRow(stringResource(R.string.settings_log), stacked = true) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Btn(stringResource(R.string.log_share), actions::onShareLog)
+            Btn(stringResource(R.string.log_clear), actions::onClearLog, kind = BtnKind.Ghost)
+        }
+        AText(stringResource(R.string.log_hint), 12f, c.muted)
+    }
     SectionHeading(stringResource(R.string.settings_section_interface))
     SwitchRow(stringResource(R.string.settings_dark), ui.theme == "dark", { actions.onTheme(if (it) "dark" else "light") })
     SettingRow(stringResource(R.string.settings_language)) {

@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.4.1
+Diagnostic log, fixes and cleanup.
+- Diagnostic log: Settings → Diagnostic log → Share / Erase logs. One file per day (`audioshelf-2026-11-03.log`, the next day `audioshelf-2026-11-04.log`, and so on), the last 7 days are kept, a day stops at 30 MB. Share sends one zip with every day and a `device.txt` about the phone. Lines also go to logcat as `AudioShelf/<part>`. Uncaught crashes are logged. It records:
+  - every audio buffer underrun (`Stutter` tag) with the power state at that moment;
+  - a late-wake watchdog (`Jitter` tag): the app thread not scheduled for 300+ ms, the main thread blocked, the whole device suspended during playback;
+  - a line every 2 s while playing: buffered audio ahead, CPU, garbage collections, speed, volume, screen, sound levels, battery, memory, power state;
+  - sound levels: how loud the source is, how many samples of the file itself are clipped, how often the limiter bent the signal (a raspy voice is either in the file or made by the equalizer/boost);
+  - decoder, audio format, audio track (offload, buffer size), player and phone volume, audio focus loss, speed changes, seeks, item changes, player errors;
+  - every user action (play, pause, seek, speed, sleep timer, library and settings buttons, screen changes);
+  - Bluetooth, in full (`Bluetooth`, `AudioDevices`, `MediaButton` tags): adapter on/off, every device connecting and disconnecting with the reason, pairing, the A2DP music link and its codec status, whether the stream is playing or suspended, the call-quality SCO link, connected devices at start and after every change, the audio route (mode, SCO, outputs with address, sample rates and encodings), and every headset/car media button press. On Android 12+ the app asks once for the Bluetooth permission so the events carry device names; without it the log says so and still records the routes;
+  - the system around the app: screen on/off, app in front/background, doze, battery saver, app standby bucket, heat, network changes, audio outputs (Bluetooth), ringer and do-not-disturb, and the audio streams other apps start (a "silent" notification may still play one);
+  - storage: every write to the database with its time, and any write that blocked a thread.
+- Notifications no longer interrupt the playback: a message sound, a notification, a navigation prompt or an alarm plays over the book or music at full volume, nothing pauses and nothing is ducked. Only a call (phone or a voice call in an app) pauses it, and it carries on when the call is over; another app that takes the audio for good (a video, a music player) still pauses it. Cause: a book is "speech", and the player pauses speech for every notification, and lowers the volume of music. The app now handles the audio focus itself (`FocusPolicy`), and the log shows every decision (`Focus` tag).
+- Settings: the Auto-next switch showed "off" whatever was saved; it now shows the real value.
+- Statistics no longer drop listening time when the dark-screen tick is late: the gap limit is 10 s instead of 5 s.
+- Storage: writes can no longer reach the disk out of order, and a failed batch is retried; a write queued while the flusher was finishing is no longer left behind.
+- Restore replaces the stored data of the backup instead of mixing it with the current one (a day of statistics was overwritten by an older copy). The app still has to be started again afterwards; the language picker no longer stops the app from closing cleanly.
+- CI: failing tests now stop the release.
+- Removed: the unreachable "add files" code (`LibraryController.addFiles`, `FileOps.add`), content time and speed fields of the statistics, `Premium.kt`, unused library flows, unused imports and the duplicated calendar helpers. `AudioShelfApp` is split into `ui/actions`, `BackupLaunchers` and `BackupController`.
+
 ## 1.3.4
 Sound screen, library buttons and playback races.
 - Volume boost stays on the Sound screen (per book or global). It is one tap-to-cycle speaker button: the brackets show the level (crossed out = off, 1-4 brackets = +3/+6/+9/+12 dB).

@@ -1,5 +1,6 @@
 package com.audioshelf.app.library
 
+import com.audioshelf.app.AppLog
 import android.content.ContentResolver
 import android.net.Uri
 import android.provider.DocumentsContract
@@ -60,6 +61,7 @@ class FolderScan(private val resolver: ContentResolver) {
             throw e
         } catch (e: Exception) {
             if (root) throw e
+            AppLog.w("FolderScan", "folder $path skipped: ${e.message}")
             return
         }
         coroutineScope {

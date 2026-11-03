@@ -32,9 +32,13 @@ class BatteryGuard(private val app: Application, private val kv: Kv) {
             else Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${app.packageName}")),
             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${app.packageName}")),
         )
+        AppLog.i("BatteryGuard", "asked; exempt=${isExempt()}")
         for (intent in intents) {
             if (context !is Activity) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            if (runCatching { context.startActivity(intent) }.isSuccess) return
+            if (runCatching { context.startActivity(intent) }.isSuccess) {
+                AppLog.i("BatteryGuard", "opened ${intent.action} (exempt=${isExempt()})")
+                return
+            }
         }
     }
 }

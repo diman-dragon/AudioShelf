@@ -27,6 +27,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         askNotifications()
+        askBluetooth()
         setContent { AudioShelfApp(container, player) }
     }
 
@@ -38,7 +39,26 @@ class MainActivity : ComponentActivity() {
         if (!granted) notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 
+    private val bluetooth = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        container.bluetooth.onPermissionResult(granted)
+    }
+
+    /** Asked once: it lets the log record Bluetooth devices by name. Nothing else uses it. */
+    private fun askBluetooth() {
+        if (Build.VERSION.SDK_INT < 31 || container.bluetooth.hasPermission()) return
+        val prefs = getSharedPreferences("diag", MODE_PRIVATE)
+        if (prefs.getBoolean("bluetooth_asked", false)) return
+        prefs.edit().putBoolean("bluetooth_asked", true).apply()
+        bluetooth.launch(Manifest.permission.BLUETOOTH_CONNECT)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        AppLog.i("Activity", "app in front")
+    }
+
     override fun onStop() {
+        AppLog.i("Activity", "app in background")
         player.remember()
         container.kv.flushNow()
         super.onStop()

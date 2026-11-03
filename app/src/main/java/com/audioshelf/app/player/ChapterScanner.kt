@@ -1,5 +1,6 @@
 package com.audioshelf.app.player
 
+import com.audioshelf.app.AppLog
 import android.content.Context
 import android.net.Uri
 import com.audioshelf.app.library.Book
@@ -25,7 +26,9 @@ class ChapterScanner(private val context: Context, private val store: ChapterSto
         val todo = book.files.filter { wants(book, it) && store.of(it) == null }
         if (todo.isEmpty()) return@withContext false
         todo.forEach { file ->
-            var list = runCatching { read(file) }.getOrDefault(emptyList())
+            var list = runCatching { read(file) }
+                .onFailure { AppLog.d("ChapterScanner", "cannot read chapters of ${file.name}: ${it.message}") }
+                .getOrDefault(emptyList())
             if (list.size < 2) list = external(book, file)
             store.set(file, list.map { ChapterRec(it.title, it.startMs, it.endMs) })
         }

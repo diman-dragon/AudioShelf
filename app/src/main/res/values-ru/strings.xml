@@ -33,12 +33,6 @@
     <string name="sleep_min">%1$d мин</string>
     <string name="sleep_chapter">Глава</string>
 
-    <string name="mode_continue">Подряд</string>
-    <string name="mode_chapter">Пауза после главы</string>
-    <string name="mode_off">По порядку</string>
-    <string name="mode_all">Повтор всех</string>
-    <string name="mode_one">Повтор трека</string>
-    <string name="mode_shuffle">Вперемешку</string>
     <string name="mode_short_continue">Без паузы</string>
     <string name="mode_short_chapter">С паузой</string>
     <string name="mode_short_off">Порядок</string>
@@ -112,11 +106,9 @@
     <string name="scan_count">Найдено файлов: %1$d · папок: %2$d</string>
     <string name="scan_stop">Остановить</string>
 
-    <string name="settings_page_app">Настройки приложения</string>
     <string name="settings_section_library">Библиотека</string>
     <string name="settings_section_playback">Воспроизведение</string>
     <string name="settings_section_interface">Оформление</string>
-    <string name="settings_section_about">О нас</string>
     <string name="settings_folder">Папка с аудио</string>
     <string name="settings_choose">Выбрать</string>
     <string name="settings_forget">Убрать</string>
@@ -130,7 +122,6 @@
     <string name="settings_energy">Энергосбережение</string>
     <string name="settings_dark">Тёмная тема</string>
     <string name="unit_sec">%d с</string>
-    <string name="settings_theme">Тема</string>
     <string name="settings_language">Язык</string>
     <string name="settings_version">Версия %1$s</string>
     <string name="path_internal">Память устройства</string>
@@ -141,11 +132,7 @@
     <string name="about_tag">Плеер аудиокниг и музыки</string>
     <string name="about_lead">Без рекламы и без аккаунта. Ваши файлы и закладки остаются на телефоне.</string>
     <string name="about_maker">Сделано в DataLaw Design — подразделении DataLaw, где в свободное от основной работы время делают приложения.</string>
-    <string name="theme_light">Светлая</string>
-    <string name="theme_dark">Тёмная</string>
     <string name="lang_auto">Авто</string>
-    <string name="energy_on">Вкл</string>
-    <string name="energy_off">Выкл</string>
     <string name="energy_hint">Звук воспроизводит аудиочип телефона, процессор спит, батарея держится дольше. Работает, пока эквалайзер и усиление громкости выключены. На некоторых телефонах может не поддерживаться.</string>
     <string name="notif_close">Закрыть</string>
     <string name="sound_eq">Эквалайзер</string>
@@ -226,7 +213,6 @@
     <string name="stats_empty">Пока пусто. Статистика начнёт считаться с первого прослушивания.</string>
     <string name="stats_hm">%1$d ч %2$d мин</string>
     <string name="stats_hours">Время суток</string>
-    <string name="stats_listened">Прослушано</string>
     <string name="stats_m">%1$d мин</string>
     <string name="stats_month">Месяц</string>
     <string name="stats_streak">Текущая серия</string>
@@ -270,4 +256,11 @@
     <string name="settings_background">Звук при выключенном экране</string>
     <string name="settings_background_open">Разрешить</string>
     <string name="settings_background_hint">Если звук заикается при выключенном экране, разрешите AudioShelf работать без ограничений батареи. На некоторых телефонах (Xiaomi, Huawei, Oppo, Samsung) есть ещё свои списки автозапуска и «спящих приложений» в настройках системы.</string>
+    <string name="settings_log">Журнал для диагностики</string>
+    <string name="log_share">Поделиться</string>
+    <string name="log_clear">Стереть логи</string>
+    <string name="log_hint">Записывает по файлу на день за последние 7 дней воспроизведение, уровни звука, обрывы буфера, ваши действия и события системы и Bluetooth (экран, ограничения батареи, сеть, звук других приложений), чтобы найти причину заиканий. Сотрите логи, воспроизведите проблему и поделитесь журналом. В нём есть названия книг и файлов.</string>
+    <string name="log_share_title">Поделиться журналом</string>
+    <string name="log_failed">Не удалось подготовить журнал</string>
+    <string name="log_cleared">Логи стёрты</string>
 </resources>

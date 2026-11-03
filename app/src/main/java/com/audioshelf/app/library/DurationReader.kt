@@ -1,5 +1,6 @@
 package com.audioshelf.app.library
 
+import com.audioshelf.app.AppLog
 import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.net.Uri
@@ -14,6 +15,7 @@ class DurationReader(private val context: Context, private val dispatcher: Corou
             retriever.setDataSource(context, Uri.parse(uri))
             retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()
         } catch (e: Exception) {
+            AppLog.d("DurationReader", "no duration for $uri: ${e.message}")
             null
         } finally {
             runCatching { retriever.release() }

@@ -62,7 +62,7 @@ class PlayerFactory(private val app: Application, private val sound: SoundOutput
             .build()
         return ExoPlayer.Builder(app, renderers(), DefaultMediaSourceFactory(app, extractors))
             .setLoadControl(loadControl)
-            .setAudioAttributes(attributes(speech), true)
+            .setAudioAttributes(attributes(speech), false) // focus is handled by FocusPolicy
             .setHandleAudioBecomingNoisy(true)
             .setSeekParameters(SeekParameters.EXACT)
             .setSeekBackIncrementMs(skipBackMs)

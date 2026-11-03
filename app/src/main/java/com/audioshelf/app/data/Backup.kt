@@ -45,7 +45,14 @@ object Backup {
         return out
     }
 
+    /**
+     * Restore, not merge: every store the backup contains is emptied first, so rows from the current
+     * data never mix with the backed-up ones (a day of statistics would otherwise be overwritten by an
+     * older version of itself). The settings store holds device keys too, so there only the
+     * backed-up keys are replaced.
+     */
     fun apply(kv: Kv, rows: List<KvRow>): Int {
+        rows.mapTo(HashSet()) { it.store }.filter { it != KV_STORE }.forEach { kv.clear(it) }
         rows.forEach { kv.put(it.store, it.key, it.value) }
         kv.flushNow()
         return rows.size

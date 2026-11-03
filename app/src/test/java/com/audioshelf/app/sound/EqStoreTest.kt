@@ -2,9 +2,7 @@ package com.audioshelf.app.sound
 
 import com.audioshelf.app.data.testKv
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class EqStoreTest {

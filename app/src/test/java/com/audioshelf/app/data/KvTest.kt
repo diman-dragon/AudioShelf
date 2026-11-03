@@ -63,4 +63,26 @@ class KvTest {
         assertEquals(true, ops[0] is KvOp.Clear)
         assertEquals("3", (ops[1] as KvOp.Put).value)
     }
+
+    @Test
+    fun failedBatchStaysQueuedAndNewerValueWins() {
+        val backend = MemoryBackend()
+        val kv = testKv(backend)
+        kv.put("s", "k", "old")
+        backend.failing = true
+        kv.flushNow()
+        assertNull(backend.table["s" to "k"])
+        kv.put("s", "k", "new")
+        backend.failing = false
+        kv.flushNow()
+        assertEquals("new", backend.table["s" to "k"])
+    }
+
+    @Test
+    fun flushWithNothingQueuedWritesNothing() {
+        val backend = MemoryBackend()
+        val kv = testKv(backend)
+        kv.flushNow()
+        assertEquals(0, backend.writes)
+    }
 }

@@ -2,6 +2,7 @@
 
 package com.audioshelf.app.player
 
+import com.audioshelf.app.AppLog
 import android.app.Application
 import android.content.Intent
 import androidx.media3.common.C
@@ -10,6 +11,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.audioshelf.app.ScreenWatch
+import com.audioshelf.app.diag.SystemWatch
 import com.audioshelf.app.library.Background
 import com.audioshelf.app.sound.SoundOutput
 import kotlinx.coroutines.CoroutineScope
@@ -25,7 +27,7 @@ import kotlinx.coroutines.launch
 
 private const val TICK_MS = 250L
 
-// Dark screen: nobody watches the position, a slow tick is enough for listening stats (gap limit 5 s).
+// Dark screen: nobody watches the position, a slow tick is enough for listening stats (the stats gap limit, MAX_GAP_MS, is well above it).
 private const val DARK_TICK_MS = 4_000L
 
 // Background work (covers, durations) stands aside while playback starts, seeks or re-buffers.
@@ -39,6 +41,7 @@ class PlaybackEngine(
     private val offload: OffloadControl,
     private val background: Background,
     private val screen: ScreenWatch,
+    private val system: SystemWatch,
     private val skipBackMs: () -> Long,
     private val skipForwardMs: () -> Long,
     private val onSave: (periodic: Boolean) -> Unit,
@@ -51,6 +54,8 @@ class PlaybackEngine(
     private var chapterStop: ChapterStop? = null
     private var sleep: SleepTimer? = null
     private var saver: PositionSaver? = null
+    private var diagnostics: PlaybackDiagnostics? = null
+    private var focus: FocusPolicy? = null
     private var ticker: Job? = null
     private var speech = false
 
@@ -74,12 +79,17 @@ class PlaybackEngine(
         ErrorRecovery(p) { failureFlow.tryEmit(it) }
         saver = PositionSaver(p, onSave)
         offload.attach(p)
+        val diag = PlaybackDiagnostics(p, sound.processor.stats, screen, system, scope)
+        diagnostics = diag
+        p.addAnalyticsListener(diag)
+        focus = FocusPolicy(app, p) { speech }
         p.addListener(Events())
         return p
     }
 
     private inner class Events : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
+            diagnostics?.setPlaying(isPlaying)
             publish()
             if (isPlaying) startTicker() else ticker?.cancel()
         }
@@ -146,6 +156,7 @@ class PlaybackEngine(
      * attributes of a playing player rebuilds the audio track, which was the stutter at every start.
      */
     fun load(items: List<MediaItem>, index: Int, positionMs: Long, autoplay: Boolean, speed: Float, profile: PlayProfile) {
+        AppLog.i("Engine", "load ${items.size} items, start at item $index ${positionMs / 1000}s, autoplay=$autoplay, speed=$speed")
         background.hold(START_HOLD_MS)
         val p = player
         applyProfile(p, profile)
@@ -159,9 +170,11 @@ class PlaybackEngine(
 
     fun startService() {
         runCatching { app.startService(Intent(app, PlaybackService::class.java)) }
+            .onFailure { AppLog.w("PlaybackEngine", "cannot start the playback service", it) }
     }
 
     fun play() {
+        AppLog.i("Engine", "play requested")
         startService()
         val p = player
         if (p.playbackState == Player.STATE_IDLE && p.currentMediaItem != null) p.prepare()
@@ -169,10 +182,12 @@ class PlaybackEngine(
     }
 
     fun pause() {
+        AppLog.i("Engine", "pause requested")
         exo?.pause()
     }
 
     fun toggle() {
+        AppLog.i("Engine", "toggle requested")
         val p = player
         val ended = p.playbackState == Player.STATE_ENDED
         val idle = p.playbackState == Player.STATE_IDLE
@@ -185,24 +200,34 @@ class PlaybackEngine(
     }
 
     fun seekTo(positionMs: Long) {
+        AppLog.i("Engine", "seek to ${positionMs / 1000}s")
         player.seekTo(positionMs)
         publish()
     }
 
     fun skipTo(index: Int, positionMs: Long = 0) {
+        AppLog.i("Engine", "skip to item $index at ${positionMs / 1000}s")
         player.seekTo(index, positionMs)
         publish()
     }
 
-    fun next() = player.seekToNextMediaItem()
+    fun next() {
+        AppLog.i("Engine", "next item")
+        player.seekToNextMediaItem()
+    }
 
-    fun previous() = player.seekToPrevious()
+    fun previous() {
+        AppLog.i("Engine", "previous")
+        player.seekToPrevious()
+    }
 
     fun setSpeed(speed: Float) {
+        AppLog.i("Engine", "speed $speed")
         exo?.setPlaybackSpeed(speed)
     }
 
     fun setSleep(minutes: Long, chapter: Boolean) {
+        AppLog.i("Engine", "sleep timer $minutes min, at chapter end=$chapter")
         player // built on demand: the timer lives and dies with the player
         sleep?.set(minutes, chapter)
     }
@@ -216,7 +241,7 @@ class PlaybackEngine(
         fader?.set(profile.fadeInMs, profile.fadeOutMs)
         if (profile.speech != speech) {
             speech = profile.speech
-            p.setAudioAttributes(factory.attributes(profile.speech), true)
+            p.setAudioAttributes(factory.attributes(profile.speech), false)
         }
     }
 
@@ -225,6 +250,7 @@ class PlaybackEngine(
     }
 
     fun stop() {
+        AppLog.i("Engine", "stop")
         val p = exo ?: return
         p.stop()
         p.clearMediaItems()
@@ -232,6 +258,7 @@ class PlaybackEngine(
     }
 
     fun close() {
+        AppLog.i("Engine", "close")
         flush()
         val p = exo ?: return
         p.pause()
@@ -240,7 +267,12 @@ class PlaybackEngine(
     }
 
     fun release() {
+        AppLog.i("Engine", "release")
         ticker?.cancel()
+        diagnostics?.release()
+        diagnostics = null
+        focus?.release()
+        focus = null
         saver?.stop()
         fader?.stop()
         sleep?.stop()

@@ -1,5 +1,6 @@
 package com.audioshelf.app.player
 
+import com.audioshelf.app.AppLog
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 
@@ -29,16 +30,19 @@ class ErrorRecovery(
         val title = player.currentMediaItem?.mediaMetadata?.title?.toString()
         when (policy.decide(kind, attempt, next >= 0)) {
             Recovery.Retry -> {
+                AppLog.w("ErrorRecovery", "${error.errorCodeName} on \"$title\" ($kind), retry ${attempt + 1}")
                 attempt++
                 player.prepare()
             }
             Recovery.SkipFile -> {
+                AppLog.w("ErrorRecovery", "${error.errorCodeName} on \"$title\" ($kind), skipping to file $next", error)
                 attempt = 0
                 report(PlaybackFailure(kind, title, skipped = true))
                 player.seekTo(next, 0L)
                 player.prepare()
             }
             Recovery.GiveUp -> {
+                AppLog.e("ErrorRecovery", "${error.errorCodeName} on \"$title\" ($kind), giving up", error)
                 attempt = 0
                 player.pause()
                 report(PlaybackFailure(kind, title, skipped = false))

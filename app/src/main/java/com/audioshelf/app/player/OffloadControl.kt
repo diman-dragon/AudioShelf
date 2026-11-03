@@ -7,6 +7,7 @@ import android.os.Looper
 import androidx.media3.common.TrackSelectionParameters.AudioOffloadPreferences
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import com.audioshelf.app.AppLog
 
 /**
  * Switches audio offload on and off. Every switch rebuilds the AudioTrack, so it must never happen in a burst:
@@ -51,6 +52,7 @@ class OffloadControl {
         val p = player ?: return
         if (on == applied) return
         applied = on
+        AppLog.i("Offload", "audio offload ${if (on) "ON" else "OFF"} (allowed=$allowed, sound neutral=$neutral): the audio track is rebuilt")
         val mode = if (on) AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED else AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_DISABLED
         val prefs = AudioOffloadPreferences.Builder()
             .setAudioOffloadMode(mode)

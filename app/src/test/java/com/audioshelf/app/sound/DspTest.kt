@@ -37,4 +37,25 @@ class DspTest {
         assertEquals(1.0, boosted / flat, 0.1)
         assertTrue(far / boosted < 0.6)
     }
+
+    @Test
+    fun loudSpeechWithBoostReachesTheLimiterAndIsCounted() {
+        val chain = SoundChain().also { it.setBoost(12) }
+        chain.configure(44100, 1)
+        chain.refresh()
+        chain.resetHits()
+        for (i in 0 until 4410) chain.process((sin(2 * PI * 200.0 * i / 44100) * 20000).toFloat(), 0)
+        assertTrue("a +12 dB boost on a loud signal must hit the limiter", chain.limiterHits > 0)
+        assertTrue(chain.overHits > 0)
+    }
+
+    @Test
+    fun belowTheKneeNothingIsCounted() {
+        val chain = SoundChain()
+        chain.configure(44100, 1)
+        chain.refresh()
+        chain.resetHits()
+        for (i in 0 until 4410) chain.process((sin(2 * PI * 200.0 * i / 44100) * 20000).toFloat(), 0)
+        assertEquals(0, chain.limiterHits)
+    }
 }

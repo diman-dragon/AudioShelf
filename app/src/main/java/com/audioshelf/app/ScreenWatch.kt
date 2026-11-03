@@ -20,7 +20,9 @@ class ScreenWatch(app: Application) {
     init {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                flow.value = intent.action != Intent.ACTION_SCREEN_OFF
+                val on = intent.action != Intent.ACTION_SCREEN_OFF
+                if (flow.value != on) AppLog.i("Screen", if (on) "screen ON" else "screen OFF")
+                flow.value = on
             }
         }
         val filter = IntentFilter().apply {

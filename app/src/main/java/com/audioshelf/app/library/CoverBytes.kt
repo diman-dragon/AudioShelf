@@ -1,5 +1,6 @@
 package com.audioshelf.app.library
 
+import com.audioshelf.app.AppLog
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -34,6 +35,7 @@ class CoverBytes(private val context: Context) {
     private fun readImage(art: ArtFile): ByteArray? = try {
         context.contentResolver.openInputStream(Uri.parse(art.uri))?.use { it.readBytes() }
     } catch (e: Exception) {
+        AppLog.d("CoverBytes", "cannot read image ${art.name}: ${e.message}")
         null
     }
 
@@ -45,6 +47,7 @@ class CoverBytes(private val context: Context) {
             retriever.setDataSource(context, uri)
             retriever.embeddedPicture?.let { return it }
         } catch (e: Exception) {
+            AppLog.d("CoverBytes", "no embedded picture in $uri: ${e.message}")
         } finally {
             runCatching { retriever.release() }
         }
@@ -63,6 +66,7 @@ class CoverBytes(private val context: Context) {
     private fun attached(uri: Uri): ByteArray? = try {
         ChannelSource.open(context, uri).use { FileTags.read(it, true).cover }
     } catch (e: Throwable) {
+        AppLog.d("CoverBytes", "no attached cover in $uri: ${e.message}")
         null
     }
 

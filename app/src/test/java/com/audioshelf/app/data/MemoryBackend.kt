@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 class MemoryBackend(rows: List<KvRow> = emptyList()) : KvBackend {
     val table = LinkedHashMap<Pair<String, String>, String>()
     var writes = 0
+    var failing = false
 
     init {
         rows.forEach { table[it.store to it.key] = it.value }
@@ -14,6 +15,7 @@ class MemoryBackend(rows: List<KvRow> = emptyList()) : KvBackend {
     override fun loadAll(): List<KvRow> = table.map { (k, v) -> KvRow(k.first, k.second, v) }
 
     override fun write(ops: List<KvOp>) {
+        if (failing) throw java.io.IOException("disk full")
         writes++
         for (op in ops) {
             when (op) {

@@ -17,7 +17,7 @@ class EngineObserver(
 
     fun onEngine(s: PlayState) {
         val t = current.get()?.takeIf { current.isLoaded(it, s) }
-        statsRecorder.onState(t?.id, s.playing, s.positionMs, s.speed, System.currentTimeMillis())
+        statsRecorder.onState(t?.id, s.playing, System.currentTimeMillis())
         if (t != null) {
             if (s.durationMs > 0) durations.note(t.id, s.index, s.durationMs)
             if (s.ended && !wasEnded) {

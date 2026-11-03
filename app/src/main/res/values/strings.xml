@@ -35,12 +35,6 @@
     <string name="sleep_min">%1$d min</string>
     <string name="sleep_chapter">Chapter</string>
 
-    <string name="mode_continue">Continuous</string>
-    <string name="mode_chapter">Pause after each chapter</string>
-    <string name="mode_off">In order</string>
-    <string name="mode_all">Repeat all</string>
-    <string name="mode_one">Repeat track</string>
-    <string name="mode_shuffle">Shuffle</string>
     <string name="mode_short_continue">No pause</string>
     <string name="mode_short_chapter">Pause</string>
     <string name="mode_short_off">In order</string>
@@ -114,11 +108,9 @@
     <string name="scan_count">Files found: %1$d · folders: %2$d</string>
     <string name="scan_stop">Stop</string>
 
-    <string name="settings_page_app">App settings</string>
     <string name="settings_section_library">Library</string>
     <string name="settings_section_playback">Playback</string>
     <string name="settings_section_interface">Appearance</string>
-    <string name="settings_section_about">About</string>
     <string name="settings_folder">Audio folder</string>
     <string name="settings_choose">Choose</string>
     <string name="settings_forget">Remove</string>
@@ -132,7 +124,6 @@
     <string name="settings_energy">Power saving</string>
     <string name="settings_dark">Dark theme</string>
     <string name="unit_sec">%d s</string>
-    <string name="settings_theme">Theme</string>
     <string name="settings_language">Language</string>
     <string name="settings_version">Version %1$s</string>
     <string name="path_internal">Device storage</string>
@@ -143,11 +134,7 @@
     <string name="about_tag">Audiobook and music player</string>
     <string name="about_lead">No ads, no account. Your files and bookmarks stay on your phone.</string>
     <string name="about_maker">Made at DataLaw Design — the DataLaw division that builds apps in its spare time.</string>
-    <string name="theme_light">Light</string>
-    <string name="theme_dark">Dark</string>
     <string name="lang_auto">Auto</string>
-    <string name="energy_on">On</string>
-    <string name="energy_off">Off</string>
     <string name="energy_hint">The phone’s audio chip plays the sound and the processor sleeps, so the battery lasts longer. Works while the equalizer is flat and the volume boost is off. Some phones may not support it.</string>
     <string name="notif_close">Close</string>
     <string name="sound_eq">Equalizer</string>
@@ -228,7 +215,6 @@
     <string name="stats_empty">Nothing yet. Statistics start counting from the first listening.</string>
     <string name="stats_hm">%1$d h %2$d min</string>
     <string name="stats_hours">Time of day</string>
-    <string name="stats_listened">Listened</string>
     <string name="stats_m">%1$d min</string>
     <string name="stats_month">Month</string>
     <string name="stats_streak">Current streak</string>
@@ -272,4 +258,11 @@
     <string name="settings_background">Screen-off playback</string>
     <string name="settings_background_open">Allow</string>
     <string name="settings_background_hint">If the sound stutters while the screen is off, allow AudioShelf to run without battery limits. Some phones (Xiaomi, Huawei, Oppo, Samsung) also have their own auto-start and “sleeping apps” lists in the system settings.</string>
+    <string name="settings_log">Diagnostic log</string>
+    <string name="log_share">Share</string>
+    <string name="log_clear">Erase logs</string>
+    <string name="log_hint">Records, one file per day for the last 7 days, playback, sound levels, buffer underruns, your actions and system events and Bluetooth (screen, battery limits, network, other apps\' audio) to find stutter. Erase it, reproduce the problem, then share it. It contains book titles and file names.</string>
+    <string name="log_share_title">Share the log</string>
+    <string name="log_failed">Could not prepare the log</string>
+    <string name="log_cleared">Logs erased</string>
 </resources>

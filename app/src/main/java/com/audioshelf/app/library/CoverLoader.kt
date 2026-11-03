@@ -1,5 +1,6 @@
 package com.audioshelf.app.library
 
+import com.audioshelf.app.AppLog
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -80,6 +81,7 @@ class CoverLoader(
         prune()
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
     } catch (e: Exception) {
+        AppLog.d("CoverLoader", "no cover for $name: ${e.message}")
         runCatching { File(dir(), "$name.none").writeBytes(ByteArray(0)) }
         null
     }

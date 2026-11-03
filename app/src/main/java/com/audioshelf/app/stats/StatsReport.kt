@@ -1,6 +1,5 @@
 package com.audioshelf.app.stats
 
-import java.util.Calendar
 import java.util.TimeZone
 
 const val ACTIVE_DAY_MS = 60_000L
@@ -26,10 +25,8 @@ class StatsReport(
     val range: StatsRange,
     val listenedMs: Long,
     val sessions: Int,
-    val activeDays: Int,
     val periodDays: Int,
     val finishedBooks: Int,
-    val startedBooks: Int,
     val streak: Int,
     val bestStreak: Int,
     val bars: List<BarPoint>,
@@ -71,7 +68,6 @@ class StatsReport(
 
             var listened = 0L
             var sessions = 0
-            var active = 0
             val hours = LongArray(24)
             val weekdays = LongArray(7)
             var longest = 0L
@@ -79,15 +75,9 @@ class StatsReport(
                 if (!inRange(key)) continue
                 listened += d.listenedMs
                 sessions += d.sessions
-                if (d.listenedMs >= ACTIVE_DAY_MS) active++
                 for (h in 0 until 24) hours[h] += d.hours[h]
                 if (d.longestSessionMs > longest) longest = d.longestSessionMs
-                val at = parseDayKey(key, tz)
-                if (at != null) {
-                    val c = Calendar.getInstance(tz)
-                    c.timeInMillis = at
-                    weekdays[(c.get(Calendar.DAY_OF_WEEK) + 5) % 7] += d.listenedMs
-                }
+                parseDayKey(key, tz)?.let { weekdays[weekdayOf(it, tz)] += d.listenedMs }
             }
             val spanDays = daysBetween(from, today, tz) + 1
 
@@ -96,15 +86,9 @@ class StatsReport(
                 if (!inRange(key)) continue
                 for ((id, ms) in per) topMap[id] = (topMap[id] ?: 0L) + ms
             }
-            val perBook = HashMap(topMap)
             val top = topMap.entries.sortedByDescending { it.value }.take(TOP_COUNT).map { TopBook(it.key, it.value) }
 
-            var finished = 0
-            var started = 0
-            for (b in books.values) {
-                if (b.finished in from..(today + 86_400_000L)) finished++
-                if (b.first in from..(today + 86_400_000L)) started++
-            }
+            val finished = books.values.count { it.finished in from..(today + 86_400_000L) }
 
             val monthly = range == StatsRange.Year || range == StatsRange.All
             val bars = if (monthly) monthBars(days, from, today, range, tz) else dayBars(days, from, today, tz)
@@ -116,10 +100,10 @@ class StatsReport(
             }
 
             return StatsReport(
-                range, listened, sessions, active, spanDays.toInt(), finished, started, streak, best,
+                range, listened, sessions, spanDays.toInt(), finished, streak, best,
                 bars, monthly, hours,
                 top, heat(days, today, tz), days.values.sumOf { it.listenedMs },
-                lastDays(7), lastDays(30), weekdays, longest, perBook,
+                lastDays(7), lastDays(30), weekdays, longest, topMap,
             )
         }
 
@@ -131,20 +115,6 @@ class StatsReport(
                 at = addDays(at, 1, tz)
             }
             return out
-        }
-
-        private fun monthStart(ms: Long, tz: TimeZone): Long {
-            val c = Calendar.getInstance(tz)
-            c.timeInMillis = dayStart(ms, tz)
-            c.set(Calendar.DAY_OF_MONTH, 1)
-            return c.timeInMillis
-        }
-
-        private fun addMonths(ms: Long, n: Int, tz: TimeZone): Long {
-            val c = Calendar.getInstance(tz)
-            c.timeInMillis = ms
-            c.add(Calendar.MONTH, n)
-            return c.timeInMillis
         }
 
         private fun monthBars(days: Map<String, DayStat>, from: Long, today: Long, range: StatsRange, tz: TimeZone): List<BarPoint> {
@@ -165,9 +135,7 @@ class StatsReport(
         }
 
         private fun heat(days: Map<String, DayStat>, today: Long, tz: TimeZone): List<HeatCell> {
-            val c = Calendar.getInstance(tz)
-            c.timeInMillis = today
-            val weekday = (c.get(Calendar.DAY_OF_WEEK) + 5) % 7
+            val weekday = weekdayOf(today, tz)
             val start = addDays(today, -(weekday + (HEAT_WEEKS - 1) * 7), tz)
             val out = ArrayList<HeatCell>(HEAT_WEEKS * 7)
             var at = start
@@ -200,27 +168,4 @@ class StatsReport(
             return current to best
         }
     }
-}
-
-fun parseDayKey(key: String, tz: TimeZone = TimeZone.getDefault()): Long? {
-    val p = key.split('-')
-    if (p.size != 3) return null
-    val y = p[0].toIntOrNull() ?: return null
-    val m = p[1].toIntOrNull() ?: return null
-    val d = p[2].toIntOrNull() ?: return null
-    val c = Calendar.getInstance(tz)
-    c.clear()
-    c.set(y, m - 1, d, 0, 0, 0)
-    return c.timeInMillis
-}
-
-fun daysBetween(from: Long, to: Long, tz: TimeZone = TimeZone.getDefault()): Long {
-    var n = 0L
-    var at = dayStart(from, tz)
-    val end = dayStart(to, tz)
-    while (at < end) {
-        at = addDays(at, 1, tz)
-        n++
-    }
-    return n
 }

@@ -3,6 +3,7 @@
 package com.audioshelf.app.sound
 
 import androidx.media3.common.util.UnstableApi
+import com.audioshelf.app.AppLog
 
 class SoundOutput(private val onNeutral: (Boolean) -> Unit = {}) {
     val chain = SoundChain()
@@ -16,6 +17,7 @@ class SoundOutput(private val onNeutral: (Boolean) -> Unit = {}) {
         if (bands == lastBands && boostDb == lastBoost) return
         lastBands = bands
         lastBoost = boostDb
+        AppLog.i("SoundOutput", "settings: bands=${bands.joinToString(",")} dB, boost $boostDb dB")
         chain.setBands(FloatArray(BAND_COUNT) { bands.getOrElse(it) { 0 }.toFloat() })
         chain.setBoost(boostDb)
         onNeutral(bands.all { it == 0 } && boostDb == 0)

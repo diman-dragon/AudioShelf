@@ -1,5 +1,6 @@
 package com.audioshelf.app.library
 
+import com.audioshelf.app.AppLog
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -61,12 +62,6 @@ class LibraryController(
         .flowOn(Dispatchers.Default)
         .stateIn(scope, SharingStarted.WhileSubscribed(UI_IDLE_MS), snapshot())
 
-    val files: StateFlow<List<LibFile>> get() = repo.files
-
-    val libraryStatus: StateFlow<LibStatus> get() = repo.status
-
-    val scanning: StateFlow<Boolean> get() = repo.scanning
-
     val fileCount: StateFlow<Int> = repo.files.map { it.size }.stateIn(scope, SharingStarted.Eagerly, 0)
 
     val hiddenCount: StateFlow<Int> = hidden.version.map { hidden.count() }
@@ -102,6 +97,7 @@ class LibraryController(
     fun fail(e: Throwable) {
         val text = e.message ?: ""
         if (text.contains("cancel")) return
+        AppLog.e("Library", "operation failed", e)
         messageFlow.tryEmit(if (e is NoViewerException) R.string.lib_no_viewer else R.string.lib_fail)
     }
 
@@ -160,21 +156,6 @@ class LibraryController(
         }
     }
 
-    fun addFiles(sources: List<Uri>) {
-        val folder = folders.current.value ?: return
-        if (sources.isEmpty()) return
-        scope.launch {
-            try {
-                val added = fileOps.add(sources, folder.uri)
-                repo.patchFiles { it + added }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                fail(e)
-            }
-        }
-    }
-
     fun chooseFolder(tree: Uri) {
         try {
             context.contentResolver.takePersistableUriPermission(
@@ -206,4 +187,10 @@ class LibraryController(
     fun allRows(): List<BookRow> = repo.books.value.map { buildRow(it, meta.get(it.id), progress, durations) }
 
     fun bookById(id: String): Book? = repo.books.value.firstOrNull { it.id == id }
+
+    /** The title to show for a book id; for a book that is gone, the end of its id. */
+    fun titleOf(id: String): String {
+        val book = bookById(id) ?: return id.substringAfterLast('/').substringAfterLast("%2F")
+        return metaOf(book).title.ifEmpty { book.name }
+    }
 }

@@ -1,5 +1,6 @@
 package com.audioshelf.app.library
 
+import com.audioshelf.app.AppLog
 import android.content.ContentResolver
 import android.net.Uri
 import android.provider.DocumentsContract
@@ -23,6 +24,7 @@ class SiblingFiles(private val resolver: ContentResolver) {
                 }
             }
         } catch (e: Exception) {
+            AppLog.w("SiblingFiles", "cannot list $dir: ${e.message}")
         }
         return out
     }
@@ -39,6 +41,7 @@ class SiblingFiles(private val resolver: ContentResolver) {
             buffer.toByteArray()
         }
     } catch (e: Exception) {
+        AppLog.w("SiblingFiles", "cannot read $uri: ${e.message}")
         null
     }
 }

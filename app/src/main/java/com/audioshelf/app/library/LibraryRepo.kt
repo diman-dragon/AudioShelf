@@ -1,5 +1,6 @@
 package com.audioshelf.app.library
 
+import com.audioshelf.app.AppLog
 import android.content.ContentResolver
 import android.net.Uri
 import com.audioshelf.app.data.Folder
@@ -12,7 +13,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flowOn
@@ -96,6 +96,7 @@ class LibraryRepo(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                AppLog.e("LibraryRepo", "scan of ${folder.uri} failed", e)
                 failed = !again
             }
             finish(folder, found, failed)
@@ -111,6 +112,7 @@ class LibraryRepo(
         if (same && failed) {
             statusFlow.value = LibStatus.Error
         } else if (same && found != null) {
+            AppLog.i("LibraryRepo", "scan finished: ${found.size} files")
             filesFlow.value = found
             statusFlow.value = LibStatus.Ok
             cache.save(folder.uri, found)

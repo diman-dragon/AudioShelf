@@ -2,6 +2,7 @@
 
 package com.audioshelf.app.player
 
+import com.audioshelf.app.AppLog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -13,7 +14,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.CommandButton
 import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionCommand
-import androidx.media3.session.SessionCommands
 import androidx.media3.session.SessionResult
 import com.audioshelf.app.R
 import com.google.common.collect.ImmutableList
@@ -34,12 +34,20 @@ class SessionCallback(
     private val fire = Runnable {
         val n = clicks
         clicks = 0
-        if (n > 0) onClicks(n)
+        if (n > 0) {
+            AppLog.i("MediaButton", "$n click(s) in a row")
+            onClicks(n)
+        }
     }
 
     override fun onMediaButtonEvent(session: MediaSession, controllerInfo: MediaSession.ControllerInfo, intent: Intent): Boolean {
         val event = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_KEY_EVENT, KeyEvent::class.java) ?: return false
         val key = event.keyCode
+        AppLog.i(
+            "MediaButton",
+            "${KeyEvent.keyCodeToString(key)} ${if (event.action == KeyEvent.ACTION_DOWN) "down" else "up"} repeat=${event.repeatCount} " +
+                "from ${controllerInfo.packageName} device=${event.deviceId} source=${event.source}",
+        )
         if (key != KeyEvent.KEYCODE_HEADSETHOOK && key != KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) return false
         if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
             clicks++
@@ -50,6 +58,7 @@ class SessionCallback(
     }
 
     override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
+        AppLog.i("SessionCallback", "controller connected: ${controller.packageName} (trusted=${controller.isTrusted})")
         val close = CommandButton.Builder(CommandButton.ICON_UNDEFINED)
             .setCustomIconResId(R.drawable.ic_close)
             .setDisplayName(context.getString(R.string.notif_close))
@@ -70,8 +79,10 @@ class SessionCallback(
         // Runs on the player's thread: building the items is a few map lookups now (the cover is a
         // pointer, not bytes) and the sound profile has to be in place before playback starts.
         try {
+            AppLog.i("SessionCallback", "playback resumption asked by ${controller.packageName}")
             Futures.immediateFuture(resume())
         } catch (e: Exception) {
+            AppLog.e("SessionCallback", "resume from the notification or a headset button failed", e)
             Futures.immediateFailedFuture(e)
         }
 

@@ -8,6 +8,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import com.audioshelf.app.AppLog
 import com.audioshelf.app.MainActivity
 import com.audioshelf.app.R
 import com.audioshelf.app.container
@@ -17,6 +18,7 @@ class PlaybackService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
+        AppLog.i("PlaybackService", "created")
         val shelf = container
         val tap = PendingIntent.getActivity(
             this,
@@ -58,12 +60,14 @@ class PlaybackService : MediaSessionService() {
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
 
     override fun onTaskRemoved(rootIntent: Intent?) {
+        AppLog.i("PlaybackService", "app swiped away from the recents")
         container.engine.flush()
         container.kv.flushNow()
         pauseAllPlayersAndStopSelf()
     }
 
     override fun onDestroy() {
+        AppLog.i("PlaybackService", "destroyed")
         session?.release()
         session = null
         container.kv.flushNow()

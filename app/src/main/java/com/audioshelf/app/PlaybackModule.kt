@@ -1,6 +1,7 @@
 package com.audioshelf.app
 
 import android.app.Application
+import com.audioshelf.app.diag.SystemWatch
 import com.audioshelf.app.library.Background
 import com.audioshelf.app.player.BookAdvancer
 import com.audioshelf.app.player.BookLoader
@@ -33,6 +34,7 @@ class PlaybackModule(
     private val scope: CoroutineScope,
     background: Background,
     private val screen: ScreenWatch,
+    system: SystemWatch,
     storage: StorageModule,
     libraryModule: LibraryModule,
 ) {
@@ -44,7 +46,7 @@ class PlaybackModule(
     private lateinit var recorder: ProgressRecorder
 
     val engine = PlaybackEngine(
-        app, scope, output, offload, background, screen,
+        app, scope, output, offload, background, screen, system,
         { storage.prefs.skipBack.value * 1000L },
         { storage.prefs.skipForward.value * 1000L },
         { periodic -> recorder.remember(periodic = periodic) },

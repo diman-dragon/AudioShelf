@@ -3,7 +3,6 @@ package com.audioshelf.app.media
 import com.audioshelf.app.data.Json
 import com.audioshelf.app.data.asList
 import com.audioshelf.app.data.asMap
-import com.audioshelf.app.data.asNumber
 
 /** Chapters from the Libby / OverDrive `openbook.json` table of contents. */
 object OpenBook {

@@ -31,6 +31,8 @@ interface SettingsActions {
     fun onOpenStats()
     fun onBackup()
     fun onRestore()
+    fun onShareLog()
+    fun onClearLog()
     fun onTheme(id: String)
     fun onLanguage(id: String)
 
@@ -46,6 +48,8 @@ interface SettingsActions {
             override fun onOpenStats() {}
             override fun onBackup() {}
             override fun onRestore() {}
+            override fun onShareLog() {}
+            override fun onClearLog() {}
             override fun onTheme(id: String) {}
             override fun onLanguage(id: String) {}
         }

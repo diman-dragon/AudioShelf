@@ -15,7 +15,8 @@ import androidx.core.view.WindowCompat
 import com.audioshelf.app.data.LANG_AUTO
 import java.util.Locale
 
-private tailrec fun Context.findActivity(): Activity? = when (this) {
+/** The activity behind a context, also through the wrapper that carries the chosen language. */
+tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
     is ContextWrapper -> baseContext.findActivity()
     else -> null
@@ -37,7 +38,7 @@ fun LocalizedContent(language: String, content: @Composable () -> Unit) {
         if (language == LANG_AUTO) {
             base to config
         } else {
-            val locale = Locale(language)
+            val locale = Locale.forLanguageTag(language)
             val changed = Configuration(config).apply {
                 setLocale(locale)
                 setLayoutDirection(locale)

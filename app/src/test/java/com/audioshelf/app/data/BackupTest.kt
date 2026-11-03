@@ -29,4 +29,21 @@ class BackupTest {
         assertNull(Backup.decode("garbage"))
         assertNull(Backup.decode(null))
     }
+
+    @Test
+    fun restoreReplacesTheStoresOfTheBackupAndKeepsDeviceKeys() {
+        val source = testKv()
+        source.put("audioshelf.stats.day", "2023-11-13", "{\"l\":100}")
+        val rows = Backup.decode(Backup.encode(Backup.rows(source), 1L))!!
+
+        val target = testKv()
+        target.put("audioshelf.stats.day", "2023-11-13", "{\"l\":999}")
+        target.put("audioshelf.stats.day", "2023-11-14", "{\"l\":5}")
+        target.put(KV_STORE, "audioshelf.folder", "{\"uri\":\"mine\"}")
+        Backup.apply(target, rows)
+
+        assertEquals("{\"l\":100}", target.get("audioshelf.stats.day", "2023-11-13"))
+        assertNull(target.get("audioshelf.stats.day", "2023-11-14"))
+        assertEquals("{\"uri\":\"mine\"}", target.get(KV_STORE, "audioshelf.folder"))
+    }
 }
