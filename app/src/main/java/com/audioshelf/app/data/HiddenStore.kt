@@ -3,6 +3,7 @@ package com.audioshelf.app.data
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 private const val STORE = "audioshelf.hidden"
 
@@ -17,23 +18,22 @@ class HiddenStore(private val kv: Kv) {
 
     fun hide(id: String) {
         kv.put(STORE, id, "1")
-        counter.value++
+        counter.update { it + 1 }
     }
 
     fun forget(id: String) {
         kv.del(STORE, id)
-        counter.value++
+        counter.update { it + 1 }
     }
 
     fun move(from: String, to: String) {
         if (from == to || !isHidden(from)) return
-        kv.del(STORE, from)
-        kv.put(STORE, to, "1")
-        counter.value++
+        kv.batch(listOf(KvOp.Del(STORE, from), KvOp.Put(STORE, to, "1")))
+        counter.update { it + 1 }
     }
 
     fun restoreAll() {
         kv.clear(STORE)
-        counter.value++
+        counter.update { it + 1 }
     }
 }

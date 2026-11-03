@@ -42,12 +42,12 @@ class FxTest {
     fun chainBoostsAndLimits() {
         val chain = SoundChain()
         chain.configure(44100, 1)
-        chain.setBoost(12)
+        chain.setSettings(FloatArray(BAND_COUNT), 12)
         chain.refresh()
         assertFalse(chain.passthrough)
         assertEquals(3981f, chain.process(1000f, 0), 40f)
         assertTrue(chain.process(30000f, 0) <= 32767f)
-        chain.setBoost(0)
+        chain.setSettings(FloatArray(BAND_COUNT), 0)
         chain.refresh()
         assertTrue(chain.passthrough)
     }

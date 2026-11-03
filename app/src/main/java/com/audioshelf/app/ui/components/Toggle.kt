@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.audioshelf.app.ui.theme.AppTheme
 
@@ -31,7 +32,7 @@ private val THUMB = 22.dp
 private val PAD = 4.dp
 
 @Composable
-fun Toggle(checked: Boolean, onChange: (Boolean) -> Unit, description: String? = null, modifier: Modifier = Modifier) {
+fun Toggle(checked: Boolean, onChange: (Boolean) -> Unit, modifier: Modifier = Modifier, description: String? = null) {
     val c = AppTheme.colors
     val track by animateColorAsState(if (checked) c.accent else c.surface, tween(160), label = "track")
     val thumb by animateColorAsState(if (checked) c.onAccent else c.muted, tween(160), label = "thumb")
@@ -49,6 +50,11 @@ fun Toggle(checked: Boolean, onChange: (Boolean) -> Unit, description: String? =
             .padding(PAD),
         contentAlignment = Alignment.CenterStart,
     ) {
-        Box(Modifier.offset(x = x).size(THUMB).clip(CircleShape).background(thumb))
+        Box(
+            Modifier.offset { IntOffset(x.roundToPx(), 0) }
+                .size(THUMB)
+                .clip(CircleShape)
+                .background(thumb),
+        )
     }
 }

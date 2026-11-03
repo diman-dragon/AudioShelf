@@ -1,4 +1,4 @@
-@file:OptIn(UnstableApi::class)
+@file:androidx.annotation.OptIn(markerClass = [UnstableApi::class])
 
 package com.audioshelf.app.player
 
@@ -52,6 +52,7 @@ class PlaybackEngine(
     private var exo: ExoPlayer? = null
     private var fader: EdgeFader? = null
     private var chapterStop: ChapterStop? = null
+    private var pauseAtEnd: PauseAtEnd? = null
     private var sleep: SleepTimer? = null
     private var saver: PositionSaver? = null
     private var diagnostics: PlaybackDiagnostics? = null
@@ -73,8 +74,10 @@ class PlaybackEngine(
         val p = factory.create(speech, skipBackMs(), skipForwardMs())
         val volume = { refreshVolume() }
         fader = EdgeFader(p, volume)
-        chapterStop = ChapterStop(p)
-        sleep = SleepTimer(p, volume)
+        val pauseAtEnd = PauseAtEnd(p)
+        this.pauseAtEnd = pauseAtEnd
+        chapterStop = ChapterStop(pauseAtEnd)
+        sleep = SleepTimer(p, volume, pauseAtEnd)
         ResumeRewind(p)
         ErrorRecovery(p) { failureFlow.tryEmit(it) }
         saver = PositionSaver(p, onSave)
@@ -281,6 +284,7 @@ class PlaybackEngine(
         exo = null
         fader = null
         chapterStop = null
+        pauseAtEnd = null
         sleep = null
         saver = null
         publish()

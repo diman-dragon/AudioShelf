@@ -7,6 +7,7 @@ import com.audioshelf.app.data.asList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 private const val QUEUE = "audioshelf.queue"
 
@@ -19,7 +20,7 @@ class QueueStore(private val kv: Kv) {
 
     private fun write(ids: List<String>) {
         if (ids.isEmpty()) kv.del(KV_STORE, QUEUE) else kv.put(KV_STORE, QUEUE, Json.write(ids))
-        counter.value++
+        counter.update { it + 1 }
     }
 
     fun add(id: String): Boolean {

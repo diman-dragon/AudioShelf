@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">AudioShelf</string>
     <string name="nav_library">Библиотека</string>
     <string name="nav_player">Плеер</string>
     <string name="nav_sound">Звук</string>

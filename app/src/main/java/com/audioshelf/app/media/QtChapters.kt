@@ -43,6 +43,6 @@ object QtChapters {
     private fun text(raw: ByteArray): String {
         val len = minOf(((raw[0].toInt() and 0xff) shl 8) or (raw[1].toInt() and 0xff), raw.size - 2)
         val utf16 = len >= 2 && (raw[2].toInt() and 0xff) == 0xFE && (raw[3].toInt() and 0xff) == 0xFF
-        return String(raw, 2, len, if (utf16) Charsets.UTF_16 else Charsets.UTF_8).replace("﻿", "")
+        return String(raw, 2, len, if (utf16) Charsets.UTF_16 else Charsets.UTF_8).replace("\uFEFF", "")
     }
 }

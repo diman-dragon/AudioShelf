@@ -6,14 +6,19 @@ import com.audioshelf.app.diag.BluetoothWatch
 import com.audioshelf.app.diag.LogShare
 import com.audioshelf.app.diag.SystemWatch
 import com.audioshelf.app.library.Background
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import java.io.File
 import kotlinx.coroutines.SupervisorJob
 
 /** The roots of the app, put together from three modules: storage, library, playback. */
 class AppContainer(app: Application) {
-    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val coroutineErrors = CoroutineExceptionHandler { context, error ->
+        AppLog.e("Coroutine", "uncaught failure in ${context[CoroutineName]?.name ?: "application scope"}", error)
+    }
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate + coroutineErrors)
     val background = Background()
     val screen = ScreenWatch(app)
     val system = SystemWatch(app).also { it.start() }

@@ -49,6 +49,20 @@ class StoresTest {
     }
 
     @Test
+    fun progressSpotAndInfoArePersistedAtomically() {
+        val backend = MemoryBackend()
+        val kv = testKv(backend)
+        val progress = ProgressStore(kv)
+
+        progress.save("book", 2, 45_000, false, 37, expanded = true)
+        kv.flushNow()
+
+        assertEquals(1, backend.writes)
+        assertEquals(2, progress.spot("book")!!.index)
+        assertEquals(37, progress.percent("book"))
+    }
+
+    @Test
     fun progressReadsOldAppRows() {
         val backend = MemoryBackend()
         backend.table["pos" to "x"] = """{"i":2,"p":90000,"t":1700000000000}"""

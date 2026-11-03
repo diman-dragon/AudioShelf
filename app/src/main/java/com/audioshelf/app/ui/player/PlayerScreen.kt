@@ -50,7 +50,12 @@ private val COVER_MIN = 64.dp
 private val BODY_MAX = 420.dp
 
 @Composable
-fun PlayerScreen(ui: PlayerUi, actions: PlayerActions, covers: CoverSource = NoCovers, modifier: Modifier = Modifier) {
+fun PlayerScreen(
+    ui: PlayerUi,
+    actions: PlayerActions,
+    modifier: Modifier = Modifier,
+    covers: CoverSource = NoCovers,
+) {
     if (!ui.loaded) {
         EmptyState(
             emoji = R.drawable.emoji_headphones,

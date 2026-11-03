@@ -1,4 +1,4 @@
-@file:OptIn(UnstableApi::class)
+@file:androidx.annotation.OptIn(markerClass = [UnstableApi::class])
 
 package com.audioshelf.app.player
 
@@ -52,6 +52,7 @@ class PlaybackService : MediaSessionService() {
     }
 
     private fun close() {
+        AppLog.i("PlaybackService", "notification close command received")
         container.engine.close()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -60,14 +61,22 @@ class PlaybackService : MediaSessionService() {
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        AppLog.i("PlaybackService", "app swiped away from the recents")
+        val state = container.engine.state.value
+        AppLog.i(
+            "PlaybackService",
+            "app swiped away from recents: playing=${state.playing}, loaded=${state.loaded}, position=${state.positionMs}ms",
+        )
         container.engine.flush()
         container.kv.flushNow()
         pauseAllPlayersAndStopSelf()
     }
 
     override fun onDestroy() {
-        AppLog.i("PlaybackService", "destroyed")
+        val state = container.engine.state.value
+        AppLog.i(
+            "PlaybackService",
+            "destroyed: playing=${state.playing}, loaded=${state.loaded}, position=${state.positionMs}ms",
+        )
         session?.release()
         session = null
         container.kv.flushNow()

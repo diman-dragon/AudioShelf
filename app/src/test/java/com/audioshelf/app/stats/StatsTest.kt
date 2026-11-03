@@ -1,6 +1,7 @@
 package com.audioshelf.app.stats
 
 import com.audioshelf.app.AppLog
+import com.audioshelf.app.data.MemoryBackend
 import com.audioshelf.app.data.testKv
 import java.util.TimeZone
 import org.junit.After
@@ -42,6 +43,20 @@ class StatsTest {
         assertEquals(20_000L, day.longestSessionMs)
         assertEquals(20_000L, day.hours.sum())
         assertEquals(20_000L, store.book("a")!!.listenedMs)
+    }
+
+    @Test
+    fun aStatsSliceIsPersistedAsOneAtomicBatch() {
+        val backend = MemoryBackend()
+        val kv = testKv(backend)
+        val store = StatsStore(kv)
+        store.add(Slice("book", "2026-11-03", 12, 1_000, true, t0))
+        kv.flushNow()
+
+        assertEquals(1, backend.writes)
+        assertEquals(1, store.days().values.single().sessions)
+        assertEquals(1_000L, store.book("book")!!.listenedMs)
+        assertEquals(1_000L, store.dayBooks().values.single()["book"])
     }
 
     @Test

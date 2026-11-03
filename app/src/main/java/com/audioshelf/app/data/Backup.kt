@@ -9,9 +9,9 @@ private val SKIP_KV_KEYS = setOf("audioshelf.folder", "audioshelf.libtree", "aud
 object Backup {
     fun rows(kv: Kv): List<KvRow> {
         val out = ArrayList<KvRow>()
-        for (store in kv.stores()) {
+        for ((store, rows) in kv.snapshot()) {
             if (store in SKIP_STORES) continue
-            for ((key, value) in kv.all(store)) {
+            for ((key, value) in rows) {
                 if (store == KV_STORE && key in SKIP_KV_KEYS) continue
                 out.add(KvRow(store, key, value))
             }
@@ -52,8 +52,10 @@ object Backup {
      * backed-up keys are replaced.
      */
     fun apply(kv: Kv, rows: List<KvRow>): Int {
-        rows.mapTo(HashSet()) { it.store }.filter { it != KV_STORE }.forEach { kv.clear(it) }
-        rows.forEach { kv.put(it.store, it.key, it.value) }
+        val ops = ArrayList<KvOp>()
+        rows.mapTo(LinkedHashSet()) { it.store }.filter { it != KV_STORE }.forEach { ops.add(KvOp.Clear(it)) }
+        rows.forEach { ops.add(KvOp.Put(it.store, it.key, it.value)) }
+        kv.batch(ops)
         kv.flushNow()
         return rows.size
     }

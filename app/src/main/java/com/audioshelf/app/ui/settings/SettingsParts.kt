@@ -66,7 +66,7 @@ fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit, hint
         Column(Modifier.fillMaxWidth().padding(vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 AText(label, 16f, c.text, Modifier.weight(1f))
-                Toggle(checked, onChange, label)
+                Toggle(checked, onChange, description = label)
             }
             if (hint != null) AText(hint, 12f, c.muted)
         }

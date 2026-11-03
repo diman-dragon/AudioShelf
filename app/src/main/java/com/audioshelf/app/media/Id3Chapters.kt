@@ -66,7 +66,7 @@ object Id3Chapters {
         val enc = d[from].toInt() and 0xff
         // Encoding 0 is "ISO-8859-1" on paper, but Russian tags are really windows-1251 (or UTF-8).
         val raw = if (enc == 0) CueSheet.decode(d.copyOfRange(from + 1, to)) else String(d, from + 1, to - from - 1, CHARSETS[minOf(3, enc)])
-        return raw.replace("﻿", "").replace("\u0000", "")
+        return raw.replace("\uFEFF", "").replace("\u0000", "")
     }
 
     private fun syncsafe(d: ByteArray, at: Int): Int =

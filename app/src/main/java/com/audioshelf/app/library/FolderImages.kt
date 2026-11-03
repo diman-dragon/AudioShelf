@@ -3,6 +3,7 @@ package com.audioshelf.app.library
 import com.audioshelf.app.AppLog
 import android.content.ContentResolver
 import android.net.Uri
+import androidx.core.net.toUri
 import android.provider.DocumentsContract
 import android.provider.DocumentsContract.Document
 import java.util.concurrent.ConcurrentHashMap
@@ -16,7 +17,7 @@ class FolderImages(private val resolver: ContentResolver) {
 
     fun of(dirUri: String): FolderListing {
         cache[dirUri]?.let { return it }
-        val listing = read(Uri.parse(dirUri))
+        val listing = read(dirUri.toUri())
         if (cache.size >= MAX_DIRS) cache.clear()
         cache[dirUri] = listing
         return listing

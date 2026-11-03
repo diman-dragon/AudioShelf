@@ -3,6 +3,7 @@ package com.audioshelf.app.player
 import android.os.SystemClock
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
+import com.audioshelf.app.AppLog
 import com.audioshelf.app.library.REWIND_MS
 import kotlin.math.abs
 
@@ -22,8 +23,8 @@ class ResumeRewind(private val player: Player) : Player.Listener {
         if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED) stoppedAt = 0
     }
 
-    override fun onIsPlayingChanged(isPlaying: Boolean) {
-        if (!isPlaying) {
+    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+        if (!playWhenReady) {
             val stopped = player.playbackState == Player.STATE_READY && player.mediaItemCount > 0
             stoppedAt = if (stopped) SystemClock.elapsedRealtime() else 0
             stoppedIndex = player.currentMediaItemIndex
@@ -35,6 +36,10 @@ class ResumeRewind(private val player: Player) : Player.Listener {
         if (at == 0L || SystemClock.elapsedRealtime() - at < MIN_STOP_MS) return
         val position = player.currentPosition
         val sameSpot = player.currentMediaItemIndex == stoppedIndex && abs(position - stoppedPosition) < SAME_SPOT_MS
-        if (sameSpot && position > 0) player.seekTo(maxOf(0L, position - REWIND_MS))
+        if (sameSpot && position > 0) {
+            val target = maxOf(0L, position - REWIND_MS)
+            AppLog.i("ResumeRewind", "rewinding ${position}ms to ${target}ms after ${SystemClock.elapsedRealtime() - at}ms before resuming")
+            player.seekTo(target)
+        }
     }
 }

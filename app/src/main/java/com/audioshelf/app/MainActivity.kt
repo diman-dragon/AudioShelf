@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.activity.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -27,19 +28,25 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         askNotifications()
-        askBluetooth()
         setContent { AudioShelfApp(container, player) }
     }
 
-    private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        AppLog.i("Permission", "notifications permission ${if (granted) "granted" else "denied"}")
+        askBluetooth()
+    }
 
     private fun askNotifications() {
-        if (Build.VERSION.SDK_INT < 33) return
+        if (Build.VERSION.SDK_INT < 33) {
+            askBluetooth()
+            return
+        }
         val granted = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-        if (!granted) notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+        if (granted) askBluetooth() else notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 
     private val bluetooth = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        getSharedPreferences("diag", MODE_PRIVATE).edit { putBoolean("bluetooth_asked", true) }
         container.bluetooth.onPermissionResult(granted)
     }
 
@@ -48,7 +55,7 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT < 31 || container.bluetooth.hasPermission()) return
         val prefs = getSharedPreferences("diag", MODE_PRIVATE)
         if (prefs.getBoolean("bluetooth_asked", false)) return
-        prefs.edit().putBoolean("bluetooth_asked", true).apply()
+        AppLog.i("Permission", "requesting Bluetooth permission for device and route diagnostics")
         bluetooth.launch(Manifest.permission.BLUETOOTH_CONNECT)
     }
 

@@ -22,20 +22,32 @@ class JitterWatch(private val power: () -> String, private val screenOn: () -> B
     private val lock = ReentrantLock()
     private val awake = lock.newCondition()
     private var active = false
+    private var closed = false
     private val main = Handler(Looper.getMainLooper())
     private val worstThread = AtomicLong()
     private val worstMain = AtomicLong()
     @Volatile private var probing = false
-
-    init {
-        Thread({ loop() }, "audioshelf-jitter").apply { isDaemon = true }.start()
+    private val thread = Thread({ loop() }, "audioshelf-jitter").apply {
+        isDaemon = true
+        start()
     }
 
     fun setActive(on: Boolean) {
         lock.withLock {
+            if (closed) return
             active = on
             if (on) awake.signalAll()
         }
+    }
+
+    fun close() {
+        lock.withLock {
+            if (closed) return
+            closed = true
+            active = false
+            awake.signalAll()
+        }
+        thread.interrupt()
     }
 
     /** The worst thread delay and the worst main-thread delay in ms since the last call. */
@@ -43,10 +55,19 @@ class JitterWatch(private val power: () -> String, private val screenOn: () -> B
 
     private fun loop() {
         while (true) {
-            lock.withLock { while (!active) awake.awaitUninterruptibly() }
+            val shouldRun = lock.withLock {
+                while (!active && !closed) awake.awaitUninterruptibly()
+                !closed
+            }
+            if (!shouldRun) return
             val up = SystemClock.uptimeMillis()
             val real = SystemClock.elapsedRealtime()
-            Thread.sleep(INTERVAL_MS)
+            try {
+                Thread.sleep(INTERVAL_MS)
+            } catch (_: InterruptedException) {
+                if (lock.withLock { closed }) return
+                continue
+            }
             val late = SystemClock.uptimeMillis() - up - INTERVAL_MS
             val asleep = SystemClock.elapsedRealtime() - real - INTERVAL_MS - late
             if (late > worstThread.get()) worstThread.set(late)
@@ -56,7 +77,7 @@ class JitterWatch(private val power: () -> String, private val screenOn: () -> B
             if (asleep > STALL_MS) {
                 AppLog.w(TAG, "SUSPENDED: the whole device slept for about $asleep ms during playback, screen ${state()}")
             }
-            probeMain()
+            if (lock.withLock { !closed }) probeMain()
         }
     }
 

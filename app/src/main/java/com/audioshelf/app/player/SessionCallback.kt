@@ -1,4 +1,4 @@
-@file:OptIn(UnstableApi::class)
+@file:androidx.annotation.OptIn(markerClass = [UnstableApi::class])
 
 package com.audioshelf.app.player
 
@@ -92,6 +92,7 @@ class SessionCallback(
         customCommand: SessionCommand,
         args: Bundle,
     ): ListenableFuture<SessionResult> {
+        AppLog.i("SessionCallback", "custom command ${customCommand.customAction}")
         if (customCommand.customAction == CLOSE.customAction) onClose()
         return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
     }

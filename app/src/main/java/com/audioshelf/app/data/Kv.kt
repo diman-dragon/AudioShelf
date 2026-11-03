@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -51,23 +52,47 @@ class Kv(
 
     fun all(store: String): Map<String, String> = synchronized(buckets) { LinkedHashMap(bucket(store)) }
 
-    fun put(store: String, key: String, value: String) {
-        synchronized(buckets) {
-            val rows = bucket(store)
-            if (rows[key] == value) return
-            rows[key] = value
+    fun snapshot(): Map<String, Map<String, String>> = synchronized(buckets) {
+        buckets.mapValues { (_, rows) -> LinkedHashMap(rows) }
+    }
+
+    fun put(store: String, key: String, value: String) = batch(listOf(KvOp.Put(store, key, value)))
+
+    fun del(store: String, key: String) = batch(listOf(KvOp.Del(store, key)))
+
+    fun clear(store: String) = batch(listOf(KvOp.Clear(store)))
+
+    /**
+     * Applies related changes to the in-memory view and write queue under the same locks.
+     * The backend writes the resulting batch in one transaction.
+     */
+    fun batch(ops: List<KvOp>) {
+        if (ops.isEmpty()) return
+        val changed = ArrayList<KvOp>(ops.size)
+        synchronized(pending) {
+            synchronized(buckets) {
+                for (op in ops) {
+                    when (op) {
+                        is KvOp.Put -> {
+                            val rows = bucket(op.store)
+                            if (rows[op.key] != op.value) {
+                                rows[op.key] = op.value
+                                changed.add(op)
+                            }
+                        }
+                        is KvOp.Del -> {
+                            if (bucket(op.store).remove(op.key) != null) changed.add(op)
+                        }
+                        is KvOp.Clear -> {
+                            bucket(op.store).clear()
+                            changed.add(op)
+                        }
+                    }
+                }
+            }
+            pending.addAll(changed)
         }
-        queue(KvOp.Put(store, key, value))
-    }
-
-    fun del(store: String, key: String) {
-        if (synchronized(buckets) { bucket(store).remove(key) } == null) return
-        queue(KvOp.Del(store, key))
-    }
-
-    fun clear(store: String) {
-        synchronized(buckets) { bucket(store).clear() }
-        queue(KvOp.Clear(store))
+        if (changed.isNotEmpty()) ensureFlusher()
     }
 
     /** Writes everything queued so far, on the calling thread. A failed batch stays queued and is retried by the timer. */
@@ -104,11 +129,6 @@ class Kv(
                 Drain.Failed
             }
         }
-    }
-
-    private fun queue(op: KvOp) {
-        synchronized(pending) { pending.add(op) }
-        ensureFlusher()
     }
 
     /** One flusher at a time. It stops only after it has seen the queue empty under the same lock [queue] adds under, so nothing is left behind. */

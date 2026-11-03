@@ -9,7 +9,11 @@ private const val TICK_MS = 1000L
 private const val FADE_TICK_MS = 200L
 private const val FADE_MS = 15_000L
 
-class SleepTimer(private val player: Player, private val onChange: () -> Unit) : Player.Listener, Runnable {
+class SleepTimer(
+    private val player: Player,
+    private val onChange: () -> Unit,
+    private val pauseAtEnd: PauseAtEnd,
+) : Player.Listener, Runnable {
     private val handler = Handler(Looper.getMainLooper())
     @Volatile var left = 0L
         private set
@@ -25,7 +29,8 @@ class SleepTimer(private val player: Player, private val onChange: () -> Unit) :
         handler.post {
             handler.removeCallbacks(this)
             left = minutes * 60_000L
-            atChapterEnd = chapter
+            atChapterEnd = chapter && left > 0
+            pauseAtEnd.setForSleep(atChapterEnd)
             lastTick = SystemClock.elapsedRealtime()
             onChange()
             if (left > 0) handler.postDelayed(this, TICK_MS)
@@ -41,6 +46,7 @@ class SleepTimer(private val player: Player, private val onChange: () -> Unit) :
         handler.removeCallbacksAndMessages(null)
         left = 0
         atChapterEnd = false
+        pauseAtEnd.setForSleep(false)
     }
 
     override fun run() {
@@ -49,6 +55,8 @@ class SleepTimer(private val player: Player, private val onChange: () -> Unit) :
         lastTick = now
         if (left <= 0) {
             left = 0
+            atChapterEnd = false
+            pauseAtEnd.setForSleep(false)
             player.pause()
             onChange()
             return
@@ -57,14 +65,19 @@ class SleepTimer(private val player: Player, private val onChange: () -> Unit) :
         handler.postDelayed(this, if (left < FADE_MS) FADE_TICK_MS else TICK_MS)
     }
 
-    override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
-        if (atChapterEnd && reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
+    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+        if (!playWhenReady && reason == Player.PLAY_WHEN_READY_CHANGE_REASON_END_OF_MEDIA_ITEM && atChapterEnd) {
             atChapterEnd = false
-            player.pause()
+            pauseAtEnd.setForSleep(false)
+            onChange()
         }
     }
 
     override fun onPlaybackStateChanged(playbackState: Int) {
-        if (playbackState == Player.STATE_ENDED) atChapterEnd = false
+        if (playbackState == Player.STATE_ENDED && atChapterEnd) {
+            atChapterEnd = false
+            pauseAtEnd.setForSleep(false)
+            onChange()
+        }
     }
 }

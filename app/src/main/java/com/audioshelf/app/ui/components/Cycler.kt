@@ -22,8 +22,8 @@ import com.audioshelf.app.ui.theme.AppTheme
 fun Cycler(
     text: String,
     onNext: () -> Unit,
-    description: String? = null,
     modifier: Modifier = Modifier,
+    description: String? = null,
     active: Boolean = false,
     horizontal: Dp = 16.dp,
     icon: SvgSpec? = null,

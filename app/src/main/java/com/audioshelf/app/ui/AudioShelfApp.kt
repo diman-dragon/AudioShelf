@@ -100,7 +100,7 @@ fun AudioShelfApp(container: AppContainer, player: PlayerViewModel) {
                             }
                             Screen.Player -> {
                                 val ui by player.ui.collectAsState()
-                                PlayerScreen(ui, playerActions, container.covers)
+                                PlayerScreen(ui, playerActions, covers = container.covers)
                             }
                             Screen.Sound -> {
                                 val ui by container.sound.ui.collectAsState()

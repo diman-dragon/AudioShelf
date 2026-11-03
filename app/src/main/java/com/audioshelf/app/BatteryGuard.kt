@@ -4,9 +4,9 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings
+import androidx.core.net.toUri
 import com.audioshelf.app.data.Kv
 
 private const val STORE = "audioshelf.battery"
@@ -15,7 +15,7 @@ private const val ASKED = "asked"
 /**
  * With the screen off many phones cut a background app's CPU time, and the sound stutters until
  * the screen is switched on again. Being exempt from battery optimization is what lifts that
- * limit; this asks for it once, and the settings row can ask again.
+ * limit; this opens the system battery-optimization list so the user can choose an exemption.
  */
 class BatteryGuard(private val app: Application, private val kv: Kv) {
     fun isExempt(): Boolean =
@@ -25,12 +25,11 @@ class BatteryGuard(private val app: Application, private val kv: Kv) {
 
     fun markAsked() = kv.put(STORE, ASKED, "1")
 
-    /** Opens the system dialog that grants the exemption, or the list where it can be revoked when it is already granted. */
+    /** Opens system battery settings, then falls back to this app's details page if unavailable. */
     fun open(context: Context) {
         val intents = listOf(
-            if (isExempt()) Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-            else Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${app.packageName}")),
-            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${app.packageName}")),
+            Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS),
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:${app.packageName}".toUri()),
         )
         AppLog.i("BatteryGuard", "asked; exempt=${isExempt()}")
         for (intent in intents) {

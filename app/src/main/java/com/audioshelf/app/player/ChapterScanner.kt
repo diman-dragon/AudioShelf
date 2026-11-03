@@ -2,7 +2,7 @@ package com.audioshelf.app.player
 
 import com.audioshelf.app.AppLog
 import android.content.Context
-import android.net.Uri
+import androidx.core.net.toUri
 import com.audioshelf.app.library.Book
 import com.audioshelf.app.library.LibFile
 import com.audioshelf.app.library.SiblingFiles
@@ -36,7 +36,7 @@ class ChapterScanner(private val context: Context, private val store: ChapterSto
     }
 
     private fun read(file: LibFile) =
-        ChannelSource.open(context, Uri.parse(file.uri)).use { FileTags.read(it, false).chapters }
+        ChannelSource.open(context, file.uri.toUri()).use { FileTags.read(it, false).chapters }
 
     private fun external(book: Book, file: LibFile): List<Chapter> = runCatching {
         val entries = siblings.list(file.dirUri)

@@ -4,6 +4,7 @@ import com.audioshelf.app.AppLog
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.core.net.toUri
 import com.audioshelf.app.R
 import com.audioshelf.app.data.Folder
 import com.audioshelf.app.data.FolderStore
@@ -172,7 +173,7 @@ class LibraryController(
         val folder = folders.current.value ?: return
         runCatching {
             context.contentResolver.releasePersistableUriPermission(
-                Uri.parse(folder.uri),
+                folder.uri.toUri(),
                 Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
             )
         }

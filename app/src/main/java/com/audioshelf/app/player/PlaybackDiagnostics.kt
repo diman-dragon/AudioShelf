@@ -1,4 +1,4 @@
-@file:OptIn(UnstableApi::class)
+@file:androidx.annotation.OptIn(markerClass = [UnstableApi::class])
 
 package com.audioshelf.app.player
 
@@ -24,14 +24,27 @@ import com.audioshelf.app.diag.JitterWatch
 import com.audioshelf.app.diag.SystemWatch
 import com.audioshelf.app.sound.SoundStats
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private const val TAG = "Playback"
 private const val BEAT_MS = 2_000L
+private const val ENVIRONMENT_SAMPLE_MS = 5_000L
+
+private data class Underrun(
+    val positionMs: Long,
+    val bufferBytes: Int,
+    val bufferMs: Long,
+    val elapsedSinceFeedMs: Long,
+    val elapsedRealtimeMs: Long,
+)
 
 /**
  * Everything the player says about itself, in the log: states, the decoder and audio track in use,
@@ -48,8 +61,11 @@ class PlaybackDiagnostics(
 ) : AnalyticsListener {
     private val jitter = JitterWatch(system::powerLine) { screen.on.value }
     private var beat: Job? = null
-    private var underruns = 0
-    private var underrunsTotal = 0
+    private var environment: Job? = null
+    private val underruns = AtomicInteger()
+    private val underrunsTotal = AtomicInteger()
+    private val lastUnderrun = AtomicReference<Underrun?>()
+    @Volatile private var environmentSnapshot = "system-state=pending"
     private var lastCpuMs = Process.getElapsedCpuTime()
     private var lastWallMs = SystemClock.elapsedRealtime()
     private var lastGc = gcCount("art.gc.gc-count")
@@ -58,7 +74,17 @@ class PlaybackDiagnostics(
     fun setPlaying(on: Boolean) {
         jitter.setActive(on)
         beat?.cancel()
-        if (!on) return
+        environment?.cancel()
+        if (!on) {
+            logUnderruns("playback stopped")
+            return
+        }
+        environment = scope.launch {
+            while (isActive) {
+                environmentSnapshot = withContext(Dispatchers.IO) { sampleEnvironment() }
+                delay(ENVIRONMENT_SAMPLE_MS)
+            }
+        }
         lastCpuMs = Process.getElapsedCpuTime()
         lastWallMs = SystemClock.elapsedRealtime()
         beat = scope.launch {
@@ -71,7 +97,9 @@ class PlaybackDiagnostics(
 
     fun release() {
         beat?.cancel()
+        environment?.cancel()
         jitter.setActive(false)
+        jitter.close()
     }
 
     private fun heartbeat() {
@@ -93,11 +121,37 @@ class PlaybackDiagnostics(
             TAG,
             "beat: pos=${position / 1000}s buffered-ahead=${ahead}ms state=${stateName(player.playbackState)} " +
                 "loading=${player.isLoading} speed=${player.playbackParameters.speed} volume=${"%.2f".format(player.volume)} " +
-                "screen=${if (screen.on.value) "on" else "off"} underruns=$underruns cpu=$cpu% $gcLine " +
+                "screen=${if (screen.on.value) "on" else "off"} underruns=${underruns.get()} cpu=$cpu% $gcLine " +
                 "worst-thread-delay=${threadLate}ms worst-main-delay=${mainLate}ms " +
-                "${stats.drain().describe()} ${system.powerLine()} ${system.resourceLine()} ${system.routeLine()}",
+                "${stats.drain().describe()} $environmentSnapshot",
         )
-        underruns = 0
+        logUnderruns("heartbeat")
+    }
+
+    private fun sampleEnvironment(): String = listOf(
+        "power" to system::powerLine,
+        "device" to system::resourceLine,
+        "route" to system::routeLine,
+    ).joinToString(" ") { (name, read) ->
+        try {
+            read()
+        } catch (e: Exception) {
+            AppLog.w(TAG, "could not sample $name state for playback diagnostics", e)
+            "$name=unavailable"
+        }
+    }
+
+    private fun logUnderruns(reason: String) {
+        val count = underruns.getAndSet(0)
+        if (count == 0) return
+        val last = lastUnderrun.getAndSet(null)
+        AppLog.w(
+            "Stutter",
+            "UNDERRUN burst: count=$count total=${underrunsTotal.get()} reason=$reason " +
+                "last=${last?.let { "pos=${it.positionMs}ms buffer=${it.bufferBytes}B/${it.bufferMs}ms " +
+                    "feed-gap=${it.elapsedSinceFeedMs}ms event-time=${it.elapsedRealtimeMs}ms" } ?: "details unavailable"} " +
+                "screen=${if (screen.on.value) "on" else "off"} $environmentSnapshot",
+        )
     }
 
     private fun gcCount(key: String): Long = Debug.getRuntimeStat(key)?.toLongOrNull() ?: 0L
@@ -139,7 +193,10 @@ class PlaybackDiagnostics(
     }
 
     override fun onIsPlayingChanged(eventTime: AnalyticsListener.EventTime, isPlaying: Boolean) {
-        AppLog.i(TAG, "playing=$isPlaying ${at(eventTime)}, screen ${if (screen.on.value) "on" else "off"}, ${system.powerLine()}")
+        AppLog.i(
+            TAG,
+            "playing=$isPlaying ${at(eventTime)}, screen ${if (screen.on.value) "on" else "off"}, $environmentSnapshot",
+        )
     }
 
     override fun onIsLoadingChanged(eventTime: AnalyticsListener.EventTime, isLoading: Boolean) {
@@ -147,13 +204,17 @@ class PlaybackDiagnostics(
     }
 
     override fun onAudioUnderrun(eventTime: AnalyticsListener.EventTime, bufferSize: Int, bufferSizeMs: Long, elapsedSinceLastFeedMs: Long) {
-        underruns++
-        underrunsTotal++
-        AppLog.w(
-            "Stutter",
-            "UNDERRUN #$underrunsTotal ${at(eventTime)}: the audio track ran dry, buffer $bufferSize bytes ($bufferSizeMs ms), " +
-                "last fed $elapsedSinceLastFeedMs ms ago, screen ${if (screen.on.value) "on" else "off"}, ${system.powerLine()} ${system.routeLine()}",
+        lastUnderrun.set(
+            Underrun(
+                eventTime.currentPlaybackPositionMs,
+                bufferSize,
+                bufferSizeMs,
+                elapsedSinceLastFeedMs,
+                SystemClock.elapsedRealtime(),
+            ),
         )
+        underrunsTotal.incrementAndGet()
+        underruns.incrementAndGet()
     }
 
     override fun onVolumeChanged(eventTime: AnalyticsListener.EventTime, volume: Float) {

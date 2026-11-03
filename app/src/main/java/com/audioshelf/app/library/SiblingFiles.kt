@@ -3,6 +3,7 @@ package com.audioshelf.app.library
 import com.audioshelf.app.AppLog
 import android.content.ContentResolver
 import android.net.Uri
+import androidx.core.net.toUri
 import android.provider.DocumentsContract
 import android.provider.DocumentsContract.Document
 
@@ -10,7 +11,7 @@ class SiblingEntry(val name: String, val uri: String)
 
 class SiblingFiles(private val resolver: ContentResolver) {
     fun list(dirUri: String): List<SiblingEntry> {
-        val dir = Uri.parse(dirUri)
+        val dir = dirUri.toUri()
         val out = ArrayList<SiblingEntry>()
         try {
             val children = DocumentsContract.buildChildDocumentsUriUsingTree(dir, DocumentsContract.getDocumentId(dir))
@@ -30,7 +31,7 @@ class SiblingFiles(private val resolver: ContentResolver) {
     }
 
     fun read(uri: String, limit: Int = 1 shl 20): ByteArray? = try {
-        resolver.openInputStream(Uri.parse(uri))?.use { input ->
+        resolver.openInputStream(uri.toUri())?.use { input ->
             val buffer = java.io.ByteArrayOutputStream()
             val chunk = ByteArray(8192)
             while (buffer.size() < limit) {

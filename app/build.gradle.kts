@@ -28,6 +28,12 @@ android {
         localeFilters += listOf("en", "ru")
     }
 
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
+
     signingConfigs {
         if (secret("AUDIOSHELF_DEBUG_KEYSTORE_FILE") != null) {
             create("audioshelfDebug") {
@@ -55,7 +61,9 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfigs.findByName("audioshelfRelease")?.let { signingConfig = it }
+            signingConfig = signingConfigs.findByName("audioshelfRelease")
+                ?: signingConfigs.findByName("audioshelfDebug")
+                ?: signingConfigs.getByName("debug")
         }
     }
 

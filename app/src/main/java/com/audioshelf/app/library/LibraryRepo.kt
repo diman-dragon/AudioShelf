@@ -3,6 +3,7 @@ package com.audioshelf.app.library
 import com.audioshelf.app.AppLog
 import android.content.ContentResolver
 import android.net.Uri
+import androidx.core.net.toUri
 import com.audioshelf.app.data.Folder
 import com.audioshelf.app.data.FolderStore
 import com.audioshelf.app.data.HiddenStore
@@ -91,7 +92,7 @@ class LibraryRepo(
             var found: List<LibFile>? = null
             var failed = false
             try {
-                val result = scan.scan(Uri.parse(folder.uri)) { progressFlow.value = it }
+                val result = scan.scan(folder.uri.toUri()) { progressFlow.value = it }
                 if (!again && (!result.cancelled || statusFlow.value != LibStatus.Ok)) found = result.files
             } catch (e: CancellationException) {
                 throw e

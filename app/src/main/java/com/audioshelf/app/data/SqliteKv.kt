@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import androidx.core.database.sqlite.transaction
 
 class SqliteKv(context: Context) : SQLiteOpenHelper(context.applicationContext, "audioshelf.db", null, 1), KvBackend {
     init {
@@ -28,8 +29,7 @@ class SqliteKv(context: Context) : SQLiteOpenHelper(context.applicationContext, 
     @Synchronized
     override fun write(ops: List<KvOp>) {
         val db = writableDatabase
-        db.beginTransaction()
-        try {
+        db.transaction {
             for (op in ops) {
                 when (op) {
                     is KvOp.Put -> {
@@ -43,9 +43,6 @@ class SqliteKv(context: Context) : SQLiteOpenHelper(context.applicationContext, 
                     is KvOp.Clear -> db.delete("kv", "s = ?", arrayOf(op.store))
                 }
             }
-            db.setTransactionSuccessful()
-        } finally {
-            db.endTransaction()
         }
     }
 }

@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import androidx.core.net.toUri
 import com.audioshelf.app.media.ChannelSource
 import com.audioshelf.app.media.FileTags
 import java.io.ByteArrayOutputStream
@@ -33,13 +34,13 @@ class CoverBytes(private val context: Context) {
     }
 
     private fun readImage(art: ArtFile): ByteArray? = try {
-        context.contentResolver.openInputStream(Uri.parse(art.uri))?.use { it.readBytes() }
+        context.contentResolver.openInputStream(art.uri.toUri())?.use { it.readBytes() }
     } catch (e: Exception) {
         AppLog.d("CoverBytes", "cannot read image ${art.name}: ${e.message}")
         null
     }
 
-    private fun embedded(file: LibFile): ByteArray? = raw(Uri.parse(file.uri))
+    private fun embedded(file: LibFile): ByteArray? = raw(file.uri.toUri())
 
     private fun raw(uri: Uri): ByteArray? {
         val retriever = MediaMetadataRetriever()

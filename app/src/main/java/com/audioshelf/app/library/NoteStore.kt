@@ -2,11 +2,13 @@ package com.audioshelf.app.library
 
 import com.audioshelf.app.data.Json
 import com.audioshelf.app.data.Kv
+import com.audioshelf.app.data.KvOp
 import com.audioshelf.app.data.asList
 import com.audioshelf.app.data.asMap
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 private const val NOTES = "audioshelf.notes"
 private const val CHARS = "audioshelf.chars"
@@ -22,7 +24,7 @@ class NoteStore(private val kv: Kv) {
 
     fun setNote(id: String, text: String) {
         if (text.isBlank()) kv.del(NOTES, id) else kv.put(NOTES, id, text)
-        counter.value++
+        counter.update { it + 1 }
     }
 
     fun people(id: String): List<Person> = Json.parse(kv.get(CHARS, id)).asList()?.mapNotNull {
@@ -32,7 +34,7 @@ class NoteStore(private val kv: Kv) {
 
     private fun write(id: String, list: List<Person>) {
         if (list.isEmpty()) kv.del(CHARS, id) else kv.put(CHARS, id, Json.write(list.map { linkedMapOf("n" to it.name, "d" to it.note) }))
-        counter.value++
+        counter.update { it + 1 }
     }
 
     fun addPerson(id: String, name: String, note: String): Boolean {
@@ -50,20 +52,23 @@ class NoteStore(private val kv: Kv) {
 
     fun move(from: String, to: String) {
         if (from == to) return
-        kv.get(NOTES, from)?.let {
-            kv.del(NOTES, from)
-            kv.put(NOTES, to, it)
+        val note = kv.get(NOTES, from)
+        val people = kv.get(CHARS, from)
+        val ops = ArrayList<KvOp>(4)
+        if (note != null) {
+            ops.add(KvOp.Del(NOTES, from))
+            ops.add(KvOp.Put(NOTES, to, note))
         }
-        kv.get(CHARS, from)?.let {
-            kv.del(CHARS, from)
-            kv.put(CHARS, to, it)
+        if (people != null) {
+            ops.add(KvOp.Del(CHARS, from))
+            ops.add(KvOp.Put(CHARS, to, people))
         }
-        counter.value++
+        if (ops.isNotEmpty()) kv.batch(ops)
+        counter.update { it + 1 }
     }
 
     fun forget(id: String) {
-        kv.del(NOTES, id)
-        kv.del(CHARS, id)
-        counter.value++
+        kv.batch(listOf(KvOp.Del(NOTES, id), KvOp.Del(CHARS, id)))
+        counter.update { it + 1 }
     }
 }

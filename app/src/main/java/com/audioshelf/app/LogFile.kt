@@ -10,9 +10,14 @@ import java.util.Locale
 import java.util.concurrent.Callable
 import java.util.concurrent.FutureTask
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeoutException
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -39,8 +44,9 @@ class LogFile(
     private val worker = ThreadPoolExecutor(
         1, 1, 0L, TimeUnit.MILLISECONDS, queue,
         ThreadFactory { r -> Thread(r, "audioshelf-log").apply { isDaemon = true } },
-        ThreadPoolExecutor.DiscardPolicy(),
     )
+    private val droppedLines = AtomicLong()
+    private val overflowReported = AtomicBoolean()
     private val timeFormat = object : ThreadLocal<SimpleDateFormat>() {
         override fun initialValue() = SimpleDateFormat("HH:mm:ss.SSS", Locale.ROOT)
     }
@@ -57,7 +63,15 @@ class LogFile(
         val day = dayFormat.get()!!.format(at)
         val line = timeFormat.get()!!.format(at) + " " + letter(level) + "/" + tag +
             " [" + Thread.currentThread().name + "] " + message + "\n"
-        worker.execute { write(day, line) }
+        val dropped = droppedLines.getAndSet(0)
+        val completeLine = if (dropped > 0) "--- log queue dropped $dropped line(s) under load ---\n$line" else line
+        try {
+            worker.execute { write(day, completeLine) }
+            overflowReported.set(false)
+        } catch (e: RejectedExecutionException) {
+            droppedLines.addAndGet(dropped + 1)
+            if (overflowReported.compareAndSet(false, true)) report("log queue is full; dropping log lines", e)
+        }
     }
 
     /** Waits until everything queued so far is on disk. */
@@ -107,24 +121,36 @@ class LogFile(
             if (day != openDay) switchTo(day)
             val w = writer ?: return
             if (full) return
-            if (size + line.length > maxDayBytes) {
+            val lineBytes = line.toByteArray(Charsets.UTF_8).size
+            if (size + lineBytes > maxDayBytes) {
                 full = true
-                w.write("--- this day's log reached the size limit, the rest of the day is not recorded ---\n")
+                val limitMessage = "--- this day's log reached the size limit, the rest of the day is not recorded ---\n"
+                w.write(limitMessage)
+                size += limitMessage.toByteArray(Charsets.UTF_8).size
                 w.flush()
                 return
             }
             w.write(line)
-            size += line.length
+            size += lineBytes
             if (queue.isEmpty()) w.flush()
         } catch (e: Exception) {
-            runCatching { writer?.close() }
+            report("could not write the app log", e)
+            try {
+                writer?.close()
+            } catch (closeError: Exception) {
+                report("could not close the app log after a write failure", closeError)
+            }
             writer = null
             openDay = null
         }
     }
 
     private fun switchTo(day: String) {
-        runCatching { writer?.close() }
+        try {
+            writer?.close()
+        } catch (e: Exception) {
+            report("could not close the previous app log", e)
+        }
         writer = null
         openDay = day
         dir.mkdirs()
@@ -137,11 +163,33 @@ class LogFile(
 
     private fun <T> onWorker(timeoutMs: Long, task: () -> T): T? {
         val job = FutureTask(Callable { task() })
-        worker.execute(job)
+        try {
+            worker.execute(job)
+        } catch (e: RejectedExecutionException) {
+            report("could not queue a log-file operation", e)
+            return null
+        }
         return try {
             job.get(timeoutMs, TimeUnit.MILLISECONDS)
-        } catch (e: Exception) {
+        } catch (e: TimeoutException) {
+            job.cancel(false)
+            report("log-file operation timed out after ${timeoutMs}ms", e)
             null
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            report("interrupted while waiting for a log-file operation", e)
+            null
+        } catch (e: ExecutionException) {
+            report("log-file operation failed", e.cause ?: e)
+            null
+        }
+    }
+
+    private fun report(message: String, error: Throwable) {
+        try {
+            android.util.Log.e("AudioShelf/LogFile", message, error)
+        } catch (_: RuntimeException) {
+            System.err.println("AudioShelf/LogFile: $message: $error")
         }
     }
 

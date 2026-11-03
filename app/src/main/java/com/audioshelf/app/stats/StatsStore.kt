@@ -2,10 +2,12 @@ package com.audioshelf.app.stats
 
 import com.audioshelf.app.data.FlatJson
 import com.audioshelf.app.data.Kv
+import com.audioshelf.app.data.KvOp
 import com.audioshelf.app.data.long
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 private const val DAYS = "audioshelf.stats.day"
 private const val BOOKS = "audioshelf.stats.book"
@@ -47,28 +49,30 @@ class StatsStore(private val kv: Kv) {
         if (slice.newSession) day.bump("n", 1)
         day.bump("h" + slice.hour, slice.listenedMs)
         if (slice.sessionMs > (day.long("m") ?: 0L)) day["m"] = slice.sessionMs
-        kv.put(DAYS, slice.dayKey, FlatJson.write(day))
-
         val book = LinkedHashMap<String, Any?>(FlatJson.parse(kv.get(BOOKS, slice.bookId)) ?: emptyMap())
         book.bump("l", slice.listenedMs)
         if (slice.newSession) book.bump("n", 1)
         if (book.long("f") == null) book["f"] = slice.now
         book["t"] = slice.now
-        kv.put(BOOKS, slice.bookId, FlatJson.write(book))
-
         val dayBookKey = slice.dayKey + SEP + slice.bookId
         val dayBook = LinkedHashMap<String, Any?>(FlatJson.parse(kv.get(DAY_BOOKS, dayBookKey)) ?: emptyMap())
         dayBook.bump("l", slice.listenedMs)
-        kv.put(DAY_BOOKS, dayBookKey, FlatJson.write(dayBook))
-        counter.value++
+        kv.batch(
+            listOf(
+                KvOp.Put(DAYS, slice.dayKey, FlatJson.write(day)),
+                KvOp.Put(BOOKS, slice.bookId, FlatJson.write(book)),
+                KvOp.Put(DAY_BOOKS, dayBookKey, FlatJson.write(dayBook)),
+            ),
+        )
+        counter.update { it + 1 }
     }
 
     @Synchronized
     fun finished(bookId: String, now: Long) {
         val book = LinkedHashMap<String, Any?>(FlatJson.parse(kv.get(BOOKS, bookId)) ?: emptyMap())
         book["d"] = now
-        kv.put(BOOKS, bookId, FlatJson.write(book))
-        counter.value++
+        kv.batch(listOf(KvOp.Put(BOOKS, bookId, FlatJson.write(book))))
+        counter.update { it + 1 }
     }
 
     fun days(): Map<String, DayStat> {

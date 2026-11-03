@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.core.net.toUri
 import android.provider.DocumentsContract
 import android.provider.DocumentsContract.Document
 import java.io.IOException
@@ -16,15 +17,15 @@ class FileOps(private val context: Context) {
     private val resolver get() = context.contentResolver
 
     suspend fun remove(uri: String) = withContext(Dispatchers.IO) {
-        if (!DocumentsContract.deleteDocument(resolver, Uri.parse(uri))) throw IOException("delete failed")
+        if (!DocumentsContract.deleteDocument(resolver, uri.toUri())) throw IOException("delete failed")
     }
 
     suspend fun rename(uri: String, name: String): String = withContext(Dispatchers.IO) {
-        DocumentsContract.renameDocument(resolver, Uri.parse(uri), name)?.toString() ?: throw IOException("rename failed")
+        DocumentsContract.renameDocument(resolver, uri.toUri(), name)?.toString() ?: throw IOException("rename failed")
     }
 
     fun open(uri: String) {
-        val target = Uri.parse(uri)
+        val target = uri.toUri()
         val mime = resolver.getType(target)
         val intent = Intent(Intent.ACTION_VIEW)
             .setDataAndType(target, if (mime != null && mime.startsWith("audio/")) mime else "audio/*")

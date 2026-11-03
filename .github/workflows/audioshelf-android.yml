@@ -48,17 +48,17 @@ jobs:
             echo "::warning::Signing secrets are not set: the APK is signed with a temporary debug key and will not install over an APK signed with your key."
           fi
 
-      - name: Build debug APK
+      - name: Build optimized release APK
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: Name the APK
         id: apk
         run: |
           VERSION=$(tr -d '[:space:]' < version.txt)
           FILE="AudioShelf-$VERSION.apk"
-          cp app/build/outputs/apk/debug/app-debug.apk "$FILE"
+          cp app/build/outputs/apk/release/app-release.apk "$FILE"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "file=$FILE" >> "$GITHUB_OUTPUT"
 

@@ -1,4 +1,4 @@
-@file:OptIn(UnstableApi::class)
+@file:androidx.annotation.OptIn(markerClass = [UnstableApi::class])
 
 package com.audioshelf.app.sound
 
@@ -14,12 +14,13 @@ class SoundOutput(private val onNeutral: (Boolean) -> Unit = {}) {
 
     /** Applies the sound settings; repeated identical calls do nothing. */
     fun apply(bands: List<Int>, boostDb: Int) {
-        if (bands == lastBands && boostDb == lastBoost) return
-        lastBands = bands
-        lastBoost = boostDb
-        AppLog.i("SoundOutput", "settings: bands=${bands.joinToString(",")} dB, boost $boostDb dB")
-        chain.setBands(FloatArray(BAND_COUNT) { bands.getOrElse(it) { 0 }.toFloat() })
-        chain.setBoost(boostDb)
-        onNeutral(bands.all { it == 0 } && boostDb == 0)
+        val normalizedBands = List(BAND_COUNT) { bands.getOrElse(it) { 0 }.coerceIn(MIN_DB, MAX_DB) }
+        val normalizedBoost = boostDb.coerceIn(0, 12)
+        if (normalizedBands == lastBands && normalizedBoost == lastBoost) return
+        lastBands = normalizedBands
+        lastBoost = normalizedBoost
+        AppLog.i("SoundOutput", "settings: bands=${normalizedBands.joinToString(",")} dB, boost $normalizedBoost dB")
+        chain.setSettings(FloatArray(BAND_COUNT) { normalizedBands[it].toFloat() }, normalizedBoost)
+        onNeutral(normalizedBands.all { it == 0 } && normalizedBoost == 0)
     }
 }

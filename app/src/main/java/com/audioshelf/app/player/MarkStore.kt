@@ -2,11 +2,13 @@ package com.audioshelf.app.player
 
 import com.audioshelf.app.data.Json
 import com.audioshelf.app.data.Kv
+import com.audioshelf.app.data.KvOp
 import com.audioshelf.app.data.asList
 import com.audioshelf.app.data.asMap
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 private const val STORE = "audioshelf.marks"
 private const val NEAR_MS = 1000L
@@ -52,15 +54,14 @@ class MarkStore(private val kv: Kv) {
         val value = kv.get(STORE, from) ?: return
         cache.remove(from)
         cache.remove(to)
-        kv.del(STORE, from)
-        kv.put(STORE, to, value)
-        counter.value++
+        kv.batch(listOf(KvOp.Del(STORE, from), KvOp.Put(STORE, to, value)))
+        counter.update { it + 1 }
     }
 
     fun forget(id: String) {
         cache.remove(id)
         kv.del(STORE, id)
-        counter.value++
+        counter.update { it + 1 }
     }
 
     private fun write(id: String, marks: List<Mark>) {
@@ -68,7 +69,7 @@ class MarkStore(private val kv: Kv) {
         val rows = sorted.map { linkedMapOf("i" to it.index, "p" to it.positionMs, "t" to it.created, "x" to if (it.expanded) 1 else 0) }
         cache.remove(id)
         kv.put(STORE, id, Json.write(rows))
-        counter.value++
+        counter.update { it + 1 }
     }
 
     private fun row(m: Map<String, Any?>?): Mark? {
