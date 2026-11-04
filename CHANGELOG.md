@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.5
+- Notifications: two new switches in Settings. "Lower the book for notifications" (off by default, the behavior so far): while a notification sounds the book plays at a fifth of its volume and then comes back. "Back 10 s after a notification" (on): when the notification is over the book goes back 10 seconds, so nothing is missed. The log says `notification over after N ms: back ...` when it does.
+- Bluetooth: the charge of the headphones or speaker is read when the device reports it (a hidden Android call; where Android refuses it, nothing is shown). It is written to the log with the device (`battery 80%`, also at every change of the charge) and shown in Settings under "Connected headphones and speakers".
+- Log: the quick database writes (`wrote 1 ops`, every few seconds, a third of the log) are now one line a minute (`wrote N ops in M batches over 60 s, slowest X ms`); slow writes are still logged one by one.
+
+## 1.4.4
+Found in the log of 4 November (7 hours on a Bluetooth headset: no stutter, no underruns).
+- Bluetooth: not one Bluetooth event reached the log in those 7 hours (the headset connecting, the stream state, the codec, the disconnect at 22:47), though the permission was given. The receiver was registered as not exported, and Android drops the broadcasts that the Bluetooth app sends to such a receiver. It is now registered as exported; the broadcasts are protected (only the system can send them) and the receiver only writes a log line.
+
 ## 1.4.3
 Fixes found by reading the logs of 3-4 November.
 - Calls: the audio focus handler read the audio mode twice, so a ringing phone could be logged as "audio mode 1, call=false" and the pause waited for the next check. The mode is now read once, and the first check for a call that starts a moment after the focus loss runs after 100 ms (it was 300 ms): the book stops with the first ring instead of about 0.4 s later.

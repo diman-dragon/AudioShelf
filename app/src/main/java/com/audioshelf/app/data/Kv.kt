@@ -14,6 +14,7 @@ private const val FLUSH_MS = 250L
 private const val RETRY_MS = 1000L
 private const val LOG_EVERY_FAILURE = 10
 private const val SLOW_MS = 50L
+private const val SUMMARY_NS = 60_000_000_000L
 
 private enum class Drain { Empty, Written, Failed }
 
@@ -104,6 +105,27 @@ class Kv(
         if (result == Drain.Failed) ensureFlusher()
     }
 
+    // The quick writes (the position, every few seconds) are counted and logged as one line a minute; the slow ones are logged each.
+    private var statSince = 0L
+    private var statBatches = 0
+    private var statOps = 0
+    private var statMaxMs = 0L
+
+    /** Called under [writeLock], so the counters need no lock of their own. */
+    private fun noteWrite(opCount: Int, ms: Long) {
+        val now = System.nanoTime()
+        if (statBatches == 0) statSince = now
+        statBatches++
+        statOps += opCount
+        if (ms > statMaxMs) statMaxMs = ms
+        if (now - statSince >= SUMMARY_NS) {
+            AppLog.d(TAG, "wrote $statOps ops in $statBatches batches over ${(now - statSince) / 1_000_000_000L} s, slowest $statMaxMs ms")
+            statBatches = 0
+            statOps = 0
+            statMaxMs = 0
+        }
+    }
+
     private fun drain(): Drain {
         synchronized(writeLock) {
             val ops = synchronized(pending) {
@@ -116,7 +138,7 @@ class Kv(
             return try {
                 backend.write(ops)
                 val ms = (System.nanoTime() - start) / 1_000_000
-                if (ms >= SLOW_MS) AppLog.w(TAG, "slow write: ${ops.size} ops took $ms ms") else AppLog.d(TAG, "wrote ${ops.size} ops in $ms ms")
+                if (ms >= SLOW_MS) AppLog.w(TAG, "slow write: ${ops.size} ops took $ms ms") else noteWrite(ops.size, ms)
                 if (failures > 0) AppLog.i(TAG, "write recovered after $failures failed attempts")
                 failures = 0
                 Drain.Written

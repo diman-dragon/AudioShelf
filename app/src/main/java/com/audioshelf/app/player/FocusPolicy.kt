@@ -9,6 +9,7 @@ import android.media.AudioManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import com.audioshelf.app.AppLog
@@ -16,6 +17,8 @@ import com.audioshelf.app.AppLog
 private const val TAG = "Focus"
 private const val CALL_FIRST_CHECK_MS = 100L
 private const val CALL_CHECK_MS = 300L
+private const val NOTIFICATION_MIN_MS = 300L
+private const val NOTIFICATION_REWIND_MS = 10_000L
 
 /** What to do when the system tells us the audio focus changed. */
 enum class FocusAction { Ignore, PauseAndResume, PauseForGood, Resume }
@@ -59,6 +62,9 @@ class FocusPolicy(
     context: Context,
     private val player: Player,
     private val speech: () -> Boolean,
+    private val duckForNotification: () -> Boolean,
+    private val rewindAfterNotification: () -> Boolean,
+    private val onDuck: (Boolean) -> Unit,
 ) : Player.Listener, AudioManager.OnAudioFocusChangeListener {
     private val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private val handler = Handler(Looper.getMainLooper())
@@ -66,6 +72,8 @@ class FocusPolicy(
     private var holding = false
     private var pausedByFocus = false
     private var lost = false
+    private var notificationSince = 0L
+    private var ducked = false
 
     private val callCheck = object : Runnable {
         override fun run() {
@@ -106,14 +114,22 @@ class FocusPolicy(
             AudioManager.AUDIOFOCUS_GAIN -> {
                 lost = false
                 handler.removeCallbacks(callCheck)
+                val ms = endNotification()
+                if (action == FocusAction.Ignore && ms >= NOTIFICATION_MIN_MS && player.playWhenReady && rewindAfterNotification()) {
+                    rewindForNotification(ms)
+                }
             }
             AudioManager.AUDIOFOCUS_LOSS -> {
                 lost = false
                 handler.removeCallbacks(callCheck)
+                endNotification()
             }
-            else -> if (!lost) {
-                lost = true
-                handler.postDelayed(callCheck, CALL_FIRST_CHECK_MS)
+            else -> {
+                if (!lost) {
+                    lost = true
+                    handler.postDelayed(callCheck, CALL_FIRST_CHECK_MS)
+                }
+                if (action == FocusAction.Ignore && player.playWhenReady) startNotification()
             }
         }
         when (action) {
@@ -131,7 +147,36 @@ class FocusPolicy(
         }
     }
 
+    /** A notification took the focus for a moment: remember when, and lower the book if the user wants that. */
+    private fun startNotification() {
+        if (notificationSince == 0L) notificationSince = SystemClock.elapsedRealtime()
+        if (duckForNotification() && !ducked) {
+            ducked = true
+            onDuck(true)
+            AppLog.i(TAG, "notification: the book is lowered")
+        }
+    }
+
+    /** The notification is over (or the focus went elsewhere): the volume comes back. Returns how long it lasted, 0 if none. */
+    private fun endNotification(): Long {
+        val since = notificationSince
+        notificationSince = 0L
+        if (ducked) {
+            ducked = false
+            onDuck(false)
+        }
+        return if (since == 0L) 0L else SystemClock.elapsedRealtime() - since
+    }
+
+    private fun rewindForNotification(ms: Long) {
+        val from = player.currentPosition
+        val to = (from - NOTIFICATION_REWIND_MS).coerceAtLeast(0L)
+        AppLog.i(TAG, "notification over after $ms ms: back ${from - to} ms ($from -> $to)")
+        player.seekTo(to)
+    }
+
     fun release() {
+        endNotification()
         handler.removeCallbacks(callCheck)
         lost = false
         if (!holding) return
@@ -147,6 +192,7 @@ class FocusPolicy(
     }
 
     private fun pauseForFocus() {
+        endNotification()
         pausedByFocus = true
         player.pause()
         AppLog.i(TAG, "paused for a call, will carry on when it is over")

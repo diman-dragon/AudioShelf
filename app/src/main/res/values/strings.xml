@@ -265,6 +265,13 @@
     <string name="settings_bluetooth">Bluetooth headphones</string>
     <string name="settings_bluetooth_open">Allow</string>
     <string name="settings_bluetooth_hint">Open the app settings and allow "Nearby devices": the app then sees the headphones by name, when they connect or drop, and the log records the Bluetooth stream state and codec.</string>
+    <string name="settings_duck">Lower the book for notifications</string>
+    <string name="duck_hint">While a notification sounds, the book plays quieter and then comes back. Off: the book keeps its volume. Some phones lower or mute it themselves whatever is chosen here.</string>
+    <string name="settings_notification_rewind">Back 10 s after a notification</string>
+    <string name="notification_rewind_hint">When a notification sound is over, the book goes back 10 seconds so that nothing is missed.</string>
+    <string name="settings_headphones">Connected headphones and speakers</string>
+    <string name="headphones_none">None connected</string>
+    <string name="headphones_hint">With the charge, when the device reports it.</string>
     <string name="log_share_title">Share the log</string>
     <string name="log_failed">Could not prepare the log</string>
     <string name="log_cleared">Logs erased</string>

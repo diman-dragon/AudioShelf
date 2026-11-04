@@ -24,10 +24,16 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import androidx.core.net.toUri
 import com.audioshelf.app.AppLog
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 private const val TAG = "Bluetooth"
 private const val CODEC_CHANGED = "android.bluetooth.a2dp.profile.action.CODEC_CONFIG_CHANGED"
 private const val PROFILE_CHECK_DELAY_MS = 500L
+
+// Not in the public API, but sent by the Bluetooth app as a protected broadcast (extra BATTERY_LEVEL, 0-100).
+private const val BATTERY_CHANGED = "android.bluetooth.device.action.BATTERY_LEVEL_CHANGED"
 
 /**
  * Every Bluetooth event that touches the audio: the adapter switching on and off, a device connecting
@@ -45,6 +51,10 @@ class BluetoothWatch(private val app: Application) {
     private val handler = Handler(Looper.getMainLooper())
     private var registered = false
     private var permitted = false
+    private val connectedFlow = MutableStateFlow("")
+
+    /** The connected music devices (headphones, a speaker) with their charge when they report it, for Settings. */
+    val connected: StateFlow<String> = connectedFlow.asStateFlow()
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -119,10 +129,14 @@ class BluetoothWatch(private val app: Application) {
             addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED)
             addAction(BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED)
             addAction(CODEC_CHANGED)
+            addAction(BATTERY_CHANGED)
             addAction(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED)
         }
         try {
-            ContextCompat.registerReceiver(app, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+            // Not RECEIVER_NOT_EXPORTED: these are sent by the Bluetooth app (its own uid, not the system's), and a
+            // not-exported receiver drops them. They are protected broadcasts, only the system can send them, and
+            // the receiver only writes a log line.
+            ContextCompat.registerReceiver(app, receiver, filter, ContextCompat.RECEIVER_EXPORTED)
             registered = true
         } catch (e: Exception) {
             AppLog.w(TAG, "cannot listen to Bluetooth events", e)
@@ -145,6 +159,11 @@ class BluetoothWatch(private val app: Application) {
                         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
                             try {
                                 val devices = proxy.connectedDevices
+                                if (proxy is BluetoothA2dp) {
+                                    connectedFlow.value = devices.joinToString(", ") { device ->
+                                        (device.name ?: "?") + (batteryOf(device)?.let { " · $it%" }.orEmpty())
+                                    }
+                                }
                                 val text = devices.joinToString("; ") { device ->
                                     describe(device) + when (proxy) {
                                         is BluetoothA2dp -> if (proxy.isA2dpPlaying(device)) ", stream PLAYING" else ", stream not playing"
@@ -223,9 +242,17 @@ class BluetoothWatch(private val app: Application) {
             else -> "type ${d.type}"
         }
         val major = d.bluetoothClass?.majorDeviceClass?.let { ", class $it" }.orEmpty()
-        "\"${d.name ?: "?"}\" ${d.address} ($type, ${bondState(d.bondState)}$major)"
+        val battery = batteryOf(d)?.let { ", battery $it%" }.orEmpty()
+        "\"${d.name ?: "?"}\" ${d.address} ($type, ${bondState(d.bondState)}$major$battery)"
     } catch (e: SecurityException) {
         "${d.address} (no permission for the name)"
+    }
+
+    /** The charge of the device in percent, if it reports one. The call is hidden in the SDK: where Android refuses it, null. */
+    private fun batteryOf(d: BluetoothDevice): Int? = try {
+        (BluetoothDevice::class.java.getMethod("getBatteryLevel").invoke(d) as? Int)?.takeIf { it in 0..100 }
+    } catch (e: Throwable) {
+        null
     }
 
     private fun adapterState(state: Int) = when (state) {
@@ -265,6 +292,7 @@ class BluetoothWatch(private val app: Application) {
             BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED,
             BluetoothDevice.ACTION_ACL_CONNECTED,
             BluetoothDevice.ACTION_ACL_DISCONNECTED,
+            BATTERY_CHANGED,
         )
     }
 }

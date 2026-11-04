@@ -57,6 +57,16 @@ class AppSettingsActions(
         prefs.setAutoNext(on)
     }
 
+    override fun onDuckNotifications(on: Boolean) {
+        AppLog.i(TAG, "lower the book for notifications: $on")
+        prefs.setDuckNotifications(on)
+    }
+
+    override fun onRewindAfterNotification(on: Boolean) {
+        AppLog.i(TAG, "rewind 10 s after a notification: $on")
+        prefs.setRewindAfterNotification(on)
+    }
+
     override fun onOpenStats() {
         AppLog.i(TAG, "open statistics")
         launch.openStats()

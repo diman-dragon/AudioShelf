@@ -131,6 +131,9 @@ private fun rememberSettingsUi(container: AppContainer, dark: Boolean): Settings
     val skipForward by prefs.skipForward.collectAsState()
     val offload by prefs.offload.collectAsState()
     val autoNext by prefs.autoNext.collectAsState()
+    val duck by prefs.duckNotifications.collectAsState()
+    val notificationRewind by prefs.rewindAfterNotification.collectAsState()
+    val headphones by container.bluetooth.connected.collectAsState()
     val language by prefs.language.collectAsState()
     return SettingsUi(
         folder = folder,
@@ -144,6 +147,9 @@ private fun rememberSettingsUi(container: AppContainer, dark: Boolean): Settings
         skipForward = skipForward,
         offload = offload,
         autoNext = autoNext,
+        duckNotifications = duck,
+        rewindAfterNotification = notificationRewind,
+        headphones = headphones,
         theme = if (dark) "dark" else "light",
         language = language,
         version = BuildConfig.VERSION_NAME,

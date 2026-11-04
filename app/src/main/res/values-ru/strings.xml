@@ -264,6 +264,13 @@
     <string name="settings_bluetooth">Bluetooth-наушники</string>
     <string name="settings_bluetooth_open">Разрешить</string>
     <string name="settings_bluetooth_hint">Откроются настройки приложения: включите «Устройства поблизости». Тогда приложение видит наушники по имени, их подключение и обрыв, а журнал записывает состояние Bluetooth-потока и кодек.</string>
+    <string name="settings_duck">Приглушать книгу при уведомлениях</string>
+    <string name="duck_hint">Пока звучит уведомление, книга играет тише, потом громкость возвращается. Выключено: книга играет с прежней громкостью. Некоторые телефоны сами приглушают или глушат звук, что бы здесь ни было выбрано.</string>
+    <string name="settings_notification_rewind">Назад на 10 с после уведомления</string>
+    <string name="notification_rewind_hint">Когда звук уведомления закончился, книга возвращается на 10 секунд, чтобы ничего не пропустить.</string>
+    <string name="settings_headphones">Подключённые наушники и колонки</string>
+    <string name="headphones_none">Ничего не подключено</string>
+    <string name="headphones_hint">С зарядом, если устройство его сообщает.</string>
     <string name="log_share_title">Поделиться журналом</string>
     <string name="log_failed">Не удалось подготовить журнал</string>
     <string name="log_cleared">Логи стёрты</string>

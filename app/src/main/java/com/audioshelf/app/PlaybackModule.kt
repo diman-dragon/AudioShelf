@@ -49,6 +49,8 @@ class PlaybackModule(
         app, scope, output, offload, background, screen, system,
         { storage.prefs.skipBack.value * 1000L },
         { storage.prefs.skipForward.value * 1000L },
+        { storage.prefs.duckNotifications.value },
+        { storage.prefs.rewindAfterNotification.value },
         { periodic -> recorder.remember(periodic = periodic) },
     )
     val battery = BatteryGuard(app, storage.kv)

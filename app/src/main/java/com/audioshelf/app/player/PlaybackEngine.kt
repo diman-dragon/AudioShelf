@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
+private const val DUCK_FACTOR = 0.2f
 private const val TICK_MS = 250L
 
 // Dark screen: nobody watches the position, a slow tick is enough for listening stats (the stats gap limit, MAX_GAP_MS, is well above it).
@@ -44,6 +45,8 @@ class PlaybackEngine(
     private val system: SystemWatch,
     private val skipBackMs: () -> Long,
     private val skipForwardMs: () -> Long,
+    private val duckNotifications: () -> Boolean,
+    private val rewindAfterNotification: () -> Boolean,
     private val onSave: (periodic: Boolean) -> Unit,
 ) {
     private val flow = MutableStateFlow(PlayState())
@@ -59,6 +62,7 @@ class PlaybackEngine(
     private var focus: FocusPolicy? = null
     private var ticker: Job? = null
     private var speech = false
+    @Volatile private var duckFactor = 1f
 
     val state: StateFlow<PlayState> = flow.asStateFlow()
 
@@ -85,7 +89,10 @@ class PlaybackEngine(
         val diag = PlaybackDiagnostics(p, sound.processor.stats, screen, system, scope)
         diagnostics = diag
         p.addAnalyticsListener(diag)
-        focus = FocusPolicy(app, p) { speech }
+        focus = FocusPolicy(app, p, { speech }, duckNotifications, rewindAfterNotification) { on ->
+            duckFactor = if (on) DUCK_FACTOR else 1f
+            refreshVolume()
+        }
         p.addListener(Events())
         return p
     }
@@ -126,7 +133,7 @@ class PlaybackEngine(
 
     private fun refreshVolume() {
         val p = exo ?: return
-        p.volume = (fader?.factor() ?: 1f) * (sleep?.factor() ?: 1f)
+        p.volume = (fader?.factor() ?: 1f) * (sleep?.factor() ?: 1f) * duckFactor
         publish()
     }
 

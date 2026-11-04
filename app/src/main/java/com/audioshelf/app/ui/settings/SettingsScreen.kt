@@ -53,6 +53,8 @@ private fun AppPage(ui: SettingsUi, actions: SettingsActions) {
         Cycler(String.format(sec, ui.skipForward), { actions.onSkipForward(nextSkip(ui.skipForward)) })
     }
     SwitchRow(stringResource(R.string.settings_auto_next), ui.autoNext, actions::onAutoNext, stringResource(R.string.auto_next_hint))
+    SwitchRow(stringResource(R.string.settings_duck), ui.duckNotifications, actions::onDuckNotifications, stringResource(R.string.duck_hint))
+    SwitchRow(stringResource(R.string.settings_notification_rewind), ui.rewindAfterNotification, actions::onRewindAfterNotification, stringResource(R.string.notification_rewind_hint))
     SwitchRow(stringResource(R.string.settings_energy), ui.offload, actions::onOffload, stringResource(R.string.energy_hint))
     val context = LocalContext.current
     SettingRow(stringResource(R.string.settings_background), stacked = true) {
@@ -63,6 +65,12 @@ private fun AppPage(ui: SettingsUi, actions: SettingsActions) {
         SettingRow(stringResource(R.string.settings_bluetooth), stacked = true) {
             Btn(stringResource(R.string.settings_bluetooth_open), { context.container.bluetooth.openPermissionSettings(context) })
             AText(stringResource(R.string.settings_bluetooth_hint), 12f, c.muted)
+        }
+    }
+    if (!ui.bluetoothMissing) {
+        SettingRow(stringResource(R.string.settings_headphones), stacked = true) {
+            AText(ui.headphones.ifEmpty { stringResource(R.string.headphones_none) }, 14f, c.text)
+            AText(stringResource(R.string.headphones_hint), 12f, c.muted)
         }
     }
     SectionHeading(stringResource(R.string.settings_section_data))
