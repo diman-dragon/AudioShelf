@@ -64,6 +64,7 @@ class PlaybackDiagnostics(
     private var environment: Job? = null
     private val underruns = AtomicInteger()
     private val underrunsTotal = AtomicInteger()
+    private val firstUnderrun = AtomicReference<Underrun?>()
     private val lastUnderrun = AtomicReference<Underrun?>()
     @Volatile private var environmentSnapshot = "system-state=pending"
     private var lastCpuMs = Process.getElapsedCpuTime()
@@ -144,14 +145,34 @@ class PlaybackDiagnostics(
     private fun logUnderruns(reason: String) {
         val count = underruns.getAndSet(0)
         if (count == 0) return
+        val first = firstUnderrun.getAndSet(null)
         val last = lastUnderrun.getAndSet(null)
+        val now = SystemClock.elapsedRealtime()
+        // This line is written at the next beat (or when playback stops), so say when the burst really was.
+        val timing = if (first != null && last != null) {
+            "burst lasted ${last.elapsedRealtimeMs - first.elapsedRealtimeMs}ms, ended ${now - last.elapsedRealtimeMs}ms before this line, " +
+                "first at pos=${first.positionMs}ms"
+        } else {
+            "timing unavailable"
+        }
         AppLog.w(
             "Stutter",
-            "UNDERRUN burst: count=$count total=${underrunsTotal.get()} reason=$reason " +
+            "UNDERRUN burst: count=$count total=${underrunsTotal.get()} reason=$reason $timing " +
                 "last=${last?.let { "pos=${it.positionMs}ms buffer=${it.bufferBytes}B/${it.bufferMs}ms " +
-                    "feed-gap=${it.elapsedSinceFeedMs}ms event-time=${it.elapsedRealtimeMs}ms" } ?: "details unavailable"} " +
-                "screen=${if (screen.on.value) "on" else "off"} $environmentSnapshot",
+                    "feed-gap=${it.elapsedSinceFeedMs}ms" } ?: "details unavailable"} " +
+                "output=${outputName()} screen=${if (screen.on.value) "on" else "off"} $environmentSnapshot",
         )
+    }
+
+    private fun outputName(): String = try {
+        system.mediaOutput()
+    } catch (e: Exception) {
+        "unavailable"
+    }
+
+    /** A fresh reading, for the lines that mark a change (the periodic one can be seconds old, or not taken yet). */
+    private fun refreshEnvironment() {
+        environmentSnapshot = sampleEnvironment()
     }
 
     private fun gcCount(key: String): Long = Debug.getRuntimeStat(key)?.toLongOrNull() ?: 0L
@@ -193,6 +214,7 @@ class PlaybackDiagnostics(
     }
 
     override fun onIsPlayingChanged(eventTime: AnalyticsListener.EventTime, isPlaying: Boolean) {
+        refreshEnvironment()
         AppLog.i(
             TAG,
             "playing=$isPlaying ${at(eventTime)}, screen ${if (screen.on.value) "on" else "off"}, $environmentSnapshot",
@@ -204,15 +226,15 @@ class PlaybackDiagnostics(
     }
 
     override fun onAudioUnderrun(eventTime: AnalyticsListener.EventTime, bufferSize: Int, bufferSizeMs: Long, elapsedSinceLastFeedMs: Long) {
-        lastUnderrun.set(
-            Underrun(
-                eventTime.currentPlaybackPositionMs,
-                bufferSize,
-                bufferSizeMs,
-                elapsedSinceLastFeedMs,
-                SystemClock.elapsedRealtime(),
-            ),
+        val underrun = Underrun(
+            eventTime.currentPlaybackPositionMs,
+            bufferSize,
+            bufferSizeMs,
+            elapsedSinceLastFeedMs,
+            SystemClock.elapsedRealtime(),
         )
+        firstUnderrun.compareAndSet(null, underrun)
+        lastUnderrun.set(underrun)
         underrunsTotal.incrementAndGet()
         underruns.incrementAndGet()
     }
@@ -230,7 +252,7 @@ class PlaybackDiagnostics(
     }
 
     override fun onAudioPositionAdvancing(eventTime: AnalyticsListener.EventTime, playoutStartSystemTimeMs: Long) {
-        AppLog.d(TAG, "audio started coming out of the speaker ${at(eventTime)}")
+        AppLog.d(TAG, "audio started coming out of ${outputName()} ${at(eventTime)}")
     }
 
     override fun onAudioSinkError(eventTime: AnalyticsListener.EventTime, audioSinkError: Exception) {

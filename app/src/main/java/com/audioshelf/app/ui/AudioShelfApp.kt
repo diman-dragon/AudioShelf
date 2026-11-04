@@ -1,6 +1,7 @@
 package com.audioshelf.app.ui
 
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -146,5 +147,6 @@ private fun rememberSettingsUi(container: AppContainer, dark: Boolean): Settings
         theme = if (dark) "dark" else "light",
         language = language,
         version = BuildConfig.VERSION_NAME,
+        bluetoothMissing = Build.VERSION.SDK_INT >= 31 && !container.bluetooth.hasPermission(),
     )
 }

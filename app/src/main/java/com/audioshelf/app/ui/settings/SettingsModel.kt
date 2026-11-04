@@ -18,6 +18,7 @@ data class SettingsUi(
     val theme: String = "dark",
     val language: String = "auto",
     val version: String = "",
+    val bluetoothMissing: Boolean = false,
 )
 
 interface SettingsActions {

@@ -70,7 +70,28 @@ class SystemWatch(private val app: Application) {
 
     /** One line with the state that decides whether a background app gets CPU time. */
     fun powerLine(): String =
-        "power[doze=${power.isDeviceIdleMode} saver=${power.isPowerSaveMode} exempt=${exempt()} bucket=${bucket()} thermal=${thermal()}]"
+        "power[doze=${power.isDeviceIdleMode}${lightIdle()?.let { " light-idle=$it" }.orEmpty()} saver=${power.isPowerSaveMode} " +
+            "exempt=${exempt()} bucket=${bucket()} thermal=${thermal()}]"
+
+    /** Light doze (the screen is off, the phone still, the network and jobs are held back); known from Android 13. */
+    private fun lightIdle(): Boolean? = if (Build.VERSION.SDK_INT >= 33) power.isDeviceLightIdleMode else null
+
+    /** Where the media of this app comes out: Bluetooth music first, then wires, then the phone's own speaker. */
+    fun mediaOutput(): String {
+        val sinks = audio.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+        val order = listOf(
+            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
+            AudioDeviceInfo.TYPE_WIRED_HEADSET,
+            AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
+            AudioDeviceInfo.TYPE_USB_HEADSET,
+            AudioDeviceInfo.TYPE_USB_DEVICE,
+            AudioDeviceInfo.TYPE_HDMI,
+            AudioDeviceInfo.TYPE_BLUETOOTH_SCO,
+            AudioDeviceInfo.TYPE_BUILTIN_SPEAKER,
+        )
+        val used = order.firstNotNullOfOrNull { type -> sinks.firstOrNull { it.type == type } }
+        return used?.let { deviceName(it) } ?: "unknown"
+    }
 
     /** One line with battery and memory, the other things that make a phone slow down. */
     fun resourceLine(): String {
@@ -159,7 +180,7 @@ class SystemWatch(private val app: Application) {
 
     private fun describe(intent: Intent): String = when (val action = intent.action) {
         PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED -> "doze (deep idle): ${power.isDeviceIdleMode}"
-        LIGHT_IDLE -> "doze (light idle) changed"
+        LIGHT_IDLE -> lightIdle()?.let { "doze (light idle): $it" } ?: "doze (light idle) changed"
         PowerManager.ACTION_POWER_SAVE_MODE_CHANGED -> "battery saver: ${power.isPowerSaveMode}"
         NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED -> {
             val nm = app.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

@@ -16,6 +16,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.audioshelf.app.player.PlayerViewModel
 import com.audioshelf.app.ui.AudioShelfApp
 
+private const val MAX_BLUETOOTH_ASKS = 2
+
 class MainActivity : ComponentActivity() {
     private val player: PlayerViewModel by viewModels {
         object : ViewModelProvider.Factory {
@@ -46,15 +48,20 @@ class MainActivity : ComponentActivity() {
     }
 
     private val bluetooth = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        getSharedPreferences("diag", MODE_PRIVATE).edit { putBoolean("bluetooth_asked", true) }
+        val prefs = getSharedPreferences("diag", MODE_PRIVATE)
+        prefs.edit { putInt("bluetooth_asks", prefs.getInt("bluetooth_asks", 0) + 1) }
         container.bluetooth.onPermissionResult(granted)
     }
 
-    /** Asked once: it lets the log record Bluetooth devices by name. Nothing else uses it. */
+    /**
+     * Asked at the next starts while it is missing, twice at most (after two refusals Android stops showing
+     * the dialog; Settings has a button that opens the app's permissions then). It lets the app see the
+     * Bluetooth headset (connection, stream state, codec) and the log record it by name.
+     */
     private fun askBluetooth() {
         if (Build.VERSION.SDK_INT < 31 || container.bluetooth.hasPermission()) return
         val prefs = getSharedPreferences("diag", MODE_PRIVATE)
-        if (prefs.getBoolean("bluetooth_asked", false)) return
+        if (prefs.getInt("bluetooth_asks", 0) >= MAX_BLUETOOTH_ASKS) return
         AppLog.i("Permission", "requesting Bluetooth permission for device and route diagnostics")
         bluetooth.launch(Manifest.permission.BLUETOOTH_CONNECT)
     }
@@ -62,6 +69,7 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         AppLog.i("Activity", "app in front")
+        container.bluetooth.onForeground()
     }
 
     override fun onStop() {

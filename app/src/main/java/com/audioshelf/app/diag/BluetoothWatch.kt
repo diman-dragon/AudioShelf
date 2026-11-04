@@ -2,6 +2,7 @@ package com.audioshelf.app.diag
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.Application
 import android.bluetooth.BluetoothA2dp
 import android.bluetooth.BluetoothAdapter
@@ -18,8 +19,10 @@ import android.media.AudioManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
+import androidx.core.net.toUri
 import com.audioshelf.app.AppLog
 
 private const val TAG = "Bluetooth"
@@ -41,6 +44,7 @@ class BluetoothWatch(private val app: Application) {
     private val adapter: BluetoothAdapter? = (app.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager)?.adapter
     private val handler = Handler(Looper.getMainLooper())
     private var registered = false
+    private var permitted = false
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -58,14 +62,30 @@ class BluetoothWatch(private val app: Application) {
             AppLog.i(TAG, "this phone has no Bluetooth")
             return
         }
+        permitted = hasPermission()
         register()
         AppLog.i(TAG, summary())
         logProfiles()
     }
 
+    /** The permission can be given in the system settings while the app is away; pick it up when the app comes back. */
+    fun onForeground() {
+        if (adapter == null || permitted || !hasPermission()) return
+        onPermissionResult(true)
+    }
+
+    /** The app's page in the system settings, where "Nearby devices" can be allowed after the dialog stopped appearing. */
+    fun openPermissionSettings(context: Context) {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:${app.packageName}".toUri())
+        if (context !is Activity) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        AppLog.i(TAG, "opening the app settings to allow Bluetooth")
+        if (runCatching { context.startActivity(intent) }.isFailure) AppLog.w(TAG, "cannot open the app settings")
+    }
+
     /** Called with the answer to the permission question; with the permission the events carry device names and more. */
     fun onPermissionResult(granted: Boolean) {
         AppLog.i(TAG, if (granted) "Bluetooth permission granted" else "Bluetooth permission denied: device names and some events are not available")
+        permitted = granted
         if (adapter == null || !granted) return
         unregister()
         register()

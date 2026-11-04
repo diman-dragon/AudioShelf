@@ -261,6 +261,9 @@
     <string name="log_share">Поделиться</string>
     <string name="log_clear">Стереть логи</string>
     <string name="log_hint">Записывает по файлу на день за последние 7 дней воспроизведение, уровни звука, обрывы буфера, ваши действия и события системы и Bluetooth (экран, ограничения батареи, сеть, звук других приложений), чтобы найти причину заиканий. Сотрите логи, воспроизведите проблему и поделитесь журналом. В нём есть названия книг и файлов.</string>
+    <string name="settings_bluetooth">Bluetooth-наушники</string>
+    <string name="settings_bluetooth_open">Разрешить</string>
+    <string name="settings_bluetooth_hint">Откроются настройки приложения: включите «Устройства поблизости». Тогда приложение видит наушники по имени, их подключение и обрыв, а журнал записывает состояние Bluetooth-потока и кодек.</string>
     <string name="log_share_title">Поделиться журналом</string>
     <string name="log_failed">Не удалось подготовить журнал</string>
     <string name="log_cleared">Логи стёрты</string>

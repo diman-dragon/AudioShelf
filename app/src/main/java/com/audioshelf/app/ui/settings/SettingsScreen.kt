@@ -59,6 +59,12 @@ private fun AppPage(ui: SettingsUi, actions: SettingsActions) {
         Btn(stringResource(R.string.settings_background_open), { context.container.battery.open(context) })
         AText(stringResource(R.string.settings_background_hint), 12f, c.muted)
     }
+    if (ui.bluetoothMissing) {
+        SettingRow(stringResource(R.string.settings_bluetooth), stacked = true) {
+            Btn(stringResource(R.string.settings_bluetooth_open), { context.container.bluetooth.openPermissionSettings(context) })
+            AText(stringResource(R.string.settings_bluetooth_hint), 12f, c.muted)
+        }
+    }
     SectionHeading(stringResource(R.string.settings_section_data))
     SettingRow(stringResource(R.string.settings_stats)) {
         Btn(stringResource(R.string.settings_open), actions::onOpenStats)

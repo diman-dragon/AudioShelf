@@ -14,6 +14,7 @@ import androidx.media3.common.util.UnstableApi
 import com.audioshelf.app.AppLog
 
 private const val TAG = "Focus"
+private const val CALL_FIRST_CHECK_MS = 100L
 private const val CALL_CHECK_MS = 300L
 
 /** What to do when the system tells us the audio focus changed. */
@@ -52,7 +53,7 @@ object FocusRules {
  * The request says it pauses when ducked. That makes the system leave the volume alone and deliver
  * every short request as a transient loss; [FocusRules] then looks at the audio mode to tell a call
  * from a notification. A call can start a moment after its focus request, so while the focus is lost the
- * mode is checked again every 300 ms.
+ * mode is checked again after 100 ms and then every 300 ms.
  */
 class FocusPolicy(
     context: Context,
@@ -69,8 +70,9 @@ class FocusPolicy(
     private val callCheck = object : Runnable {
         override fun run() {
             if (!lost) return
-            if (!pausedByFocus && player.playWhenReady && FocusRules.isCall(audio.mode)) {
-                AppLog.i(TAG, "a call started while the focus was lost: pausing")
+            val mode = audio.mode
+            if (!pausedByFocus && player.playWhenReady && FocusRules.isCall(mode)) {
+                AppLog.i(TAG, "a call started while the focus was lost (audio mode $mode): pausing")
                 pauseForFocus()
             }
             handler.postDelayed(this, CALL_CHECK_MS)
@@ -95,9 +97,11 @@ class FocusPolicy(
     }
 
     override fun onAudioFocusChange(change: Int) {
-        val call = FocusRules.isCall(audio.mode)
+        // One read: the mode can change between two reads, and the log must show what the decision used.
+        val mode = audio.mode
+        val call = FocusRules.isCall(mode)
         val action = FocusRules.onChange(change, call, pausedByFocus)
-        AppLog.i(TAG, "focus ${name(change)}: audio mode ${audio.mode}, call=$call, playing=${player.isPlaying} -> $action")
+        AppLog.i(TAG, "focus ${name(change)}: audio mode $mode, call=$call, playing=${player.isPlaying} -> $action")
         when (change) {
             AudioManager.AUDIOFOCUS_GAIN -> {
                 lost = false
@@ -109,7 +113,7 @@ class FocusPolicy(
             }
             else -> if (!lost) {
                 lost = true
-                handler.postDelayed(callCheck, CALL_CHECK_MS)
+                handler.postDelayed(callCheck, CALL_FIRST_CHECK_MS)
             }
         }
         when (action) {

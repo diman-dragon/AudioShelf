@@ -262,6 +262,9 @@
     <string name="log_share">Share</string>
     <string name="log_clear">Erase logs</string>
     <string name="log_hint">Records, one file per day for the last 7 days, playback, sound levels, buffer underruns, your actions and system events and Bluetooth (screen, battery limits, network, other apps\' audio) to find stutter. Erase it, reproduce the problem, then share it. It contains book titles and file names.</string>
+    <string name="settings_bluetooth">Bluetooth headphones</string>
+    <string name="settings_bluetooth_open">Allow</string>
+    <string name="settings_bluetooth_hint">Open the app settings and allow "Nearby devices": the app then sees the headphones by name, when they connect or drop, and the log records the Bluetooth stream state and codec.</string>
     <string name="log_share_title">Share the log</string>
     <string name="log_failed">Could not prepare the log</string>
     <string name="log_cleared">Logs erased</string>

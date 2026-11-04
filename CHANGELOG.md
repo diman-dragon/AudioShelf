@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.3
+Fixes found by reading the logs of 3-4 November.
+- Calls: the audio focus handler read the audio mode twice, so a ringing phone could be logged as "audio mode 1, call=false" and the pause waited for the next check. The mode is now read once, and the first check for a call that starts a moment after the focus loss runs after 100 ms (it was 300 ms): the book stops with the first ring instead of about 0.4 s later.
+- Log: `playing=` lines were written with a stale (or, at the start, empty `system-state=pending`) power, device and route reading, so after a call they still showed `mode=ringtone`. The reading is taken again at every play / pause.
+- Log: `audio started coming out of the speaker` was written for every output, Bluetooth included; it now names the real output (`bluetooth A2DP "..."`, `speaker`, ...).
+- Log: the `UNDERRUN burst` line is written at the next beat, so it now says how long the burst lasted, how long ago it ended and where it began, names the output, and no longer prints the meaningless `event-time`.
+- Log: `doze (light idle)` now says whether the phone entered or left it (Android 13+), and `power[...]` carries `light-idle=`.
+- Bluetooth: the permission ("Nearby devices") is asked at the next two starts while it is missing (it was asked once, and the one refusal on 3 November left the log without the headset state during the only stutter). Settings shows a "Bluetooth headphones" button that opens the app settings once Android stops showing the dialog, and the permission given there is picked up when the app comes back.
+
 ## 1.4.1
 Diagnostic log, fixes and cleanup.
 - Diagnostic log: Settings → Diagnostic log → Share / Erase logs. One file per day (`audioshelf-2026-11-03.log`, the next day `audioshelf-2026-11-04.log`, and so on), the last 7 days are kept, a day stops at 30 MB. Share sends one zip with every day and a `device.txt` about the phone. Lines also go to logcat as `AudioShelf/<part>`. Uncaught crashes are logged. It records:

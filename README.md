@@ -56,7 +56,7 @@ app/src/main/java/com/audioshelf/app/
 Logs: Settings → Diagnostic log → Share (a zip with one file per day, the last 7 days; `device.txt` describes the phone), or `adb logcat -s 'AudioShelf/*'`.
 
 Finding a stutter or a raspy voice in a shared log (`grep` works well):
-- `Stutter` — an audio buffer underrun: the moment the sound broke, with the power state.
+- `Stutter` — an audio buffer underrun burst: when it began and ended, the output it played to, and the power state (`doze`, `light-idle`).
 - `Jitter` — `STALL` (the app thread was not scheduled), `SUSPENDED` (the device slept), main thread busy.
 - `Playback` `beat:` — every 2 s while playing: `buffered-ahead`, `cpu`, `worst-thread-delay`, `sound[...]`, `power[...]`.
 - `sound[... source-clipped=N ...]` high: the file itself is clipped. `limiter-hits` / `over-full-scale` high: the equalizer or boost pushes the signal into the limiter.
