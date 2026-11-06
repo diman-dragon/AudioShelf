@@ -170,11 +170,6 @@ class PlaybackDiagnostics(
         "unavailable"
     }
 
-    /** A fresh reading, for the lines that mark a change (the periodic one can be seconds old, or not taken yet). */
-    private fun refreshEnvironment() {
-        environmentSnapshot = sampleEnvironment()
-    }
-
     private fun gcCount(key: String): Long = Debug.getRuntimeStat(key)?.toLongOrNull() ?: 0L
 
     private fun stateName(state: Int) = when (state) {
@@ -214,11 +209,13 @@ class PlaybackDiagnostics(
     }
 
     override fun onIsPlayingChanged(eventTime: AnalyticsListener.EventTime, isPlaying: Boolean) {
-        refreshEnvironment()
-        AppLog.i(
-            TAG,
-            "playing=$isPlaying ${at(eventTime)}, screen ${if (screen.on.value) "on" else "off"}, $environmentSnapshot",
-        )
+        // The reading goes through binder calls that took up to 1.3 s with the screen off; not on the main thread.
+        val head = "playing=$isPlaying ${at(eventTime)}, screen ${if (screen.on.value) "on" else "off"}"
+        scope.launch(Dispatchers.IO) {
+            val now = sampleEnvironment()
+            environmentSnapshot = now
+            AppLog.i(TAG, "$head, $now")
+        }
     }
 
     override fun onIsLoadingChanged(eventTime: AnalyticsListener.EventTime, isLoading: Boolean) {

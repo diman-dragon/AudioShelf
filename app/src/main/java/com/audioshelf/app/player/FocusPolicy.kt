@@ -6,6 +6,7 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
+import android.media.AudioPlaybackConfiguration
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -19,6 +20,18 @@ private const val CALL_FIRST_CHECK_MS = 100L
 private const val CALL_CHECK_MS = 300L
 private const val NOTIFICATION_MIN_MS = 300L
 private const val NOTIFICATION_REWIND_MS = 10_000L
+
+// A notification is a few seconds. One that holds the focus longer is another app that forgot to let it go
+// (a 10-minute one was seen): the book is not kept lowered, and nothing was missed that a rewind would give back.
+private const val NOTIFICATION_MAX_DUCK_MS = 15_000L
+private const val NOTIFICATION_MAX_REWIND_MS = 30_000L
+
+// A call in an app (Telegram, WhatsApp) takes the focus "for good" with the audio mode still normal. It is told
+// apart by what plays on the phone: a ringtone or a voice-call stream. The focus is gone for good, so no GAIN
+// comes when the call ends; the streams are watched instead.
+private const val CALL_WATCH_MS = 1_000L
+private const val CALL_GONE_POLLS = 2
+private const val CALL_WATCH_LIMIT_MS = 3L * 60 * 60 * 1000
 
 /** What to do when the system tells us the audio focus changed. */
 enum class FocusAction { Ignore, PauseAndResume, PauseForGood, Resume }
@@ -74,6 +87,49 @@ class FocusPolicy(
     private var lost = false
     private var notificationSince = 0L
     private var ducked = false
+    private var callGonePolls = 0
+    private var callWatchSince = 0L
+
+    private val duckTimeout = Runnable {
+        if (ducked) {
+            ducked = false
+            onDuck(false)
+            AppLog.i(TAG, "notification still holds the focus after $NOTIFICATION_MAX_DUCK_MS ms: the book is back to full volume")
+        }
+    }
+
+    private val callWatch = object : Runnable {
+        override fun run() {
+            if (!pausedByFocus || player.playWhenReady) return
+            callGonePolls = if (voiceCallPlaying()) 0 else callGonePolls + 1
+            if (callGonePolls >= CALL_GONE_POLLS) {
+                AppLog.i(TAG, "the call is over: carrying on")
+                player.play()
+                return
+            }
+            if (SystemClock.elapsedRealtime() - callWatchSince > CALL_WATCH_LIMIT_MS) {
+                AppLog.i(TAG, "no end of the call seen for 3 hours: staying paused")
+                pausedByFocus = false
+                return
+            }
+            handler.postDelayed(this, CALL_WATCH_MS)
+        }
+    }
+
+    /** A ringtone or a voice call is playing on the phone (any app). */
+    private fun voiceCallPlaying(): Boolean = Build.VERSION.SDK_INT >= 26 && try {
+        audio.activePlaybackConfigurations.any { isCallStream(it) }
+    } catch (e: Exception) {
+        false
+    }
+
+    private fun isCallStream(config: AudioPlaybackConfiguration): Boolean = when (config.audioAttributes.usage) {
+        AudioAttributes.USAGE_VOICE_COMMUNICATION,
+        AudioAttributes.USAGE_VOICE_COMMUNICATION_SIGNALLING,
+        AudioAttributes.USAGE_NOTIFICATION_RINGTONE,
+        -> true
+        else -> false
+    }
 
     private val callCheck = object : Runnable {
         override fun run() {
@@ -94,6 +150,7 @@ class FocusPolicy(
     override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
         if (playWhenReady) {
             pausedByFocus = false
+            handler.removeCallbacks(callWatch)
             acquire()
         } else if (!pausedByFocus) {
             release()
@@ -108,14 +165,21 @@ class FocusPolicy(
         // One read: the mode can change between two reads, and the log must show what the decision used.
         val mode = audio.mode
         val call = FocusRules.isCall(mode)
-        val action = FocusRules.onChange(change, call, pausedByFocus)
-        AppLog.i(TAG, "focus ${name(change)}: audio mode $mode, call=$call, playing=${player.isPlaying} -> $action")
+        val appCall = change == AudioManager.AUDIOFOCUS_LOSS && player.playWhenReady && voiceCallPlaying()
+        val action = if (appCall) FocusAction.PauseAndResume else FocusRules.onChange(change, call, pausedByFocus)
+        AppLog.i(
+            TAG,
+            "focus ${name(change)}: audio mode $mode, call=$call${if (appCall) " (a voice call of an app is playing)" else ""}, " +
+                "playing=${player.isPlaying} -> $action",
+        )
         when (change) {
             AudioManager.AUDIOFOCUS_GAIN -> {
                 lost = false
                 handler.removeCallbacks(callCheck)
                 val ms = endNotification()
-                if (action == FocusAction.Ignore && ms >= NOTIFICATION_MIN_MS && player.playWhenReady && rewindAfterNotification()) {
+                if (action == FocusAction.Ignore && ms in NOTIFICATION_MIN_MS..NOTIFICATION_MAX_REWIND_MS &&
+                    player.playWhenReady && rewindAfterNotification()
+                ) {
                     rewindForNotification(ms)
                 }
             }
@@ -134,8 +198,19 @@ class FocusPolicy(
         }
         when (action) {
             FocusAction.Ignore -> Unit
-            FocusAction.PauseAndResume -> pauseForFocus()
+            FocusAction.PauseAndResume -> {
+                pauseForFocus()
+                if (appCall) {
+                    // The focus is gone for good, so let the request go and watch the call instead.
+                    release()
+                    callGonePolls = 0
+                    callWatchSince = SystemClock.elapsedRealtime()
+                    handler.removeCallbacks(callWatch)
+                    handler.postDelayed(callWatch, CALL_WATCH_MS)
+                }
+            }
             FocusAction.PauseForGood -> {
+                handler.removeCallbacks(callWatch)
                 pausedByFocus = false
                 player.pause()
                 release()
@@ -153,6 +228,8 @@ class FocusPolicy(
         if (duckForNotification() && !ducked) {
             ducked = true
             onDuck(true)
+            handler.removeCallbacks(duckTimeout)
+            handler.postDelayed(duckTimeout, NOTIFICATION_MAX_DUCK_MS)
             AppLog.i(TAG, "notification: the book is lowered")
         }
     }
@@ -161,6 +238,7 @@ class FocusPolicy(
     private fun endNotification(): Long {
         val since = notificationSince
         notificationSince = 0L
+        handler.removeCallbacks(duckTimeout)
         if (ducked) {
             ducked = false
             onDuck(false)

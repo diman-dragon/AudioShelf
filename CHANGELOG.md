@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.6
+Found in the log of 5 November (headset, 12 hours, no stutter, 4 calls and a dozen notifications).
+- Calls in an app (Telegram, WhatsApp): they take the audio focus "for good" with the audio mode still normal, so the book was stopped for good and waited for a manual start (twice that day, after 2 and 10 minutes). Now, when the focus is lost and a ringtone or a voice-call stream is playing on the phone, the book pauses and carries on 2 seconds after that stream is gone (it rewinds 5 seconds as after any pause). A phone call already worked.
+- Notifications: a notification sound made the headset suspend the music stream for a few seconds (`A2DP stream NOT PLAYING (suspended)` in the log), which is where the book "disappeared"; the rewind of 1.4.5 covers it. Two limits added after another app held the focus for 10 minutes: the book is not kept lowered for longer than 15 seconds, and it is not rewound after a "notification" longer than 30 seconds.
+- Main thread: `playing=` lines took the power, device and route reading on the main thread, which cost 0.5-1.3 s (`the main thread was busy`, 8 times that day, always right after a play or pause). The reading is now taken in the background and the line is written when it is ready.
+- Log: a burst of Bluetooth events (a call switching the headset) gave 6 identical `connected devices` lines each; one check is made after the burst. The repeated identical `battery_level_changed` lines are written once.
+- Seen and working: Bluetooth events, the headset's charge (100%, 90%), the codec (AAC), the call pause and resume, the rewind after a notification.
+
 ## 1.4.5
 - Notifications: two new switches in Settings. "Lower the book for notifications" (off by default, the behavior so far): while a notification sounds the book plays at a fifth of its volume and then comes back. "Back 10 s after a notification" (on): when the notification is over the book goes back 10 seconds, so nothing is missed. The log says `notification over after N ms: back ...` when it does.
 - Bluetooth: the charge of the headphones or speaker is read when the device reports it (a hidden Android call; where Android refuses it, nothing is shown). It is written to the log with the device (`battery 80%`, also at every change of the charge) and shown in Settings under "Connected headphones and speakers".

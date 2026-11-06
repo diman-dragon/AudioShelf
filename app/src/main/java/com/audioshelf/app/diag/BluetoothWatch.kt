@@ -56,10 +56,22 @@ class BluetoothWatch(private val app: Application) {
     /** The connected music devices (headphones, a speaker) with their charge when they report it, for Settings. */
     val connected: StateFlow<String> = connectedFlow.asStateFlow()
 
+    // Events come in bursts (a call switching the headset gave 6 in a row); one check after the burst is enough.
+    private val profileCheck = Runnable { logProfiles() }
+    private var lastBatteryLine = ""
+
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            AppLog.i(TAG, describe(intent))
-            if (intent.action in PROFILE_ACTIONS) handler.postDelayed({ logProfiles() }, PROFILE_CHECK_DELAY_MS)
+            val line = describe(intent)
+            if (intent.action == BATTERY_CHANGED) {
+                if (line == lastBatteryLine) return
+                lastBatteryLine = line
+            }
+            AppLog.i(TAG, line)
+            if (intent.action in PROFILE_ACTIONS) {
+                handler.removeCallbacks(profileCheck)
+                handler.postDelayed(profileCheck, PROFILE_CHECK_DELAY_MS)
+            }
         }
     }
 
