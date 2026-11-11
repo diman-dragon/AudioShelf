@@ -75,3 +75,51 @@ class DspTest {
         assertEquals("EQ headroom must prevent full-scale overdrive", 0, chain.overHits)
     }
 }
+
+class AdaptiveBoostTest {
+    private fun run(chain: SoundChain, amplitude: Double, seconds: Int, hz: Double = 200.0, rate: Int = 44100): Double {
+        chain.configure(rate, 1)
+        chain.refresh()
+        var peakLast = 0.0
+        val n = rate * seconds
+        for (i in 0 until n) {
+            val y = chain.process((sin(2 * PI * hz * i / rate) * amplitude).toFloat(), 0)
+            if (i > n - rate / 2) peakLast = maxOf(peakLast, Math.abs(y.toDouble()))
+        }
+        return peakLast
+    }
+
+    @Test
+    fun loudMaterialMakesTheBoostGiveWay() {
+        val chain = SoundChain().also { it.setSettings(FloatArray(BAND_COUNT), 9) }
+        run(chain, 20000.0, 20)
+        assertTrue("the boost must be cut on loud material, was ${chain.boostCutDb}", chain.boostCutDb >= 5f)
+        chain.resetHits()
+        run(chain, 20000.0, 1)
+        assertTrue("after the cut the limiter should be mostly idle, hits=${chain.limiterHits}", chain.limiterHits < 200)
+    }
+
+    @Test
+    fun quietSpeechKeepsAllOfTheBoost() {
+        val chain = SoundChain().also { it.setSettings(FloatArray(BAND_COUNT), 6) }
+        run(chain, 3000.0, 10)
+        assertEquals(0f, chain.boostCutDb, 0.001f)
+    }
+
+    @Test
+    fun theCutGoesBackWhenTheSignalIsQuietAgain() {
+        val chain = SoundChain().also { it.setSettings(FloatArray(BAND_COUNT), 9) }
+        run(chain, 30000.0, 10)
+        val cut = chain.boostCutDb
+        assertTrue(cut > 0f)
+        run(chain, 2000.0, 20)
+        assertTrue("the cut should shrink, $cut -> ${chain.boostCutDb}", chain.boostCutDb < cut)
+    }
+
+    @Test
+    fun withoutBoostNothingIsCut() {
+        val chain = SoundChain()
+        run(chain, 30000.0, 5)
+        assertEquals(0f, chain.boostCutDb, 0.001f)
+    }
+}

@@ -257,6 +257,9 @@
     <string name="settings_background">Звук при выключенном экране</string>
     <string name="settings_background_open">Разрешить</string>
     <string name="settings_background_hint">Если звук заикается при выключенном экране, разрешите AudioShelf работать без ограничений батареи. На некоторых телефонах (Xiaomi, Huawei, Oppo, Samsung) есть ещё свои списки автозапуска и «спящих приложений» в настройках системы.</string>
+    <string name="settings_background_free">Ограничения батареи для AudioShelf сняты.</string>
+    <string name="settings_background_stutter">Заикание при выключенном экране было записано при включённом ограничении батареи: попробуйте разрешить.</string>
+    <string name="settings_background_limited">Для AudioShelf включено ограничение батареи.</string>
     <string name="settings_log">Журнал для диагностики</string>
     <string name="log_share">Поделиться</string>
     <string name="log_clear">Стереть логи</string>

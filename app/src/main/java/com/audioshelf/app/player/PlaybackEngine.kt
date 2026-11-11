@@ -64,6 +64,9 @@ class PlaybackEngine(
     private var speech = false
     @Volatile private var duckFactor = 1f
 
+    /** An underrun was heard with the screen off (set once by the module that owns the battery guard). */
+    var onScreenOffUnderrun: () -> Unit = {}
+
     val state: StateFlow<PlayState> = flow.asStateFlow()
 
     /** A file failed to play: shown to the user once, whatever the recovery did about it. */
@@ -86,7 +89,7 @@ class PlaybackEngine(
         ErrorRecovery(p) { failureFlow.tryEmit(it) }
         saver = PositionSaver(p, onSave)
         offload.attach(p)
-        val diag = PlaybackDiagnostics(p, sound.processor.stats, screen, system, scope)
+        val diag = PlaybackDiagnostics(p, sound.processor.stats, screen, system, scope) { onScreenOffUnderrun() }
         diagnostics = diag
         p.addAnalyticsListener(diag)
         focus = FocusPolicy(app, p, { speech }, duckNotifications, rewindAfterNotification) { on ->

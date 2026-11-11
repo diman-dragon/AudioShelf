@@ -58,6 +58,7 @@ class PlaybackModule(
     val sound: SoundModel
 
     init {
+        engine.onScreenOffUnderrun = battery::noteScreenOffStutter
         val current = CurrentBook(engine, library, storage.chapters)
         val sleep = SleepState()
         recorder = ProgressRecorder(current, engine, storage.progress, storage.durations, storage.stats)

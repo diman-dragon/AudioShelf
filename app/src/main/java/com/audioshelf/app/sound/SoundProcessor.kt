@@ -71,6 +71,7 @@ class SoundProcessor(val chain: SoundChain) : BaseAudioProcessor() {
             if (++channel == channels) channel = 0
         }
         out.flip()
+        stats.boostCutDb = chain.boostCutDb
         stats.record(samples, sourceClipped, chain.limiterHits, chain.overHits, peakIn, peakOut)
     }
 

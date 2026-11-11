@@ -258,6 +258,9 @@
     <string name="settings_background">Screen-off playback</string>
     <string name="settings_background_open">Allow</string>
     <string name="settings_background_hint">If the sound stutters while the screen is off, allow AudioShelf to run without battery limits. Some phones (Xiaomi, Huawei, Oppo, Samsung) also have their own auto-start and “sleeping apps” lists in the system settings.</string>
+    <string name="settings_background_free">Battery limits are off for AudioShelf.</string>
+    <string name="settings_background_stutter">Stutter with the screen off was recorded while the battery limit is on: allowing it may help.</string>
+    <string name="settings_background_limited">The battery limit is on for AudioShelf.</string>
     <string name="settings_log">Diagnostic log</string>
     <string name="log_share">Share</string>
     <string name="log_clear">Erase logs</string>

@@ -6,6 +6,7 @@ import android.os.Debug
 import android.os.Process
 import android.os.SystemClock
 import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -58,6 +59,7 @@ class PlaybackDiagnostics(
     private val screen: ScreenWatch,
     private val system: SystemWatch,
     private val scope: CoroutineScope,
+    private val onScreenOffUnderrun: () -> Unit = {},
 ) : AnalyticsListener {
     private val jitter = JitterWatch(system::powerLine) { screen.on.value }
     private var beat: Job? = null
@@ -145,6 +147,7 @@ class PlaybackDiagnostics(
     private fun logUnderruns(reason: String) {
         val count = underruns.getAndSet(0)
         if (count == 0) return
+        if (!screen.on.value) onScreenOffUnderrun()
         val first = firstUnderrun.getAndSet(null)
         val last = lastUnderrun.getAndSet(null)
         val now = SystemClock.elapsedRealtime()
@@ -282,10 +285,23 @@ class PlaybackDiagnostics(
     }
 
     override fun onAudioTrackInitialized(eventTime: AnalyticsListener.EventTime, audioTrackConfig: AudioSink.AudioTrackConfig) {
+        // The buffer in seconds: the size alone says nothing without the rate and the channels (22050 Hz mono is 2 s in 88200 bytes).
+        val channels = Integer.bitCount(audioTrackConfig.channelConfig)
+        val bytesPerSample = when (audioTrackConfig.encoding) {
+            C.ENCODING_PCM_16BIT -> 2
+            C.ENCODING_PCM_FLOAT -> 4
+            else -> 0
+        }
+        val frameBytes = channels * bytesPerSample
+        val seconds = if (frameBytes > 0 && audioTrackConfig.sampleRate > 0) {
+            " (${"%.1f".format(audioTrackConfig.bufferSize.toDouble() / frameBytes / audioTrackConfig.sampleRate)} s)"
+        } else {
+            ""
+        }
         AppLog.i(
             TAG,
-            "audio track created: ${audioTrackConfig.sampleRate} Hz, encoding ${audioTrackConfig.encoding}, " +
-                "buffer ${audioTrackConfig.bufferSize} bytes, offload=${audioTrackConfig.offload}, tunneling=${audioTrackConfig.tunneling}",
+            "audio track created: ${audioTrackConfig.sampleRate} Hz, $channels ch, encoding ${audioTrackConfig.encoding}, " +
+                "buffer ${audioTrackConfig.bufferSize} bytes$seconds, offload=${audioTrackConfig.offload}, tunneling=${audioTrackConfig.tunneling}",
         )
     }
 

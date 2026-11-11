@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.7
+Found in the logs of 6-10 November (about 20 hours on a Bluetooth headset, 4 stutter episodes, loud music with the boost on).
+- Sound: the boost is now adaptive. When the signal keeps reaching the limiter (loud music, a clipped file) the boost gives way by up to its own size and comes back slowly when the signal is quiet again; quiet speech keeps all of it. The gain is smoothed, so the change is not heard. The `beat` line shows `boost-cut=X.XdB`, and `boost follows the limiter: ...` is written when the cut changes by a whole dB. Before this, a +6 or +9 dB boost on loud material pushed thousands of samples a second into the limiter (up to 6500 in 2 seconds on 6 November).
+- Log: `audio track created` now says the channels and the buffer in seconds (22050 Hz mono in 88200 bytes is 2 s, not 1 s).
+- Battery: an underrun with the screen off is remembered, and Settings under "Screen-off playback" says whether the battery limit is lifted, still on, or on while a stutter was recorded.
+- Focus: `setWillPauseWhenDucked(true)` stays, with the reason written next to it (with `false` the system lowers music by itself and does not tell the app).
+- Seen: all 4 stutter episodes were on Bluetooth A2DP with the screen off and 30-90 s of audio buffered, so the app was not starving; the phone's threads were delayed for 30-60 s before each one. Only one episode followed an A2DP suspend after a notification.
+
 ## 1.4.6
 Found in the log of 5 November (headset, 12 hours, no stutter, 4 calls and a dozen notifications).
 - Calls in an app (Telegram, WhatsApp): they take the audio focus "for good" with the audio mode still normal, so the book was stopped for good and waited for a manual start (twice that day, after 2 and 10 minutes). Now, when the focus is lost and a ringtone or a voice-call stream is playing on the phone, the book pauses and carries on 2 seconds after that stream is gone (it rewinds 5 seconds as after any pause). A phone call already worked.

@@ -286,6 +286,11 @@ class FocusPolicy(
             val built = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
                 .setAudioAttributes(attributes)
                 .setOnAudioFocusChangeListener(this, handler)
+                // Kept on deliberately: with false the system ducks music by itself and does not tell the app, which would
+                // break the "notifications do not touch the playback" setting. A book (speech) is not ducked by the system
+                // either way, so false changes nothing for it. The A2DP "suspended" that follows a notification is the
+                // Bluetooth stack's own reaction (it came after 19 of 21 focus losses in the logs, and an underrun
+                // within two minutes followed only one of them), not something this flag decides; both events are in the log.
                 .setWillPauseWhenDucked(true)
                 .build()
             request = built

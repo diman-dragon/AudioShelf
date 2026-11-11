@@ -11,6 +11,7 @@ import com.audioshelf.app.data.Kv
 
 private const val STORE = "audioshelf.battery"
 private const val ASKED = "asked"
+private const val SCREEN_OFF_STUTTER = "screen-off-stutter"
 
 /**
  * With the screen off many phones cut a background app's CPU time, and the sound stutters until
@@ -24,6 +25,15 @@ class BatteryGuard(private val app: Application, private val kv: Kv) {
     fun shouldAsk(): Boolean = !isExempt() && kv.get(STORE, ASKED) == null
 
     fun markAsked() = kv.put(STORE, ASKED, "1")
+
+    /** A buffer underrun happened with the screen off: remembered, so Settings can say that lifting the limit is worth trying. */
+    fun noteScreenOffStutter() {
+        if (isExempt() || kv.get(STORE, SCREEN_OFF_STUTTER) != null) return
+        kv.put(STORE, SCREEN_OFF_STUTTER, "1")
+        AppLog.i("BatteryGuard", "stutter with the screen off while the battery limit is on: Settings will point at it")
+    }
+
+    fun screenOffStutterSeen(): Boolean = !isExempt() && kv.get(STORE, SCREEN_OFF_STUTTER) != null
 
     /** Opens system battery settings, then falls back to this app's details page if unavailable. */
     fun open(context: Context) {

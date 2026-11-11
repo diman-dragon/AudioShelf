@@ -18,10 +18,11 @@ class SoundStats {
         val overLimit: Long,
         val peakIn: Int,
         val peakOut: Int,
+        val boostCutDb: Float = 0f,
     ) {
         fun describe(): String =
             "sound[in-peak=${percent(peakIn)}% out-peak=${percent(peakOut)}% source-clipped=$sourceClipped " +
-                "limiter-hits=$limited over-full-scale=$overLimit of $samples samples]"
+                "limiter-hits=$limited over-full-scale=$overLimit of $samples samples boost-cut=${"%.1f".format(boostCutDb)}dB]"
 
         private fun percent(peak: Int) = (peak * 100f / FULL_SCALE).toInt()
     }
@@ -32,6 +33,9 @@ class SoundStats {
     private val overLimit = AtomicLong()
     private val peakIn = AtomicInteger()
     private val peakOut = AtomicInteger()
+
+    /** How much of the boost the limiter has taken back (set by the processor), shown in the next [drain]. */
+    @Volatile var boostCutDb = 0f
 
     fun record(sampleCount: Int, sourceClippedCount: Int, limitedCount: Int, overCount: Int, inPeak: Int, outPeak: Int) {
         samples.addAndGet(sampleCount.toLong())
@@ -44,7 +48,7 @@ class SoundStats {
 
     fun drain(): Snapshot = Snapshot(
         samples.getAndSet(0), sourceClipped.getAndSet(0), limited.getAndSet(0), overLimit.getAndSet(0),
-        peakIn.getAndSet(0), peakOut.getAndSet(0),
+        peakIn.getAndSet(0), peakOut.getAndSet(0), boostCutDb,
     )
 
     private fun raise(target: AtomicInteger, value: Int) {

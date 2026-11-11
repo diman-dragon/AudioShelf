@@ -60,6 +60,13 @@ private fun AppPage(ui: SettingsUi, actions: SettingsActions) {
     SettingRow(stringResource(R.string.settings_background), stacked = true) {
         Btn(stringResource(R.string.settings_background_open), { context.container.battery.open(context) })
         AText(stringResource(R.string.settings_background_hint), 12f, c.muted)
+        val battery = context.container.battery
+        val status = when {
+            battery.isExempt() -> R.string.settings_background_free
+            battery.screenOffStutterSeen() -> R.string.settings_background_stutter
+            else -> R.string.settings_background_limited
+        }
+        AText(stringResource(status), 12f, c.text)
     }
     if (ui.bluetoothMissing) {
         SettingRow(stringResource(R.string.settings_bluetooth), stacked = true) {
