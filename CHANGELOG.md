@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.8
+From a second review of 1.4.7.
+- Sound: the shown boost cut now follows a change of the boost setting at once (it could show the old value), and tests cover stereo frames, a lowered boost and a new track keeping the cut. The first quarter of a second after the app starts or the boost is raised is still limited by the soft limiter alone, until the first window is measured.
+- Cleanup: unused imports (`Uri` in `SiblingFiles.kt` and `LibraryRepo.kt`, `update` in `Kv.kt`) and the unused `AppColors.isLight`.
+- Checked and left as it is: `flushNow()` held the main thread once in three days of logs (65 ms), the slow writes (50-650 ms) are on the database thread, so it is not moved off the main thread; the focus flag and the A2DP debounce (see 1.4.7).
+
 ## 1.4.7
 Found in the logs of 6-10 November (about 20 hours on a Bluetooth headset, 4 stutter episodes, loud music with the boost on).
 - Sound: the boost is now adaptive. When the signal keeps reaching the limiter (loud music, a clipped file) the boost gives way by up to its own size and comes back slowly when the signal is quiet again; quiet speech keeps all of it. The gain is smoothed, so the change is not heard. The `beat` line shows `boost-cut=X.XdB`, and `boost follows the limiter: ...` is written when the cut changes by a whole dB. Before this, a +6 or +9 dB boost on loud material pushed thousands of samples a second into the limiter (up to 6500 in 2 seconds on 6 November).

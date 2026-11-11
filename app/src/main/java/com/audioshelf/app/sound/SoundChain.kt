@@ -79,6 +79,7 @@ class SoundChain {
             boost = 10.0.pow(wanted.boostDb / 20.0).toFloat()
             boostDb = wanted.boostDb.toFloat()
             cutDb = min(cutDb, boostDb)
+            boostCutDb = cutDb
             boostTarget = targetBoost()
             if (builtSettings == null) boostNow = boostTarget
             builtSettings = wanted

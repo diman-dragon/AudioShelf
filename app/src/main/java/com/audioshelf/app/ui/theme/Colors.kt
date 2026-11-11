@@ -15,7 +15,6 @@ class AppColors(
     val onAccent: Color,
     val seekBorder: Color,
     val seekTrack: Color,
-    val isLight: Boolean,
 ) {
     val accentSoft: Color get() = accent.copy(alpha = 0.18f)
 }
@@ -30,7 +29,6 @@ val DarkColors = AppColors(
     onAccent = Color(0xFF1A1204),
     seekBorder = Color(0xFF858585),
     seekTrack = Color(0xFF3B3B3B),
-    isLight = false,
 )
 
 val LightColors = AppColors(
@@ -43,7 +41,6 @@ val LightColors = AppColors(
     onAccent = Color(0xFFFFF8EA),
     seekBorder = Color(0xFFB2B2B2),
     seekTrack = Color(0xFFEFEFEF),
-    isLight = true,
 )
 
 val DangerColor = Color(0xFFE5484D)

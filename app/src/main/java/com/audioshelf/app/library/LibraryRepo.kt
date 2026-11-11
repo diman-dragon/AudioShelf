@@ -2,7 +2,6 @@ package com.audioshelf.app.library
 
 import com.audioshelf.app.AppLog
 import android.content.ContentResolver
-import android.net.Uri
 import androidx.core.net.toUri
 import com.audioshelf.app.data.Folder
 import com.audioshelf.app.data.FolderStore

@@ -123,3 +123,42 @@ class AdaptiveBoostTest {
         assertEquals(0f, chain.boostCutDb, 0.001f)
     }
 }
+
+class AdaptiveBoostEdgeTest {
+    @Test
+    fun stereoFramesCountAsTwoSamplesEach() {
+        val chain = SoundChain().also { it.setSettings(FloatArray(BAND_COUNT), 9) }
+        chain.configure(44100, 2)
+        chain.refresh()
+        // 0.25 s of stereo is 22050 calls; a cut must appear after about that many, not after twice as many.
+        for (i in 0 until 22050 + 10) {
+            val v = (sin(2 * PI * 200.0 * (i / 2) / 44100) * 20000).toFloat()
+            chain.process(v, i % 2)
+        }
+        assertTrue("the first window of a stereo signal must already cut, was ${chain.boostCutDb}", chain.boostCutDb > 0f)
+    }
+
+    @Test
+    fun loweringTheBoostLowersTheCutAtOnce() {
+        val chain = SoundChain().also { it.setSettings(FloatArray(BAND_COUNT), 9) }
+        chain.configure(44100, 1)
+        chain.refresh()
+        for (i in 0 until 44100 * 5) chain.process((sin(2 * PI * 200.0 * i / 44100) * 20000).toFloat(), 0)
+        assertTrue(chain.boostCutDb > 3f)
+        chain.setSettings(FloatArray(BAND_COUNT), 3)
+        chain.refresh()
+        assertTrue("the cut cannot exceed the new boost, was ${chain.boostCutDb}", chain.boostCutDb <= 3f)
+    }
+
+    @Test
+    fun theCutSurvivesANewTrack() {
+        val chain = SoundChain().also { it.setSettings(FloatArray(BAND_COUNT), 9) }
+        chain.configure(44100, 1)
+        chain.refresh()
+        for (i in 0 until 44100 * 5) chain.process((sin(2 * PI * 200.0 * i / 44100) * 20000).toFloat(), 0)
+        val cut = chain.boostCutDb
+        chain.configure(44100, 1)
+        chain.refresh()
+        assertEquals(cut, chain.boostCutDb, 0.001f)
+    }
+}
