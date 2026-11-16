@@ -18,14 +18,6 @@ import com.audioshelf.app.AppLog
 private const val TAG = "Focus"
 private const val CALL_FIRST_CHECK_MS = 100L
 private const val CALL_CHECK_MS = 300L
-private const val NOTIFICATION_MIN_MS = 300L
-private const val NOTIFICATION_REWIND_MS = 10_000L
-
-// A notification is a few seconds. One that holds the focus longer is another app that forgot to let it go
-// (a 10-minute one was seen): the book is not kept lowered, and nothing was missed that a rewind would give back.
-private const val NOTIFICATION_MAX_DUCK_MS = 15_000L
-private const val NOTIFICATION_MAX_REWIND_MS = 30_000L
-
 // A call in an app (Telegram, WhatsApp) takes the focus "for good" with the audio mode still normal. It is told
 // apart by what plays on the phone: a ringtone or a voice-call stream. The focus is gone for good, so no GAIN
 // comes when the call ends; the streams are watched instead.
@@ -37,15 +29,17 @@ private const val CALL_WATCH_LIMIT_MS = 3L * 60 * 60 * 1000
 enum class FocusAction { Ignore, PauseAndResume, PauseForGood, Resume }
 
 /**
- * The rules, kept apart from Android so they can be tested: a notification, a message sound, a
- * navigation prompt or an alarm must not touch the playback; a call (phone, or a voice call in an
- * app) pauses it and it carries on when the call is over; another app that takes the audio for good
- * (a video, a music player) pauses it and it stays paused.
+ * The rules, kept apart from Android so they can be tested: a notification of any kind (a message,
+ * a social network, a low battery), a navigation prompt or an alarm must not touch the playback, not
+ * even its volume; a call (phone, or a voice call in an app) pauses it for the whole call and it carries
+ * on, a little back, when the call is over; another app that takes the audio for good (a video, a music
+ * player) pauses it and it stays paused.
  */
 object FocusRules {
     fun onChange(change: Int, inCall: Boolean, pausedByFocus: Boolean): FocusAction = when (change) {
         AudioManager.AUDIOFOCUS_GAIN -> if (pausedByFocus) FocusAction.Resume else FocusAction.Ignore
-        AudioManager.AUDIOFOCUS_LOSS -> FocusAction.PauseForGood
+        // A call in an app takes the focus "for good"; it is told apart from another app (a video) by [inCall].
+        AudioManager.AUDIOFOCUS_LOSS -> if (inCall) FocusAction.PauseAndResume else FocusAction.PauseForGood
         // Because the request says "I pause when ducked", every short request arrives as a transient
         // loss, a notification's as well as a call's. Only a call is allowed to stop the playback.
         AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
@@ -63,21 +57,19 @@ object FocusRules {
 
 /**
  * Audio focus handled by the app instead of the player. The player's own handling pauses a book
- * (speech) for every notification and lowers the volume of an album; here the playback goes on at full
- * volume under a notification, and stops only for a call.
+ * (speech) for every notification; here the playback goes on, as it was, under a notification, and
+ * stops only for a call.
  *
  * The request says it pauses when ducked. That makes the system leave the volume alone and deliver
- * every short request as a transient loss; [FocusRules] then looks at the audio mode to tell a call
- * from a notification. A call can start a moment after its focus request, so while the focus is lost the
- * mode is checked again after 100 ms and then every 300 ms.
+ * every short request as a transient loss; [FocusRules] then looks at the audio mode and at what plays
+ * on the phone to tell a call from a notification. A call can start a moment after its focus request,
+ * so while the focus is lost this is checked again after 100 ms and then every 300 ms.
  */
 class FocusPolicy(
     context: Context,
     private val player: Player,
+    private val trace: (String) -> Unit,
     private val speech: () -> Boolean,
-    private val duckForNotification: () -> Boolean,
-    private val rewindAfterNotification: () -> Boolean,
-    private val onDuck: (Boolean) -> Unit,
 ) : Player.Listener, AudioManager.OnAudioFocusChangeListener {
     private val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private val handler = Handler(Looper.getMainLooper())
@@ -85,18 +77,8 @@ class FocusPolicy(
     private var holding = false
     private var pausedByFocus = false
     private var lost = false
-    private var notificationSince = 0L
-    private var ducked = false
     private var callGonePolls = 0
     private var callWatchSince = 0L
-
-    private val duckTimeout = Runnable {
-        if (ducked) {
-            ducked = false
-            onDuck(false)
-            AppLog.i(TAG, "notification still holds the focus after $NOTIFICATION_MAX_DUCK_MS ms: the book is back to full volume")
-        }
-    }
 
     private val callWatch = object : Runnable {
         override fun run() {
@@ -104,7 +86,7 @@ class FocusPolicy(
             callGonePolls = if (voiceCallPlaying()) 0 else callGonePolls + 1
             if (callGonePolls >= CALL_GONE_POLLS) {
                 AppLog.i(TAG, "the call is over: carrying on")
-                player.play()
+                resumeAfterCall()
                 return
             }
             if (SystemClock.elapsedRealtime() - callWatchSince > CALL_WATCH_LIMIT_MS) {
@@ -135,7 +117,7 @@ class FocusPolicy(
         override fun run() {
             if (!lost) return
             val mode = audio.mode
-            if (!pausedByFocus && player.playWhenReady && FocusRules.isCall(mode)) {
+            if (!pausedByFocus && player.playWhenReady && (FocusRules.isCall(mode) || voiceCallPlaying())) {
                 AppLog.i(TAG, "a call started while the focus was lost (audio mode $mode): pausing")
                 pauseForFocus()
             }
@@ -164,43 +146,30 @@ class FocusPolicy(
     override fun onAudioFocusChange(change: Int) {
         // One read: the mode can change between two reads, and the log must show what the decision used.
         val mode = audio.mode
-        val call = FocusRules.isCall(mode)
-        val appCall = change == AudioManager.AUDIOFOCUS_LOSS && player.playWhenReady && voiceCallPlaying()
-        val action = if (appCall) FocusAction.PauseAndResume else FocusRules.onChange(change, call, pausedByFocus)
+        val appCall = player.playWhenReady && voiceCallPlaying()
+        val call = FocusRules.isCall(mode) || appCall
+        val action = FocusRules.onChange(change, call, pausedByFocus)
         AppLog.i(
             TAG,
             "focus ${name(change)}: audio mode $mode, call=$call${if (appCall) " (a voice call of an app is playing)" else ""}, " +
                 "playing=${player.isPlaying} -> $action",
         )
+        trace("focus ${name(change)} -> $action")
         when (change) {
-            AudioManager.AUDIOFOCUS_GAIN -> {
+            AudioManager.AUDIOFOCUS_GAIN, AudioManager.AUDIOFOCUS_LOSS -> {
                 lost = false
                 handler.removeCallbacks(callCheck)
-                val ms = endNotification()
-                if (action == FocusAction.Ignore && ms in NOTIFICATION_MIN_MS..NOTIFICATION_MAX_REWIND_MS &&
-                    player.playWhenReady && rewindAfterNotification()
-                ) {
-                    rewindForNotification(ms)
-                }
             }
-            AudioManager.AUDIOFOCUS_LOSS -> {
-                lost = false
-                handler.removeCallbacks(callCheck)
-                endNotification()
-            }
-            else -> {
-                if (!lost) {
-                    lost = true
-                    handler.postDelayed(callCheck, CALL_FIRST_CHECK_MS)
-                }
-                if (action == FocusAction.Ignore && player.playWhenReady) startNotification()
+            else -> if (!lost) {
+                lost = true
+                handler.postDelayed(callCheck, CALL_FIRST_CHECK_MS)
             }
         }
         when (action) {
             FocusAction.Ignore -> Unit
             FocusAction.PauseAndResume -> {
                 pauseForFocus()
-                if (appCall) {
+                if (change == AudioManager.AUDIOFOCUS_LOSS) {
                     // The focus is gone for good, so let the request go and watch the call instead.
                     release()
                     callGonePolls = 0
@@ -215,46 +184,17 @@ class FocusPolicy(
                 player.pause()
                 release()
             }
-            FocusAction.Resume -> {
-                pausedByFocus = false
-                player.play()
-            }
+            FocusAction.Resume -> resumeAfterCall()
         }
     }
 
-    /** A notification took the focus for a moment: remember when, and lower the book if the user wants that. */
-    private fun startNotification() {
-        if (notificationSince == 0L) notificationSince = SystemClock.elapsedRealtime()
-        if (duckForNotification() && !ducked) {
-            ducked = true
-            onDuck(true)
-            handler.removeCallbacks(duckTimeout)
-            handler.postDelayed(duckTimeout, NOTIFICATION_MAX_DUCK_MS)
-            AppLog.i(TAG, "notification: the book is lowered")
-        }
-    }
-
-    /** The notification is over (or the focus went elsewhere): the volume comes back. Returns how long it lasted, 0 if none. */
-    private fun endNotification(): Long {
-        val since = notificationSince
-        notificationSince = 0L
-        handler.removeCallbacks(duckTimeout)
-        if (ducked) {
-            ducked = false
-            onDuck(false)
-        }
-        return if (since == 0L) 0L else SystemClock.elapsedRealtime() - since
-    }
-
-    private fun rewindForNotification(ms: Long) {
-        val from = player.currentPosition
-        val to = (from - NOTIFICATION_REWIND_MS).coerceAtLeast(0L)
-        AppLog.i(TAG, "notification over after $ms ms: back ${from - to} ms ($from -> $to)")
-        player.seekTo(to)
+    /** The call is over: the book plays on; [ResumeRewind] takes it 5 s back after any stop of 3 s or more. */
+    private fun resumeAfterCall() {
+        pausedByFocus = false
+        player.play()
     }
 
     fun release() {
-        endNotification()
         handler.removeCallbacks(callCheck)
         lost = false
         if (!holding) return
@@ -270,7 +210,6 @@ class FocusPolicy(
     }
 
     private fun pauseForFocus() {
-        endNotification()
         pausedByFocus = true
         player.pause()
         AppLog.i(TAG, "paused for a call, will carry on when it is over")
@@ -287,7 +226,7 @@ class FocusPolicy(
                 .setAudioAttributes(attributes)
                 .setOnAudioFocusChangeListener(this, handler)
                 // Kept on deliberately: with false the system ducks music by itself and does not tell the app, which would
-                // break the "notifications do not touch the playback" setting. A book (speech) is not ducked by the system
+                // break "notifications do not touch the playback". A book (speech) is not ducked by the system
                 // either way, so false changes nothing for it. The A2DP "suspended" that follows a notification is the
                 // Bluetooth stack's own reaction (it came after 19 of 21 focus losses in the logs, and an underrun
                 // within two minutes followed only one of them), not something this flag decides; both events are in the log.

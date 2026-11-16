@@ -162,3 +162,25 @@ class AdaptiveBoostEdgeTest {
         assertEquals(cut, chain.boostCutDb, 0.001f)
     }
 }
+
+class AdaptiveBoostLogTest {
+    @Test
+    fun speechPeaksDoNotFloodTheLog() {
+        val lines = mutableListOf<String>()
+        val old = com.audioshelf.app.AppLog.sink
+        com.audioshelf.app.AppLog.sink = com.audioshelf.app.AppLog.Sink { _, _, m -> if (m.startsWith("boost follows")) lines += m }
+        try {
+            val chain = SoundChain().also { it.setSettings(FloatArray(BAND_COUNT), 6) }
+            chain.configure(44100, 1)
+            chain.refresh()
+            // quiet speech with a short loud burst once a second: the cut moves by under a dB each time
+            for (i in 0 until 44100 * 60) {
+                val loud = (i % 44100) < 300
+                chain.process((sin(2 * PI * 200.0 * i / 44100) * if (loud) 15000 else 3000).toFloat(), 0)
+            }
+            assertTrue("too many lines: ${lines.size}", lines.size < 20)
+        } finally {
+            com.audioshelf.app.AppLog.sink = old
+        }
+    }
+}

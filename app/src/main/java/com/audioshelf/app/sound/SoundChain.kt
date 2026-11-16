@@ -5,7 +5,6 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
-import kotlin.math.roundToInt
 import kotlin.math.tanh
 
 private const val KNEE = 24000f
@@ -20,6 +19,7 @@ private const val HIT_RATIO = 0.002f
 private const val CUT_STEP_DB = 0.5f
 private const val RESTORE_STEP_DB = 0.05f
 private const val GAIN_SMOOTHING = 0.0004f
+private const val LOG_STEP_DB = 1f
 
 class SoundChain {
     private data class Settings(val bandsDb: FloatArray, val boostDb: Int)
@@ -36,7 +36,7 @@ class SoundChain {
     private var boostNow = 1f
     private var boostTarget = 1f
     private var cutDb = 0f
-    private var shownCutDb = 0
+    private var loggedCutDb = 0f
     private var windowLength = 1
     private var windowSamples = 0
     private var windowHits = 0
@@ -118,10 +118,11 @@ class SoundChain {
         }
         boostTarget = targetBoost()
         boostCutDb = cutDb
-        val shown = cutDb.roundToInt()
-        if (shown != shownCutDb) {
-            shownCutDb = shown
-            AppLog.i("SoundChain", "boost follows the limiter: -$shown dB of ${boostDb.toInt()} dB (hit ratio ${"%.2f".format(ratio * 100)}%)")
+        // Logged only when the cut has moved by a whole dB since the last line: rounding alone flipped between -1 and -0
+        // every quarter of a second on speech (4800 lines, a quarter of the day's log).
+        if (abs(cutDb - loggedCutDb) >= LOG_STEP_DB) {
+            loggedCutDb = cutDb
+            AppLog.i("SoundChain", "boost follows the limiter: -${"%.1f".format(cutDb)} dB of ${boostDb.toInt()} dB (hit ratio ${"%.2f".format(ratio * 100)}%)")
         }
     }
 

@@ -113,20 +113,41 @@ class LibraryController(
     fun remove(book: Book) {
         val targets = if (book.folder && book.ownsDir) book.dirUris else book.files.map { it.uri }
         scope.launch {
+            // What is deleted on the disk is deleted in the library too, even when a later delete fails:
+            // a failure half way must not leave files that are gone still listed.
+            val deleted = HashSet<String>()
+            var failure: Exception? = null
             try {
-                targets.forEach { fileOps.remove(it) }
-                meta.forget(book.id)
-                progress.forget(book.id)
-                durations.forget(book.id)
-                hidden.forget(book.id)
-                val gone = book.files.mapTo(HashSet()) { it.uri }
-                repo.patchFiles { list -> list.filter { it.uri !in gone } }
-                eventFlow.tryEmit(LibraryEvent.Gone(book.id))
+                for (target in targets) {
+                    fileOps.remove(target)
+                    deleted.add(target)
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                fail(e)
+                failure = e
             }
+            val everything = failure == null
+            val gone = when {
+                everything -> book.files.mapTo(HashSet()) { it.uri }
+                book.folder && book.ownsDir -> emptySet()
+                else -> deleted
+            }
+            try {
+                if (everything) {
+                    meta.forget(book.id)
+                    progress.forget(book.id)
+                    durations.forget(book.id)
+                    hidden.forget(book.id)
+                }
+                if (gone.isNotEmpty()) repo.patchFiles { list -> list.filter { it.uri !in gone } }
+                if (everything) eventFlow.tryEmit(LibraryEvent.Gone(book.id))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                failure = failure ?: e
+            }
+            failure?.let { fail(it) }
         }
     }
 

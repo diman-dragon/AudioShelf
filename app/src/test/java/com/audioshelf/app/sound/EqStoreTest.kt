@@ -24,10 +24,8 @@ class EqStoreTest {
         store.setTrack("a", Eq.of("bass"))
         assertEquals("bass", store.effective("a").preset)
         assertEquals("rock", store.effective("b").preset)
-        store.moveTrack("a", "c")
-        assertEquals("bass", store.effective("c").preset)
-        store.clearTrack("c")
-        assertEquals("rock", store.effective("c").preset)
+        store.clearTrack("a")
+        assertEquals("rock", store.effective("a").preset)
     }
 
     @Test

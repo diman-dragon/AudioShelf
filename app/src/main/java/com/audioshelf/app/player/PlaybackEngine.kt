@@ -11,6 +11,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.audioshelf.app.ScreenWatch
+import com.audioshelf.app.diag.AudioTrace
 import com.audioshelf.app.diag.SystemWatch
 import com.audioshelf.app.library.Background
 import com.audioshelf.app.sound.SoundOutput
@@ -25,7 +26,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-private const val DUCK_FACTOR = 0.2f
 private const val TICK_MS = 250L
 
 // Dark screen: nobody watches the position, a slow tick is enough for listening stats (the stats gap limit, MAX_GAP_MS, is well above it).
@@ -45,8 +45,6 @@ class PlaybackEngine(
     private val system: SystemWatch,
     private val skipBackMs: () -> Long,
     private val skipForwardMs: () -> Long,
-    private val duckNotifications: () -> Boolean,
-    private val rewindAfterNotification: () -> Boolean,
     private val onSave: (periodic: Boolean) -> Unit,
 ) {
     private val flow = MutableStateFlow(PlayState())
@@ -60,9 +58,10 @@ class PlaybackEngine(
     private var saver: PositionSaver? = null
     private var diagnostics: PlaybackDiagnostics? = null
     private var focus: FocusPolicy? = null
+    private var pin: HeadphonePin? = null
+    private var trace: AudioTrace? = null
     private var ticker: Job? = null
     private var speech = false
-    @Volatile private var duckFactor = 1f
 
     /** An underrun was heard with the screen off (set once by the module that owns the battery guard). */
     var onScreenOffUnderrun: () -> Unit = {}
@@ -89,13 +88,13 @@ class PlaybackEngine(
         ErrorRecovery(p) { failureFlow.tryEmit(it) }
         saver = PositionSaver(p, onSave)
         offload.attach(p)
-        val diag = PlaybackDiagnostics(p, sound.processor.stats, screen, system, scope) { onScreenOffUnderrun() }
+        val audioTrace = AudioTrace(app, p, system)
+        trace = audioTrace
+        val diag = PlaybackDiagnostics(p, sound.processor.stats, screen, system, scope, audioTrace::begin) { onScreenOffUnderrun() }
         diagnostics = diag
         p.addAnalyticsListener(diag)
-        focus = FocusPolicy(app, p, { speech }, duckNotifications, rewindAfterNotification) { on ->
-            duckFactor = if (on) DUCK_FACTOR else 1f
-            refreshVolume()
-        }
+        focus = FocusPolicy(app, p, audioTrace::begin) { speech }
+        pin = HeadphonePin(app, p)
         p.addListener(Events())
         return p
     }
@@ -136,7 +135,7 @@ class PlaybackEngine(
 
     private fun refreshVolume() {
         val p = exo ?: return
-        p.volume = (fader?.factor() ?: 1f) * (sleep?.factor() ?: 1f) * duckFactor
+        p.volume = (fader?.factor() ?: 1f) * (sleep?.factor() ?: 1f)
         publish()
     }
 
@@ -286,6 +285,10 @@ class PlaybackEngine(
         diagnostics = null
         focus?.release()
         focus = null
+        pin?.release()
+        pin = null
+        trace?.release()
+        trace = null
         saver?.stop()
         fader?.stop()
         sleep?.stop()

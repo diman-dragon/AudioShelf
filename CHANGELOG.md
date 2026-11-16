@@ -1,5 +1,44 @@
 # Changelog
 
+## 1.4.14
+Debt from the audits that can be closed without guessing.
+- Deleting a book: when a later file of a book fails to delete, the files that are already gone are removed from the library too (before, the exception left them listed until the next scan and their progress in place). A book is forgotten (meta, progress, duration, hidden mark) only when everything was deleted; a folder book whose folder could not be deleted stays unchanged.
+- `SqliteKv.onUpgrade` no longer does nothing silently: it writes a warning (there is no migration yet, the database is version 1).
+- The screenshot test no longer swallows a `ComposeTimeoutException` without a trace: the skipped screenshot is named in the test output.
+- Not done on purpose: renaming (file rename, then the moves of meta, progress, duration, hidden in four stores) is still not one transaction; making it one needs the stores to share a write batch, a larger change that cannot be checked without a build.
+- Not compiled here (no Android SDK).
+
+## 1.4.13
+From the end of the 16 November log (1.4.8): three stutter episodes with the screen off, the phone charging and the JLab GO Air Sport on AAC (19:25:32-46, 22:46:37-45 and 22:47:20-30, 22:49:17-35; 291 underruns in the last one) and the Bluetooth link dropping 14 s after the last of them (22:49:49). In all of them the buffer was full (2000 ms, 35-50 s ahead) and the feed gaps small, the CPU 16-32%, the main thread idle: the app fed the sound in time, the headphones' link did not take it. Not an app-side stall.
+- Every underrun burst now opens an `AudioTrace` window (route, devices, players, volumes, A2DP/SCO state, 4 times a second), so the next stutter comes with the full picture of the link around it.
+- Not compiled here (no Android SDK).
+
+## 1.4.12
+Full audio-route logging, and a fix after reading the logs of 6-16 November (all from 1.4.8).
+- Seen in all the logs: 33 of 40 notifications with the book playing (39 of them on the JLab GO Air Sport, 33 of those 39; the one on the KP-599 had none; the three of 16 November 16:29-16:41 had none on the JLab either) were followed, about 1 s later, by the A2DP stream being suspended until the notification ended (3-7 s). Low battery is no different from other notifications. The logs did not say where the book's sound goes in that time.
+- New `AudioTrace` (`diag/AudioTrace.kt`): a window opens on a focus loss, on an A2DP stream change while the book plays, or when another app starts a notification / call / alarm / navigation stream. In the window, 4 times a second (a line on a change, one a second otherwise): the book (playing, position, volume, session, attributes), the devices the system would use for media, a notification and a notification event (Android 13+), every audio player on the phone with its owner, state and the device it is routed to (from the system's own description of the player, also written raw at the start), the volumes and mutes of the streams, the mode, the ringer, speakerphone, the communication device, the A2DP and SCO state. Events (A2DP, SCO, volume, mute, mode, headset, Bluetooth link) are written with their milliseconds since the start; the window ends with a summary of the events and of the route changes.
+- `AudioStreams` now writes the system's text of each player (device id, owner, state) on every change of the players.
+- After a call the book is no longer rewound twice: the extra 5 s seek of 1.4.10 is removed, `ResumeRewind` already goes 5 s back after any stop of 3 s or more (seen in the log of 16 November, a call over Bluetooth: pause 0.4 s after the focus loss, 5 s back on the end).
+- Not compiled here (no Android SDK): `AudioTrace`, `HeadphonePin`, `FocusPolicy`. The system's text of a player (`deviceId:`, `u/pid:`, `state:`) is read with regular expressions; if the format differs on the phone, the raw text in the log still shows everything.
+
+## 1.4.11
+Found in the logs of 11-14 November (1.4.8): one notification on 13 November, 20:44, with JLab GO Air Sport. The notification took the focus at 20:44:28, the A2DP stream was suspended at 20:44:29 and came back at 20:44:34 (when the notification ended) while the book went on playing; this is the "the sound moves to the phone and comes back" the user hears. The other 16 notifications in the logs show no such thing.
+- Experimental: the book is pinned to the Bluetooth headphones (`HeadphonePin`, `ExoPlayer.setPreferredAudioDevice`) for as long as they are connected, so that the system has no reason to move it to the speaker under a notification. Without the headphones the preference is dropped and the output is chosen by the system as before. Whether the phone (vivo, Android 13) honours it under a notification is not known: if it does not, the log of the episode will say so (`HeadphonePin`, `AudioDevices`, `Bluetooth`, `Focus` lines).
+- Not compiled here (no Android SDK).
+
+## 1.4.10
+Behaviour around notifications and calls.
+- Notifications of any kind (messages, social networks, low battery and the like) no longer touch the book: it is not paused, not lowered and not rewound. The two settings that existed for this ("Lower the book for notifications", "Back 10 s after a notification") are removed together with their code, strings and the 0.2 volume factor. Saved values of the two settings stay in the database unused. The loudness of the notification sound itself is the system's, not the app's.
+- Voice calls (phone, and VoIP such as Telegram or WhatsApp): the book pauses as soon as the call rings, stays paused for the whole call, and after the hang-up goes back 5 seconds and plays on. The call is now also recognised by what plays on the phone (ringtone / voice-call stream), not only by the audio mode, for every kind of focus loss, so a VoIP ring that takes only a short focus is caught too.
+- Another app that takes the audio for good (a video, a music player) still pauses the book and it stays paused.
+- Cleanup: removed `ComingSoonScreen` and its two strings (only a screenshot test used it), `Fx.nextGain()` and `EqStore.moveTrack()` (only tests called them), an unused import in `EqStore.kt`; `ArraySource` moved from main to the test sources. Checked and left: `StatsReport.finishedBooks` is computed and tested but not shown anywhere (the data is recorded; removing it touches the stored statistics).
+- Not compiled here (no Android SDK): `FocusPolicy`, the settings screen and the tests need the CI build to confirm.
+
+## 1.4.9
+Found in the logs of 11-13 November (1.4.8, 7 hours on Bluetooth A2DP, 3.8 of them with the screen off).
+- Log: `boost follows the limiter` was written 4800 times in a day (a quarter of the log): on speech the cut moved between 0.45 and 0.5 dB and the rounded value flipped between -1 and -0 every quarter of a second. It is now written only when the cut has moved by a whole dB since the last line, and shows one decimal.
+- Seen and working: no underruns in 13000 beats (7 hours on KP-599 and JLab GO Air Sport, the battery limit lifted); the boost cut was 0 dB half of the time, 0.7 dB at the 90th percentile, 3.2 dB at most (boost 3 dB, 6 dB); the limiter hit more than 0.2% of the samples in 112 of 13000 beats (before: thousands of hits per beat); no error lines.
+
 ## 1.4.8
 From a second review of 1.4.7.
 - Sound: the shown boost cut now follows a change of the boost setting at once (it could show the old value), and tests cover stereo frames, a lowered boost and a new track keeping the cut. The first quarter of a second after the app starts or the boost is raised is still limited by the soft limiter alone, until the first window is measured.

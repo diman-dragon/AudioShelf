@@ -5,6 +5,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import androidx.core.database.sqlite.transaction
+import com.audioshelf.app.AppLog
 
 class SqliteKv(context: Context) : SQLiteOpenHelper(context.applicationContext, "audioshelf.db", null, 1), KvBackend {
     init {
@@ -15,7 +16,10 @@ class SqliteKv(context: Context) : SQLiteOpenHelper(context.applicationContext, 
         db.execSQL("CREATE TABLE kv (s TEXT NOT NULL, k TEXT NOT NULL, v TEXT NOT NULL, PRIMARY KEY (s, k)) WITHOUT ROWID")
     }
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {}
+    // Version 1 is the only one so far. A migration goes here when the version is raised; until then a call is a bug worth a line.
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        AppLog.w("Kv", "database upgrade $oldVersion -> $newVersion has no migration")
+    }
 
     @Synchronized
     override fun loadAll(): List<KvRow> {

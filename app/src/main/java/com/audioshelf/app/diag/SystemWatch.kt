@@ -241,6 +241,8 @@ class SystemWatch(private val app: Application) {
                     if (now == lastStreams) return
                     lastStreams = now
                     AppLog.i("AudioStreams", "audio players on the phone (all apps): [${now}]")
+                    // The system's own text of each player has the device it plays to (deviceId), its owner (u/pid) and its state.
+                    for (config in configs) AppLog.d("AudioStreams", "  player: " + config.toString().replace('\n', ' ').take(300))
                 }
             },
             handler,
@@ -265,6 +267,9 @@ class SystemWatch(private val app: Application) {
     private fun outputs(): String =
         audio.getDevices(AudioManager.GET_DEVICES_OUTPUTS).joinToString(", ") { deviceName(it) }.ifEmpty { "none" }
 
+    /** A device with its id, the number the system uses to say where a player is routed. */
+    fun deviceLabel(d: AudioDeviceInfo) = "${deviceName(d)}#${d.id}"
+
     private fun deviceName(d: AudioDeviceInfo, detail: Boolean = false): String {
         val type = when (d.type) {
             AudioDeviceInfo.TYPE_BUILTIN_EARPIECE -> "earpiece"
@@ -286,7 +291,7 @@ class SystemWatch(private val app: Application) {
         return type + name + address + rates + channels + encodings
     }
 
-    private fun usage(usage: Int) = when (usage) {
+    fun usage(usage: Int) = when (usage) {
         1 -> "MEDIA"
         2 -> "VOICE_COMMUNICATION"
         3 -> "VOICE_SIGNALLING"
@@ -305,7 +310,7 @@ class SystemWatch(private val app: Application) {
         else -> "usage$usage"
     }
 
-    private fun content(type: Int) = when (type) {
+    fun content(type: Int) = when (type) {
         1 -> "SPEECH"
         2 -> "MUSIC"
         3 -> "MOVIE"

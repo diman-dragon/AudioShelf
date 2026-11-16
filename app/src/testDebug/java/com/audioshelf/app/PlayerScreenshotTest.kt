@@ -39,7 +39,6 @@ import com.audioshelf.app.ui.AppFrame
 import com.audioshelf.app.ui.Screen
 import com.audioshelf.app.ui.components.SwipeGuard
 import com.audioshelf.app.ui.player.PlayerScreen
-import com.audioshelf.app.ui.screens.ComingSoonScreen
 import com.audioshelf.app.ui.theme.AudioShelfTheme
 import androidx.compose.ui.test.ComposeTimeoutException
 import java.io.File
@@ -62,7 +61,7 @@ class PlayerScreenshotTest {
 
     private fun capture(name: String, dark: Boolean, screen: Screen = Screen.Player, ui: PlayerUi = reference()) =
         captureContent(name, dark, screen) { current ->
-            if (current == Screen.Player) PlayerScreen(ui, PlayerActions.None) else ComingSoonScreen(current)
+            PlayerScreen(ui, PlayerActions.None)
         }
 
     private fun captureContent(name: String, dark: Boolean, screen: Screen, content: @Composable (Screen) -> Unit) {
@@ -76,6 +75,8 @@ class PlayerScreenshotTest {
         val bitmap = try {
             rule.onRoot().captureToImage().asAndroidBitmap()
         } catch (e: ComposeTimeoutException) {
+            // Not silent: a screenshot that was not taken must be visible in the test output.
+            System.err.println("screenshot $name was not captured: ${e.message}")
             return
         }
         val dir = File("build/screenshots").apply { mkdirs() }

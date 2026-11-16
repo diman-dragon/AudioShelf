@@ -21,8 +21,6 @@ class FxTest {
     fun neutralMeansNothingToDo() {
         assertTrue(Fx.Off.neutral)
         assertFalse(Fx.Off.withGain(3).neutral)
-        assertEquals(3, Fx.Off.nextGain().gainDb)
-        assertEquals(0, Fx(12).nextGain().gainDb)
     }
 
     @Test

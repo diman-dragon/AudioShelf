@@ -15,9 +15,6 @@ class Fx(val gainDb: Int = 0) {
 
     fun withGain(db: Int) = Fx(db.coerceIn(0, GAIN_STEPS.last()))
 
-    /** The next step in the cycle 0 -> +3 -> +6 -> +9 -> +12 -> 0. */
-    fun nextGain() = Fx(GAIN_STEPS[(GAIN_STEPS.indexOf(gainDb).coerceAtLeast(0) + 1) % GAIN_STEPS.size])
-
     override fun equals(other: Any?) = other is Fx && other.gainDb == gainDb
 
     override fun hashCode() = gainDb

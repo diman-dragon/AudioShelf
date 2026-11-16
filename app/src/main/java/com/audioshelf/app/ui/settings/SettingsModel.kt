@@ -15,8 +15,6 @@ data class SettingsUi(
     val skipForward: Int = 30,
     val offload: Boolean = false,
     val autoNext: Boolean = false,
-    val duckNotifications: Boolean = false,
-    val rewindAfterNotification: Boolean = true,
     val theme: String = "dark",
     val language: String = "auto",
     val version: String = "",
@@ -32,8 +30,6 @@ interface SettingsActions {
     fun onSkipForward(seconds: Int)
     fun onOffload(on: Boolean)
     fun onAutoNext(on: Boolean)
-    fun onDuckNotifications(on: Boolean)
-    fun onRewindAfterNotification(on: Boolean)
     fun onOpenStats()
     fun onBackup()
     fun onRestore()
@@ -51,8 +47,6 @@ interface SettingsActions {
             override fun onSkipForward(seconds: Int) {}
             override fun onOffload(on: Boolean) {}
             override fun onAutoNext(on: Boolean) {}
-            override fun onDuckNotifications(on: Boolean) {}
-            override fun onRewindAfterNotification(on: Boolean) {}
             override fun onOpenStats() {}
             override fun onBackup() {}
             override fun onRestore() {}

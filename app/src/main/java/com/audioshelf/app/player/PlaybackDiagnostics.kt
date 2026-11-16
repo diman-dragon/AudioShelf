@@ -59,6 +59,7 @@ class PlaybackDiagnostics(
     private val screen: ScreenWatch,
     private val system: SystemWatch,
     private val scope: CoroutineScope,
+    private val onStutter: (String) -> Unit = {},
     private val onScreenOffUnderrun: () -> Unit = {},
 ) : AnalyticsListener {
     private val jitter = JitterWatch(system::powerLine) { screen.on.value }
@@ -148,6 +149,7 @@ class PlaybackDiagnostics(
         val count = underruns.getAndSet(0)
         if (count == 0) return
         if (!screen.on.value) onScreenOffUnderrun()
+        onStutter("underrun burst of $count while the book plays to ${outputName()}")
         val first = firstUnderrun.getAndSet(null)
         val last = lastUnderrun.getAndSet(null)
         val now = SystemClock.elapsedRealtime()

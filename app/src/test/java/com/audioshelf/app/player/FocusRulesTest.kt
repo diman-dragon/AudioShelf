@@ -24,6 +24,19 @@ class FocusRulesTest {
     }
 
     @Test
+    fun aCallInAnAppTakesTheFocusForGoodAndStillPausesOnlyForTheCall() {
+        assertEquals(FocusAction.PauseAndResume, FocusRules.onChange(AudioManager.AUDIOFOCUS_LOSS, inCall = true, pausedByFocus = false))
+    }
+
+    @Test
+    fun aNotificationCannotPauseEvenWhenTheBookIsAlreadyPausedByACall() {
+        assertEquals(
+            FocusAction.Ignore,
+            FocusRules.onChange(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK, inCall = false, pausedByFocus = true),
+        )
+    }
+
+    @Test
     fun gainWithoutOurPauseChangesNothing() {
         assertEquals(FocusAction.Ignore, FocusRules.onChange(AudioManager.AUDIOFOCUS_GAIN, inCall = false, pausedByFocus = false))
     }

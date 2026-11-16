@@ -7,8 +7,6 @@
     <string name="nav_sound">Sound</string>
     <string name="nav_settings">Settings</string>
 
-    <string name="soon_title">Coming soon</string>
-    <string name="soon_hint">This screen is not built yet</string>
 
     <string name="player_empty">Nothing is playing</string>
     <string name="player_empty_hint">Pick a file in the library</string>
@@ -268,10 +266,6 @@
     <string name="settings_bluetooth">Bluetooth headphones</string>
     <string name="settings_bluetooth_open">Allow</string>
     <string name="settings_bluetooth_hint">Open the app settings and allow "Nearby devices": the app then sees the headphones by name, when they connect or drop, and the log records the Bluetooth stream state and codec.</string>
-    <string name="settings_duck">Lower the book for notifications</string>
-    <string name="duck_hint">While a notification sounds, the book plays quieter and then comes back. Off: the book keeps its volume. Some phones lower or mute it themselves whatever is chosen here.</string>
-    <string name="settings_notification_rewind">Back 10 s after a notification</string>
-    <string name="notification_rewind_hint">When a notification sound is over, the book goes back 10 seconds so that nothing is missed.</string>
     <string name="settings_headphones">Connected headphones and speakers</string>
     <string name="headphones_none">None connected</string>
     <string name="headphones_hint">With the charge, when the device reports it.</string>

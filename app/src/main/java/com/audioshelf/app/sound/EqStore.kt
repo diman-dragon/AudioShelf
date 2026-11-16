@@ -2,7 +2,6 @@ package com.audioshelf.app.sound
 
 import com.audioshelf.app.data.KV_STORE
 import com.audioshelf.app.data.Kv
-import com.audioshelf.app.data.KvOp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,13 +31,6 @@ class EqStore(private val kv: Kv) {
 
     fun clearTrack(id: String) {
         kv.del(TRACKS, id)
-        counter.update { it + 1 }
-    }
-
-    fun moveTrack(from: String, to: String) {
-        if (from == to) return
-        val eq = track(from) ?: return
-        kv.batch(listOf(KvOp.Del(TRACKS, from), KvOp.Put(TRACKS, to, Eq.encode(eq))))
         counter.update { it + 1 }
     }
 

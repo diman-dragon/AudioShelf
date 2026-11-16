@@ -16,8 +16,6 @@ private const val LIB_SORT = "audioshelf.libsort"
 private const val LIB_VIEW = "audioshelf.libview"
 private const val LIB_PROGRESS = "audioshelf.libprogress"
 private const val AUTO_NEXT = "audioshelf.autonext"
-private const val DUCK_NOTIFICATIONS = "audioshelf.ducknotifications"
-private const val REWIND_NOTIFICATION = "audioshelf.rewindnotification"
 
 class Prefs(private val kv: Kv) {
     private fun read(key: String) = kv.get(KV_STORE, key)
@@ -34,8 +32,6 @@ class Prefs(private val kv: Kv) {
     private val viewFlow = MutableStateFlow(LibView.of(read(LIB_VIEW)))
     private val progressFlow = MutableStateFlow(ProgressFilter.of(read(LIB_PROGRESS)))
     private val autoNextFlow = MutableStateFlow(read(AUTO_NEXT) == "1")
-    private val duckFlow = MutableStateFlow(read(DUCK_NOTIFICATIONS) == "1")
-    private val rewindNotificationFlow = MutableStateFlow(read(REWIND_NOTIFICATION) != "0")
 
     val theme: StateFlow<String?> = themeFlow.asStateFlow()
     val language: StateFlow<String> = langFlow.asStateFlow()
@@ -47,12 +43,6 @@ class Prefs(private val kv: Kv) {
     val libView: StateFlow<LibView> = viewFlow.asStateFlow()
     val libProgress: StateFlow<ProgressFilter> = progressFlow.asStateFlow()
     val autoNext: StateFlow<Boolean> = autoNextFlow.asStateFlow()
-
-    /** Lower the book while a notification sounds (off: the book keeps its volume). */
-    val duckNotifications: StateFlow<Boolean> = duckFlow.asStateFlow()
-
-    /** Go back 10 seconds when a notification is over (on unless switched off). */
-    val rewindAfterNotification: StateFlow<Boolean> = rewindNotificationFlow.asStateFlow()
 
     fun setTheme(id: String) {
         kv.put(KV_STORE, THEME, id)
@@ -97,16 +87,6 @@ class Prefs(private val kv: Kv) {
     fun setLibProgress(filter: ProgressFilter) {
         kv.put(KV_STORE, LIB_PROGRESS, filter.id)
         progressFlow.value = filter
-    }
-
-    fun setDuckNotifications(on: Boolean) {
-        kv.put(KV_STORE, DUCK_NOTIFICATIONS, if (on) "1" else "0")
-        duckFlow.value = on
-    }
-
-    fun setRewindAfterNotification(on: Boolean) {
-        kv.put(KV_STORE, REWIND_NOTIFICATION, if (on) "1" else "0")
-        rewindNotificationFlow.value = on
     }
 
     fun setAutoNext(on: Boolean) {
