@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.15
+New app icon; the logs of 20-27 November (1.4.14) read and checked.
+- Icon: the sand-coloured headphones-and-book icon replaces the navy one. Adaptive icon (background `#F3E7CF`, foreground with the art inside the 66 dp safe zone), monochrome layer for themed icons (Android 13+), and the legacy square and round icons for all five densities. The art was cut out of the supplied 1024 px image with its transparency recovered, so it sits on the background without a halo.
+- Logs, 20-27 November (1.4.14, vivo V2025, Android 13): no error lines, no crashes, no ANR; 9 starts of the process, all clean. The only warnings are slow database writes (54-116 ms, background thread) and two main-thread pauses of 378-450 ms. 19 stutter bursts, all on the JLab GO Air Sport over A2DP, screen off, phone charging, buffer full (2000 ms) and the feed gaps 0-176 ms: the same picture as in 1.4.13, the headphones' link, not the app. No code change for it.
+- Checked: English and Russian strings match (260 each), every `R.string` used in code is defined, no TODO / FIXME left in the sources.
+- Not compiled here (no Android SDK): only resources changed in this version.
+
 ## 1.4.14
 Debt from the audits that can be closed without guessing.
 - Deleting a book: when a later file of a book fails to delete, the files that are already gone are removed from the library too (before, the exception left them listed until the next scan and their progress in place). A book is forgotten (meta, progress, duration, hidden mark) only when everything was deleted; a folder book whose folder could not be deleted stays unchanged.
